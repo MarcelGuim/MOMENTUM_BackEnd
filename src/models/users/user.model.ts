@@ -20,7 +20,7 @@ const UserSchema = new Schema<IUsuari>({
     }
 });
 
-export interface IUsuari extends Document {
+export interface IUsuari{
     name: string;
     age: number;
     mail: string;

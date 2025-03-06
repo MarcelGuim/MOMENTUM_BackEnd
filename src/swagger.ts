@@ -57,8 +57,8 @@ const options = {
             },
         },
     },
-    apis: ['./models/chats/chat.routes.ts', './models/users/user.routes.ts'], // Archivos donde están definidos los endpoints
-    //apis: ['./src/**/*.ts']
+    //apis: ['./models/chats/chat.routes.ts', './models/users/user.routes.ts'], // Archivos donde están definidos los endpoints
+    apis: ['./src/**/*.ts']
 };
 
 const swaggerSpec = swaggerJSDoc(options);

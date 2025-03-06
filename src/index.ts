@@ -3,7 +3,9 @@ import userRoutes from './models/users/user.routes';
 import chatRoutes from './models/chats/chat.routes';
 import connectDB from './database';
 import { setupSwagger } from './swagger'; 
+import { CalendarService } from './models/calendari/calendar.services';
 
+const calendarService = new CalendarService;
 const app = express();
 app.use(express.json());
 
@@ -14,7 +16,6 @@ connectDB.connect();
 const PORT = 8080;
 
 setupSwagger(app);
-  
 
 app.listen(PORT, () => {
     console.log('Servidor en marxa a http://localhost:8080');

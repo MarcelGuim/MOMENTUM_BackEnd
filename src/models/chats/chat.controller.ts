@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { IChat } from './chat.model';
 import { ChatService } from './chat.services';
-import { get } from 'http';
 
 const chatService = new ChatService();
 

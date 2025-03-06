@@ -19,7 +19,7 @@ const ChatSchema = new Schema<IChat>({
     }
 });
 
-export interface IChat extends Document {
+export interface IChat{
     from: string;
     to: string;
     message: string;
