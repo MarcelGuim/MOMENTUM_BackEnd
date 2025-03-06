@@ -3,20 +3,15 @@ import Appointment  from '../appointment/appointment.model';
 
 const CalendarSchema = new mongoose.Schema<ICalendar>({
     user:{ 
-        type: String,
+        type: mongoose.Types.ObjectId,
         required:true
     },
-    appointments: [{ type: mongoose.Types.ObjectId, ref: Appointment }],
-    availableSlots:{
-        type: [Date],
-        required: true
-    }
+    appointments: [{ type: mongoose.Types.ObjectId, ref: Appointment }]
 });
 
 export interface ICalendar{
-    user: String;
+    user: mongoose.ObjectId;
     appointments: mongoose.ObjectId[];
-    availableSlots: Date[];
 }
 
 

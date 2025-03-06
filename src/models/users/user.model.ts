@@ -1,6 +1,6 @@
-import { Schema, model, Document } from 'mongoose';
+import mongoose from 'mongoose';
 
-const UserSchema = new Schema<IUsuari>({
+const UserSchema = new mongoose.Schema<IUsuari>({
     name: { 
         type: String, 
         required: true 
@@ -17,16 +17,23 @@ const UserSchema = new Schema<IUsuari>({
     password: { 
         type: String, 
         required: true 
+    },
+    available:{
+        type:Boolean,
+        required:true,
+        default: true
     }
 });
 
 export interface IUsuari{
+    _id?:mongoose.ObjectId
     name: string;
     age: number;
     mail: string;
     password: string;
+    available:boolean;
 }
 
 
-const User = model<IUsuari>('User', UserSchema);
+const User = mongoose.model<IUsuari>('User', UserSchema);
 export default User;

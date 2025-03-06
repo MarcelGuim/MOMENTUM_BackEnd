@@ -1,16 +1,12 @@
 import { Schema, model, Document, ObjectId } from 'mongoose';
 
 const AppointmentSchema = new Schema<IAppointment>({
-    date:{
-        type:Date,
-        required: true
-    },
     inTime:{
-        type:Number,
+        type:Date,
         required:true
     },
     outTime:{
-        type:Number,
+        type:Date,
         required:true
     },
     place:{
@@ -24,10 +20,9 @@ const AppointmentSchema = new Schema<IAppointment>({
 });
 
 export interface IAppointment{
-    _id?: string;
-    date:Date;
-    inTime:number;
-    outTime:number;
+    _id?: ObjectId;
+    inTime:Date;
+    outTime:Date;
     place:String;
     title:String;
 }
