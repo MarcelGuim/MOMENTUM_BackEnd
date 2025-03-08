@@ -143,3 +143,19 @@ export async function restoreUserByName(req: Request, res: Response): Promise<Re
     }
 }
 
+export async function getUsersPaginated(req:Request, res:Response): Promise<Response>{
+    try{
+        const page = parseInt(req.query.page as string) ||1;
+        const limit = parseInt(req.query.limit as string) || 5;
+        const users = await userService.getUsersPaginated(page,limit);
+        if(users){
+            return res.status(200).json(users);
+        }
+        else{
+            return res.status(404).json({error: 'Users not found'});
+        }
+    }
+    catch(error){
+        return res.status(500).json({ error: 'Failed to get users' });
+    }
+}

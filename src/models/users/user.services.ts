@@ -33,6 +33,14 @@ export class UserService {
     }
   }
 
+  async getUsersPaginated(page = 1, limit = 5): Promise<{users: IUsuari[]; totalPages:number; currentPage:number} | null> {
+    const users = await User.find()
+      .skip((page - 1) * limit)
+      .sort({ name: 1 })
+      .limit(limit);
+    return {users, currentPage:page, totalPages: Math.ceil(await User.countDocuments() / limit),};
+  }
+
   // Hard delete:
   async hardDeleteUserByName(name: string): Promise<IUsuari | null> {
     return await User.findOneAndDelete({name});

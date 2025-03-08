@@ -10,7 +10,7 @@ class ConnectDB {
     }
 
     try {
-      const dbURI = 'mongodb://localhost:27017/momentum';
+      const dbURI = 'mongodb+srv://joan:1234@cluster0.3owhs.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
       mongoose.set('strictQuery', false); 
       
       await mongoose.connect(dbURI, {

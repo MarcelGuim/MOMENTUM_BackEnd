@@ -3,7 +3,7 @@ import { userValidationRules, userValidator } from './user.validation';
 
 const router = Router();
 
-import { createUser, getUserByName, hardDeleteUserByName, updateUserByName, loginUser, diguesHola, restoreUserByName, softDeleteUserByName } from './user.controller';
+import { createUser, getUserByName, hardDeleteUserByName, updateUserByName, loginUser, diguesHola, restoreUserByName, softDeleteUserByName, getUsersPaginated } from './user.controller';
 
 /**
  * @swagger
@@ -219,5 +219,45 @@ router.patch('/soft/:name', softDeleteUserByName);
  *         description: Fallo al restaurar el usuario
  */
 router.patch('/restore/:name', restoreUserByName);
+
+/**
+ * @swagger
+ * /users/page/{page}:
+ *   get:
+ *     summary: Obtiene usuarios paginados
+ *     tags: [users]
+ *     description: Retorna una lista de usuarios en bloques de 5 o 10.
+ *     parameters:
+ *       - in: path
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Número de usuarios por página (opcional, por defecto 5)
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios paginada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 totalPages:
+ *                   type: integer
+ *                 currentPage:
+ *                   type: integer
+ *       500:
+ *         description: Error en el servidor
+ */
+router.get('/page/:page',getUsersPaginated);
 
 export default router;
