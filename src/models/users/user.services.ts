@@ -11,10 +11,6 @@ export class UserService {
     return await User.findOne({name});
   }  
 
-  async deleteUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOneAndDelete({name});
-  }
-
   async updateUserByName(name: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
     console.log("Updating user at the service:", data, name);
     return await User.findOneAndUpdate({ name }, data, { new: true });
@@ -36,5 +32,27 @@ export class UserService {
         return false;
     }
   }
-}
 
+  // Hard delete:
+  async hardDeleteUserByName(name: string): Promise<IUsuari | null> {
+    return await User.findOneAndDelete({name});
+  }
+
+  // Soft delete:
+  async softDeleteUserByName(name: string): Promise<IUsuari | null> {
+    return await User.findOneAndUpdate(
+      { name }, 
+      { isDeleted: true },
+      { new: true } 
+    );
+  }
+
+  // Soft undelete:
+  async restoreUserByName(name: string): Promise<IUsuari | null> {
+    return await User.findOneAndUpdate(
+      { name }, 
+      { isDeleted: false },
+      { new: true }
+    );
+  }
+}

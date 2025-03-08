@@ -1,5 +1,14 @@
 import mongoose from 'mongoose';
 
+export interface IUsuari {
+    _id?: mongoose.ObjectId;
+    name: string;
+    age: number;
+    mail: string;
+    password: string;
+    isDeleted: boolean;
+}
+
 const UserSchema = new mongoose.Schema<IUsuari>({
     name: { 
         type: String, 
@@ -11,29 +20,27 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     },
     mail: { 
         type: String, 
-        required: true, 
-        //unique: true 
+        required: true 
     },
     password: { 
         type: String, 
         required: true 
     },
-    available:{
-        type:Boolean,
-        required:true,
-        default: true
+    isDeleted: {
+        type: Boolean,
+        required: true, 
+        default: false
     }
 });
 
-export interface IUsuari{
-    _id?:mongoose.ObjectId
-    name: string;
-    age: number;
-    mail: string;
-    password: string;
-    available:boolean;
-}
+UserSchema.pre('find', function() {
+  this.where({ isDeleted: false });
+});
 
+UserSchema.pre('findOne', function() {
+  this.where({ isDeleted: false });
+});
 
 const User = mongoose.model<IUsuari>('User', UserSchema);
+
 export default User;

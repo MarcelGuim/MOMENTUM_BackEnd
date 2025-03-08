@@ -38,25 +38,6 @@ export async function getUserByName(req:Request, res:Response): Promise<Response
     }
 }
 
-export async function deleteUserByName(req:Request, res:Response): Promise<Response>{
-    try{
-        const{name} = req.params;
-        const user = await userService.deleteUserByName(name);
-        if(user){
-            return res.status(200).json({
-                message: "User deleted",
-                user
-            });
-        }
-        else{
-            return res.status(404).json({error: 'User not found'});
-        }
-    }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to delete user' });
-    }
-}
-
 export async function updateUserByName(req:Request, res:Response): Promise<Response>{
     console.log("Updating user");
     try{
@@ -107,3 +88,58 @@ export async function diguesHola(req:Request, res:Response): Promise<Response>{
     console.log("Hola");
     return res.status(200).json({message: "Hola"});
 }
+
+// DELETES
+export async function hardDeleteUserByName(req:Request, res:Response): Promise<Response>{
+    try{
+        const{name} = req.params;
+        const user = await userService.hardDeleteUserByName(name);
+        if(user){
+            return res.status(200).json({
+                message: "User deleted",
+                user
+            });
+        }
+        else{
+            return res.status(404).json({error: 'User not found'});
+        }
+    }
+    catch(error){
+        return res.status(500).json({ error: 'Failed to delete user' });
+    }
+}
+
+export async function softDeleteUserByName(req: Request, res: Response): Promise<Response> {
+    try {
+        const { name } = req.params;
+        const user = await userService.softDeleteUserByName(name);
+        if (user) {
+            return res.status(200).json({
+                message: "User soft deleted (marked as unavailable)",
+                user
+            });
+        } else {
+            return res.status(404).json({ error: 'User not found' });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to soft delete user' });
+    }
+}
+
+export async function restoreUserByName(req: Request, res: Response): Promise<Response> {
+    try {
+        const { name } = req.params;
+        const user = await userService.restoreUserByName(name);
+        if (user) {
+            return res.status(200).json({
+                message: "User restored (marked as available)",
+                user
+            });
+        } else {
+            return res.status(404).json({ error: 'User not found' });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to restore user' });
+    }
+}
+

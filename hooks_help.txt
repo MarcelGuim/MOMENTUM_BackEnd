@@ -1,0 +1,13 @@
+Per tal de fer les consultes amb els hooks de available implementats:
+
+Citas disponibles (no eliminadas): Usamos Appointment.find() (el middleware aplica automáticamente el filtro de isDeleted: false).
+const availableAppointments = await Appointment.find();
+
+Citas no disponibles (eliminadas): Especificamos explícitamente { isDeleted: true }.
+const unavailableAppointments = await Appointment.find({ isDeleted: true });
+
+Todas las citas (disponibles y no disponibles): Omitimos la condición isDeleted y traemos todas las citas, tanto las disponibles como las eliminadas.
+const allAppointments = await Appointment.find({});
+
+NOTA:
+Limitación en findByIdAndUpdate: Como mencionamos antes, los hooks no se ejecutan en métodos como findByIdAndUpdate o updateOne. La solución es manejar explícitamente este caso en el controlador o servicio.

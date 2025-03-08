@@ -1,4 +1,3 @@
-
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
@@ -38,7 +37,7 @@ const options = {
                 },
                 User: {
                     type: 'object',
-                    required: ['name', 'age', 'mail','password'],
+                    required: ['name', 'age', 'mail', 'password'],
                     properties: {
                         name: {
                             type: 'string',
@@ -52,13 +51,66 @@ const options = {
                         password: {
                             type: 'string',
                         },
+                        isDeleted: {
+                            type: 'boolean',
+                            default: false,
+                        },
+                    },
+                },
+                Calendar: {
+                    type: 'object',
+                    required: ['user', 'appointments'],
+                    properties: {
+                        user: {
+                            type: 'string',
+                            description: 'ID del usuario asociado',
+                        },
+                        appointments: {
+                            type: 'array',
+                            items: {
+                                type: 'string',
+                            },
+                            description: 'IDs de las citas',
+                        },
+                        isDeleted: {
+                            type: 'boolean',
+                            default: false,
+                        },
+                    },
+                },
+                Appointment: {
+                    type: 'object',
+                    required: ['inTime', 'outTime', 'place', 'title'], // Actualizado para coincidir con el modelo
+                    properties: {
+                        inTime: {
+                            type: 'string',
+                            format: 'date-time',
+                            description: 'Fecha y hora de inicio',
+                        },
+                        outTime: {
+                            type: 'string',
+                            format: 'date-time',
+                            description: 'Fecha y hora de fin',
+                        },
+                        place: {
+                            type: 'string',
+                            description: 'Lugar de la cita',
+                        },
+                        title: {
+                            type: 'string',
+                            description: 'Título de la cita',
+                        },
+                        isDeleted: {
+                            type: 'boolean',
+                            default: false,
+                            description: 'Indica si la cita está marcada como eliminada',
+                        },
                     },
                 },
             },
         },
     },
-    //apis: ['./models/chats/chat.routes.ts', './models/users/user.routes.ts'], // Archivos donde están definidos los endpoints
-    apis: ['./src/**/*.ts']
+    apis: ['./src/**/*.ts'], // Busca en todos los archivos TypeScript en la carpeta src
 };
 
 const swaggerSpec = swaggerJSDoc(options);
