@@ -12,14 +12,9 @@ export async function createCalendar(req: Request, res: Response): Promise<Respo
         const answer = await calendarService.createCalendar(calendar);
 
         if (answer === null) {
-            console.log("User not found");
+            console.log("User not found or invalid calendar name");
             return res.status(404).json({
-                message: "User not found"
-            });
-        } else if (answer === true) {
-            console.log("The user already has a calendar");
-            return res.status(405).json({
-                message: "The user already has a calendar"
+                message: "User not found or invalid calendar name"
             });
         } else {
             console.log("Calendar created");
@@ -36,33 +31,17 @@ export async function createCalendar(req: Request, res: Response): Promise<Respo
     }
 }
 
-export async function getAppointmentsForADay(req: Request, res: Response): Promise<Response> {
+export async function getAllAppointments(req: Request, res: Response): Promise<Response> {
     try {
-        console.log("Finding appointments for a day");
-        const { name, date1 } = req.params;
-        const date = new Date(date1);
+        console.log("Finding all appointments")
+        const { userId } = req.params;
 
-        // Llamar al servicio
-        const answer = await calendarService.getAppointmentsForADay(date, name);
+        const answer = await calendarService.getAllAppointments(userId);
 
-        // Manejar la respuesta del servicio
-        if (answer === true) {
-            console.log("User not found");
-            return res.status(404).json({
-                message: "User not found"
-            });
-        } else if (answer === false) {
-            console.log("The user has no calendar");
-            return res.status(405).json({
-                message: "The user has no calendar"
-            });
-        } else {
-            console.log("Appointments obtained");
-            return res.status(200).json({
-                message: "Appointments obtained",
-                appointments: answer
-            });
-        }
+        return res.status(200).json({
+            message: "Appointments obtained",
+            appointments: answer,
+        })
     } catch (error) {
         console.log("Server Error");
         return res.status(500).json({
@@ -71,28 +50,60 @@ export async function getAppointmentsForADay(req: Request, res: Response): Promi
     }
 }
 
-export async function getCalendarOfUser(req:Request, res:Response): Promise<Response>{
-        //Retorna null si no te calendari
-        //Retorna el calendari si tot ha anat bé
-    try{
-        console.log("Finding the calendar of a user");
-        const {name} = req.params;
-        const answer = await calendarService.getCalendarOfUser(name);
-        if(answer === null){
-            console.log("The user has no calendar");
-            return res.status(404).json({
-                message:"The user has no calendar"
-            });
-        }
-        else{
-            console.log("Calendar obtained");
-            return res.status(201).json({
-                message:"Calendar obtained",
-                answer
-            });
-        }
+export async function getAppointmentsBetweenDates(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("Finding appointments between two dates");
+        const { userId, d1, d2 } = req.params;
+        const date1 = new Date(d1);
+        const date2 = new Date(d2);
+
+        const answer = await calendarService.getAppointmentsBetweenDates(date1, date2, userId);
+        return res.status(200).json({
+            message: "Appointments obtained",
+            appointments: answer,
+        })
+    } catch (error) {
+        console.log("Server Error");
+        return res.status(500).json({
+            message: "Server Error"
+        });
     }
-    catch(error){
+}
+
+export async function getAppointmentsForADay(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("Finding appointments for a day");
+        const { userId, date } = req.params;
+        const date1 = new Date(date);
+
+        // Llamar al servicio
+        const answer = await calendarService.getAppointmentsForADay(date1, userId);
+
+        console.log("Appointments obtained");
+        return res.status(200).json({
+            message: "Appointments obtained",
+            appointments: answer
+        });
+    } catch (error) {
+        console.log("Server Error");
+        return res.status(500).json({
+            message: "Server Error"
+        });
+    }
+}
+
+export async function getCalendarsOfUser(req:Request, res:Response): Promise<Response>{
+    try{
+        console.log("Finding the calendars of a user");
+        const { userId } = req.params;
+        const answer = await calendarService.getCalendarsOfUser(userId);
+
+        console.log("Calendar obtained");
+        return res.status(200).json({
+            message:"Calendar obtained",
+            calendars: answer
+        });
+    } catch(error){
         console.log("Server Error")
         return res.status(500).json({
             message:"Server Error"
@@ -103,22 +114,17 @@ export async function getCalendarOfUser(req:Request, res:Response): Promise<Resp
 export async function addAppointmentToCalendar(req: Request, res: Response): Promise<Response> {
     try {
         console.log("Adding an appointment to the calendar of a user");
-        const { name } = req.params;
+        const { calendarId } = req.params;
         const appointment: Partial<IAppointment> = req.body;
 
         // Llamar al servicio
-        const answer = await calendarService.addAppointmentToCalendar(name, appointment);
+        const answer = await calendarService.addAppointmentToCalendar(calendarId, appointment);
 
         // Manejar la respuesta del servicio
-        if (answer === false) {
-            console.log("User not found");
+        if (answer === null) {
+            console.log("Calendar not found");
             return res.status(404).json({
-                message: "User not found"
-            });
-        } else if (answer === true) {
-            console.log("The user has no calendar");
-            return res.status(405).json({
-                message: "The user has no calendar"
+                message: "Calendar not found"
             });
         } else {
             console.log("Appointment added to calendar");
@@ -135,56 +141,56 @@ export async function addAppointmentToCalendar(req: Request, res: Response): Pro
     }
 }
 
-export async function hardDeleteCalendarUser(req: Request, res: Response) {
+export async function hardDeleteCalendarsUser(req: Request, res: Response) {
     try {
-        const { userName } = req.params;
-        const deletedCalendar = await calendarService.hardDeleteCalendarUser(userName);
+        const { userId } = req.params;
+        const numDeleted = await calendarService.hardDeleteCalendarsUser(userId);
 
-        if (deletedCalendar) {
+        if (numDeleted > 0) {
             return res.status(200).json({
-                message: "Calendar permanently deleted",
-                calendar: deletedCalendar
+                message: "Calendars permanently deleted",
+                numDeleted: numDeleted,
             });
         } else {
-            return res.status(404).json({ error: "Calendar or user not found" });
+            return res.status(404).json({ error: "User had no calendars" });
         }
     } catch (error) {
         return res.status(500).json({ error: "Failed to delete calendar" });
     }
 }
 
-export async function softDeleteCalendarUser(req: Request, res: Response) {
+export async function softDeleteCalendarsUser(req: Request, res: Response) {
     try {
-        const { userName } = req.params;
-        const softDeletedCalendar = await calendarService.softDeleteCalendarUser(userName);
+        const { userId } = req.params;
+        const numDeleted = await calendarService.softDeleteCalendarsUser(userId);
 
-        if (softDeletedCalendar) {
+        if (numDeleted > 0) {
             return res.status(200).json({
-                message: "Calendar soft deleted (marked as unavailable)",
-                calendar: softDeletedCalendar
+                message: "Calendars soft deleted (marked as unavailable)",
+                numDeleted: numDeleted,
             });
         } else {
-            return res.status(404).json({ error: "Calendar or user not found" });
+            return res.status(404).json({ error: "User had no calendars" });
         }
     } catch (error) {
-        return res.status(500).json({ error: "Failed to soft delete calendar" });
+        return res.status(500).json({ error: "Failed to soft delete calendars" });
     }
 }
 
-export async function restoreCalendarUser(req: Request, res: Response) {
+export async function restoreCalendarsUser(req: Request, res: Response) {
     try {
-        const { userName } = req.params;
-        const restoredCalendar = await calendarService.restoreCalendarUser(userName);
+        const { userId } = req.params;
+        const numRestored = await calendarService.restoreCalendarsUser(userId);
 
-        if (restoredCalendar) {
+        if (numRestored > 0) {
             return res.status(200).json({
-                message: "Calendar restored (marked as available)",
-                calendar: restoredCalendar
+                message: "Calendars restored (marked as available)",
+                numRestored: numRestored,
             });
         } else {
-            return res.status(404).json({ error: "Calendar or user not found" });
+            return res.status(404).json({ error: "User had no calendars" });
         }
     } catch (error) {
-        return res.status(500).json({ error: "Failed to restore calendar" });
+        return res.status(500).json({ error: "Failed to restore calendars" });
     }
 }

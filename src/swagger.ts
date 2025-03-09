@@ -59,11 +59,15 @@ const options = {
                 },
                 Calendar: {
                     type: 'object',
-                    required: ['user', 'appointments'],
+                    required: ['owner', 'name', 'appointments', 'invitees'],
                     properties: {
-                        user: {
+                        owner: {
                             type: 'string',
                             description: 'ID del usuario asociado',
+                        },
+                        name: {
+                            type: 'string',
+                            description: 'Displayed name of the calendar',
                         },
                         appointments: {
                             type: 'array',
@@ -71,6 +75,13 @@ const options = {
                                 type: 'string',
                             },
                             description: 'IDs de las citas',
+                        },
+                        invitees: {
+                            type: 'array',
+                            items: {
+                                type: 'string',
+                                description: 'IDs dels usuaris amb accés al calendari'
+                            }
                         },
                         isDeleted: {
                             type: 'boolean',

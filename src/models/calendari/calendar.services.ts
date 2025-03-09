@@ -6,109 +6,90 @@ import { start } from 'repl';
 
 
 export class CalendarService {
-    async createCalendar(data: Partial<ICalendar>): Promise<ICalendar | null | boolean> {
+    async createCalendar(data: Partial<ICalendar>): Promise<ICalendar | null> {
         // Verificar si el usuario existe
-        const user = await User.findById(data.user);
+        const user = await User.findById(data.owner);
         if (!user) {
             return null; // Usuario no encontrado
         }
-    
-        // Verificar si el usuario ya tiene un calendario
-        const existingCalendar = await Calendar.findOne({ user: data.user });
-        if (existingCalendar) {
-            return true; // El usuario ya tiene un calendario
-        }
-    
-        // Crear el calendario
+
+        // Verificar que el nom del calendari sigui vàlid:
+        if(!data.calendarName) return null;
+
+        // Crear el calendari
         const calendar = new Calendar(data);
         return await calendar.save(); // Devuelve el calendario creado
     }
+
+    async getAllAppointments(userId: string): Promise<IAppointment[]> {
+        const calendars = await Calendar.find({ owner: userId }).populate<{appointments: IAppointment[]}>({
+            path: 'appointments'
+        });
+        
+        const result: IAppointment[] = [];
+        calendars.forEach(calendar => result.push(...calendar.appointments));
+        return result;
+    }
     
-    async getAppointmentsForADay(date: Date, userName: string): Promise<IAppointment[] | boolean | null> {
-        // Buscar el usuario por nombre
-        const user = await User.findOne({ name: userName });
-        if (!user) {
-            return true; // Usuario no encontrado
-        }
-    
-        // Verificar si el usuario tiene un calendario
-        const calendar = await Calendar.findOne({ user: user._id });
-        if (!calendar) {
-            return false; // El usuario no tiene un calendario
-        }
-    
+    async getAppointmentsBetweenDates(startDate: Date, endDate: Date, userId: string): Promise<IAppointment[]> {
+        // Cerca calendaris de l'usuari
+        const calendars = await Calendar.find({ owner: userId }).populate<{appointments: IAppointment[]}>({
+            path: 'appointments',
+            match: { inTime: { $gte: startDate, $lte: endDate } }
+        });
+        
+        const result: IAppointment[] = [];
+        calendars.forEach(calendar => result.push(...calendar.appointments));
+        return result;
+    }
+
+    async getAppointmentsForADay(date: Date, userId: string): Promise<IAppointment[]> {
         // Obtener las citas para el día especificado
         const startOfDay = new Date(date.setHours(0, 0, 0, 0));
         const endOfDay = new Date(date.setHours(23, 59, 59, 999));
-    
-        const calendarWithAppointments = await Calendar.findOne({ user: user._id }).populate({
-            path: 'appointments',
-            match: { inTime: { $gte: startOfDay, $lte: endOfDay } }
-        });
-    
-        if (!calendarWithAppointments) {
-            return []; // No hay citas para este día
-        }
-    
-        const appointments = calendarWithAppointments.appointments as unknown as IAppointment[];
-        return appointments; // Devuelve las citas
+
+        return await this.getAppointmentsBetweenDates(startOfDay, endOfDay, userId);
     }
 
-    async  getCalendarOfUser(userName: string): Promise<ICalendar | null>{
-        //Retorna null si no te calendari
-        //Retorna el calendari si tot ha anat bé
-        const user = await User.findOne({name:userName});
-        if(user === null){
-            return null
-        }
-        return await Calendar.findOne({user:user._id})
+    async getCalendarsOfUser(userId: string): Promise<ICalendar[]>{
+        return await Calendar.find({ owner: userId })
     }
 
-    async addAppointmentToCalendar(userName: string, appointment: Partial<IAppointment>): Promise<ICalendar | null | boolean> {
-        // Buscar el usuario por nombre
-        const user = await User.findOne({ name: userName });
-        if (!user) {
-            return false; // Usuario no encontrado
-        }
-    
-        // Verificar si el usuario tiene un calendario
-        const calendar = await Calendar.findOne({ user: user._id });
+    async addAppointmentToCalendar(calendarId: string, appointment: Partial<IAppointment>): Promise<ICalendar | null> {
+        // Verificar si existeix el calendari
+        const calendar = await Calendar.findOne({ _id: calendarId });
         if (!calendar) {
-            return true; // El usuario no tiene un calendario
+            return null; // El calendari no existeix
         }
     
         // Guardar la cita
         const appointmentSaved = await new Appointment(appointment).save();
     
         // Actualizar el calendario con la nueva cita
-        const updatedCalendar = await Calendar.findOneAndUpdate(
-            { user: user._id },
+        return await calendar.updateOne(
             { $push: { appointments: appointmentSaved._id } },
-            { new: true }
+            { new: true },
         );
-        return updatedCalendar; // Calendario actualizado
     }
 
-    async hardDeleteCalendarUser(userName: string): Promise<ICalendar | null> {
-        const user = await User.findOne({name:userName});
-        return await Calendar.findOneAndDelete({ user: user?._id });
+    async hardDeleteCalendarsUser(userId: string): Promise<number> {
+        const result = await Calendar.deleteMany({ owner: userId });
+        return result.deletedCount;
     }
 
-    async softDeleteCalendarUser(userName: string): Promise<ICalendar | null> {
-        const user = await User.findOne({name:userName});
-        return await Calendar.findOneAndUpdate(
-            { user: user?._id },
+    async softDeleteCalendarsUser(userId: string): Promise<number> {
+        const result = await Calendar.updateMany(
+            { owner: userId },
             { isDeleted: true },
-            { new: true }
         );
+        return result.modifiedCount;
     }
 
-    async restoreCalendarUser(userName: string): Promise<ICalendar | null> {
-        const user = await User.findOne({name:userName});
-        return await Calendar.findOneAndUpdate(
-            { user: user?._id },
+    async restoreCalendarsUser(userId: string): Promise<number> {
+        const result = await Calendar.updateMany(
+            { owner: userId },
             { isDeleted: false },
-            { new: true }
         );
+        return result.modifiedCount;
     }
 }

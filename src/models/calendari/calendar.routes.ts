@@ -2,11 +2,12 @@ import { Router } from 'express';
 import {
     createCalendar,
     getAppointmentsForADay,
-    getCalendarOfUser,
+    getCalendarsOfUser,
     addAppointmentToCalendar,
-    hardDeleteCalendarUser,
-    softDeleteCalendarUser,
-    restoreCalendarUser
+    hardDeleteCalendarsUser,
+    softDeleteCalendarsUser,
+    restoreCalendarsUser,
+    getAllAppointments
 } from './calendar.controller';
 
 const router = Router();
@@ -24,94 +25,153 @@ const router = Router();
  *           schema:
  *             type: object
  *             properties:
- *               user:
+ *               owner:
  *                 type: string
  *                 description: ID del usuario
+ *               calendarName:
+ *                 type: string
+ *                 description: Nombre del calendario
  *               appointments:
  *                 type: array
  *                 items:
  *                   type: string
  *                 description: IDs de las citas
+ *               invitees:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: IDs de los usuarios con acceso al calendario
  *     responses:
  *       201:
  *         description: Calendario creado exitosamente
  *       404:
  *         description: Usuario no encontrado
- *       405:
- *         description: El usuario ya tiene un calendario
  *       500:
  *         description: Error del servidor
  */
 router.post('/', createCalendar);
 
+
 /**
  * @swagger
- * /calendars/appointments/{name}/{date1}:
+ * /calendars/appointments/{userId}:
+ *   get:
+ *     summary: Obtiene todas las citas de un usuario
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario
+ *     responses:
+ *       200:
+ *         description: Citas obtenidas exitosamente
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/appointments/:userId', getAllAppointments);
+
+
+/**
+ * @swagger
+ * /calendars/appointments/{userId}/{d1}/{d2}:
+ *   get:
+ *     summary: Obtiene las citas de un usuario entre dos fechas
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario
+ *       - in: path
+ *         name: d1
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha y hora inicial
+ *       - in: path
+ *         name: d2
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Fecha y hora final
+ *     responses:
+ *       200:
+ *         description: Citas obtenidas exitosamente
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/appointments/:userId/:d1/:d2', getAppointmentsForADay);
+
+
+/**
+ * @swagger
+ * /calendars/appointments/{userId}/{date}:
  *   get:
  *     summary: Obtiene las citas de un usuario para un día específico
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
  *         schema:
  *           type: string
- *         description: Nombre del usuario
+ *         description: ID del usuario
  *       - in: path
- *         name: date1
+ *         name: date
  *         required: true
  *         schema:
  *           type: string
  *           format: date
  *         description: Fecha en formato YYYY-MM-DD
  *     responses:
- *       201:
+ *       200:
  *         description: Citas obtenidas exitosamente
- *       404:
- *         description: El usuario no tiene un calendario
- *       405:
- *         description: Usuario no encontrado
  *       500:
  *         description: Error del servidor
  */
-router.get('/appointments/:name/:date1', getAppointmentsForADay);
+router.get('/appointments/:userId/:date', getAppointmentsForADay);
 
 /**
  * @swagger
- * /calendars/user/{name}:
+ * /calendars/user/{userId}:
  *   get:
- *     summary: Obtiene el calendario de un usuario por su nombre
+ *     summary: Obtiene los calendarios de un usuario por su ID
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
  *         schema:
  *           type: string
- *         description: Nombre del usuario
+ *         description: ID del usuario
  *     responses:
- *       201:
+ *       200:
  *         description: Calendario obtenido exitosamente
- *       404:
- *         description: El usuario no tiene un calendario
  *       500:
  *         description: Error del servidor
  */
-router.get('/user/:name', getCalendarOfUser);
+router.get('/user/:userId', getCalendarsOfUser);
 
 /**
  * @swagger
- * /calendars/add-appointment/{name}:
+ * /calendars/add-appointment/{calendarId}:
  *   post:
  *     summary: Añade una cita al calendario de un usuario
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: calendarId
  *         required: true
  *         schema:
  *           type: string
- *         description: Nombre del usuario
+ *         description: ID del calendario
  *     requestBody:
  *       required: true
  *       content:
@@ -122,81 +182,79 @@ router.get('/user/:name', getCalendarOfUser);
  *       201:
  *         description: Cita añadida exitosamente
  *       404:
- *         description: El usuario no tiene un calendario
- *       405:
- *         description: Usuario no encontrado
+ *         description: Calendario no encontrado
  *       500:
  *         description: Error del servidor
  */
-router.post('/add-appointment/:name', addAppointmentToCalendar);
+router.post('/add-appointment/:calendarId', addAppointmentToCalendar);
 
 /**
  * @swagger
- * /calendars/hard/{userName}:
+ * /calendars/hard/{userId}:
  *   delete:
- *     summary: Elimina permanentemente el calendario de un usuario por su nombre
+ *     summary: Elimina permanentemente los calendarios de un usuario
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userName
+ *         name: userId
  *         required: true
  *         schema:
  *           type: string
- *         description: Nombre del usuario
+ *         description: ID del usuario
  *     responses:
  *       200:
- *         description: Calendario eliminado permanentemente
+ *         description: Calendarios eliminados permanentemente
  *       404:
- *         description: Calendario o usuario no encontrado
+ *         description: Calendarios o usuario no encontrado
  *       500:
- *         description: Error al eliminar el calendario
+ *         description: Error al eliminar los calendarios
  */
-router.delete('/hard/:userName', hardDeleteCalendarUser);
+router.delete('/hard/:userId', hardDeleteCalendarsUser);
 
 /**
  * @swagger
- * /calendars/soft/{userName}:
+ * /calendars/soft/{userId}:
  *   patch:
- *     summary: Marca como eliminado (soft delete) el calendario de un usuario por su nombre
+ *     summary: Marca como eliminado (soft delete) los calendarios de un usuario
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userName
+ *         name: userId
  *         required: true
  *         schema:
  *           type: string
- *         description: Nombre del usuario
+ *         description: ID del usuario
  *     responses:
  *       200:
- *         description: Calendario marcado como eliminado
+ *         description: Calendarios marcados como eliminados
  *       404:
- *         description: Calendario o usuario no encontrado
+ *         description: Calendarios o usuario no encontrado
  *       500:
- *         description: Error al marcar el calendario como eliminado
+ *         description: Error al marcar los calendarios como eliminados
  */
-router.patch('/soft/:userName', softDeleteCalendarUser);
+router.patch('/soft/:userId', softDeleteCalendarsUser);
 
 /**
  * @swagger
- * /calendars/restore/{userName}:
+ * /calendars/restore/{userId}:
  *   patch:
- *     summary: Restaura el calendario de un usuario por su nombre (soft undelete)
+ *     summary: Restaura los calendario de un usuario (soft undelete)
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userName
+ *         name: userId
  *         required: true
  *         schema:
  *           type: string
- *         description: Nombre del usuario
+ *         description: ID del usuario
  *     responses:
  *       200:
- *         description: Calendario restaurado
+ *         description: Calendarios restaurados
  *       404:
- *         description: Calendario o usuario no encontrado
+ *         description: Calendarios o usuario no encontrado
  *       500:
- *         description: Error al restaurar el calendario
+ *         description: Error al restaurar los calendarios
  */
-router.patch('/restore/:userName', restoreCalendarUser);
+router.patch('/restore/:userId', restoreCalendarsUser);
 
 export default router;
