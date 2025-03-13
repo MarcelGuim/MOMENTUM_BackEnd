@@ -7,7 +7,8 @@ import {
     hardDeleteCalendarsUser,
     softDeleteCalendarsUser,
     restoreCalendarsUser,
-    getAllAppointments
+    getAllAppointments,
+    getAppointmentsBetweenDates
 } from './calendar.controller';
 
 const router = Router();
@@ -51,7 +52,6 @@ const router = Router();
  */
 router.post('/', createCalendar);
 
-
 /**
  * @swagger
  * /calendars/appointments/{userId}:
@@ -72,7 +72,6 @@ router.post('/', createCalendar);
  *         description: Error del servidor
  */
 router.get('/appointments/:userId', getAllAppointments);
-
 
 /**
  * @swagger
@@ -107,8 +106,7 @@ router.get('/appointments/:userId', getAllAppointments);
  *       500:
  *         description: Error del servidor
  */
-router.get('/appointments/:userId/:d1/:d2', getAppointmentsForADay);
-
+router.get('/appointments/:userId/:d1/:d2', getAppointmentsBetweenDates);
 
 /**
  * @swagger

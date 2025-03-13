@@ -1,11 +1,30 @@
 import {IUsuari} from './user.model';
 import User from './user.model';
+import nodemailer from 'nodemailer';
+import * as crypto from "node:crypto";
+import e from 'express';
+
+let activations: IUsuari[] = [];
 
 export class UserService {
-  async createUser(data: Partial<IUsuari>): Promise<IUsuari> {
-    const user = new User(data);
+  async createUser(user: IUsuari): Promise<Boolean> {
+    console.log("Activations PRE: " + activations.length);
+    const id = crypto.randomBytes(20).toString('hex');
+    user.activationId = id;
+    mailOptions.to=user.mail;
     console.log("Creating user at the service:", user);
-    return await user.save();
+    activations.push(user);
+    mailOptions.text="The activation link is: http://localhost:8080/users/activate/"+user.name+"/"+id;//Link d'activació per localhost
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('Error sending the email:', error);
+        return false;
+      } else {
+        console.log('Email sent: ' + info.response);
+        console.log("Activations POST: " + activations.length);
+      }
+    });
+    return true;
   }
   async getUserByName(name: string): Promise<IUsuari | null> {
     return await User.findOne({name});
@@ -63,4 +82,34 @@ export class UserService {
       { new: true }
     );
   }
+  
+  async activateUser(name: string, id: string): Promise<IUsuari | null>{
+      console.log(activations.length);
+      let user:IUsuari | void = activations.find((element) => {
+        if(element.name === name && element.activationId === id){
+          return element;
+        }
+      });
+      if(user === null || user === undefined){
+        return null;
+      }
+      user.activationId = "";
+      const userSaved = new User(user);
+      return await userSaved.save();
+  }
 }
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'momentumea2025@gmail.com', // La teva adreça de correu
+    pass: 'vlzf cjuw duop bnko'       // La teva contrasenya (potser hauries d'utilitzar un "App Password" si tens 2FA activat)
+  }
+});
+
+const mailOptions = {
+  from: 'momentumea2025@gmail.com',
+  to: '',
+  subject: 'New user created',
+  text: ''
+};

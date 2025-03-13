@@ -3,7 +3,7 @@ import { userValidationRules, userValidator } from './user.validation';
 
 const router = Router();
 
-import { createUser, getUserByName, hardDeleteUserByName, updateUserByName, loginUser, diguesHola, restoreUserByName, softDeleteUserByName, getUsersPaginated } from './user.controller';
+import { createUser, getUserByName, hardDeleteUserByName, updateUserByName, loginUser, diguesHola, restoreUserByName, softDeleteUserByName, getUsersPaginated, activateUser } from './user.controller';
 
 /**
  * @swagger
@@ -60,6 +60,35 @@ router.get("/Hola", diguesHola);
  *         description: Failed to create user
  */
 router.post("/register",userValidationRules(),userValidator, createUser);
+
+/**
+ * @swagger
+ * /users/validate/{name}/{id}:
+ *   post:
+ *     summary: Valida un nou usuari
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         description: El nombre del usuario a validar
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: El id del usuario a validar
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Usuario validado
+ *       404:
+ *         description: Usuario no encontrado
+ *       500:
+ *         description: Fallo al validar el usuario
+ */
+router.get("/activate/:name/:id", activateUser);
 
 /**
  * @swagger

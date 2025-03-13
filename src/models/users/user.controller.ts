@@ -8,13 +8,17 @@ export async function createUser(req:Request, res:Response): Promise<Response> {
     console.log("Creating user");
     try{
         const{name,age,mail,password} = req.body as IUsuari
-        const newUser: Partial<IUsuari> = {name,age,mail,password};
+        const newUser: IUsuari = {name,age,mail,password,isDeleted:false};
         console.log("Creating user:", { name, age, mail, password });
         const user = await userService.createUser(newUser);
-        return res.status(200).json({
-            message:"User Created",
-            user
-        });
+        if(user){
+            return res.status(200).json({
+                message:"Validate user in the email"
+            });
+        }
+        else{
+            return res.status(404).json({error: 'User not created, there has been an error'});
+        }
     }
     catch(error){
         return res.status(500).json({ error: 'Failed to create user' });
@@ -157,5 +161,22 @@ export async function getUsersPaginated(req:Request, res:Response): Promise<Resp
     }
     catch(error){
         return res.status(500).json({ error: 'Failed to get users' });
+    }
+}
+
+export async function activateUser(req:Request, res:Response): Promise<Response>{
+    try{
+        const { name, id } = req.params;
+        console.log(name,id);
+        const user = await userService.activateUser(name,id);
+        if(user){
+            return res.status(200).json(user);
+        }
+        else{
+            return res.status(404).json({error: 'Users not found'});
+        }
+    }
+    catch(error){
+        return res.status(500).json({ error: 'Failed to activate users' });
     }
 }

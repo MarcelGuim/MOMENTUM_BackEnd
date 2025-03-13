@@ -7,6 +7,7 @@ export interface IUsuari {
     mail: string;
     password: string;
     isDeleted: boolean;
+    activationId?: string;
 }
 
 const UserSchema = new mongoose.Schema<IUsuari>({
