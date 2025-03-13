@@ -8,7 +8,7 @@ export async function createUser(req:Request, res:Response): Promise<Response> {
     console.log("Creating user");
     try{
         const{name,age,mail,password} = req.body as IUsuari
-        const newUser: IUsuari = {name,age,mail,password,isDeleted:false};
+        const newUser: Partial<IUsuari> = {name,age,mail,password,isDeleted:false};
         console.log("Creating user:", { name, age, mail, password });
         const user = await userService.createUser(newUser);
         if(user){

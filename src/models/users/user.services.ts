@@ -4,13 +4,16 @@ import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import e from 'express';
 
-let activations: IUsuari[] = [];
+let activations: Partial<IUsuari>[] = [];
 
 export class UserService {
-  async createUser(user: IUsuari): Promise<Boolean> {
+  async createUser(user: Partial<IUsuari>): Promise<Boolean> {
     console.log("Activations PRE: " + activations.length);
     const id = crypto.randomBytes(20).toString('hex');
     user.activationId = id;
+    if(user.mail === undefined){
+      return false;
+    }
     mailOptions.to=user.mail;
     console.log("Creating user at the service:", user);
     activations.push(user);
@@ -86,7 +89,7 @@ export class UserService {
   
   async activateUser(name: string, id: string): Promise<IUsuari | null>{
       console.log(activations.length);
-      let user:IUsuari | void = activations.find((element) => {
+      let user:Partial<IUsuari> | void = activations.find((element) => {
         if(element.name === name && element.activationId === id){
           return element;
         }
