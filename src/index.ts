@@ -8,10 +8,20 @@ import { CalendarService } from './models/calendari/calendar.services';
 import Appointment, { IAppointment } from './models/appointment/appointment.model';
 import Calendar, { ICalendar } from './models/calendari/calendar.model';
 import User, { IUsuari } from './models/users/user.model';
+import cors from "cors";
 
 // Configuración de Express
 const app = express();
 app.use(express.json());
+
+// Configuración global de CORS
+app.use(
+  cors({
+    origin: "http://localhost:4200", // Permite peticiones desde tu frontend en Angular
+    methods: ["GET", "POST", "PUT", "DELETE"], // Métodos permitidos
+    allowedHeaders: ["Content-Type", "Authorization"], // Encabezados permitidos
+  })
+);
 
 // Conexión a la base de datos
 connectDB.connect();
