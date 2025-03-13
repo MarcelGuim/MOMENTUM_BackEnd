@@ -17,13 +17,14 @@ export class UserService {
   }
 
   async loginUser(name:string, password:string): Promise<boolean | null>{
-    const user2: Partial<IUsuari> | null = await User.findOne({name: name}).select('name password');
+    const user2 = await User.findOne({name: name}).select('name password');
     console.log("user2 is: " +user2);
     if(user2 === null){
         console.log("User not found")
         return null;
     }
-    else if(user2.password === password){
+    const isMatch : boolean = await user2.isValidPassword(password);
+    if(isMatch){
         console.log("Correct user and password")
         return true;
     }
