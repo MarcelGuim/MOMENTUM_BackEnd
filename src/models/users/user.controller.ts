@@ -63,9 +63,9 @@ export async function updateUserById(req: Request, res: Response): Promise<Respo
 export async function loginUser(req: Request, res: Response): Promise<Response> {
     console.log("Logging in user");
     try {
-        const { name, password } = req.body as IUsuari;
-        const user = await userService.loginUser(name, password);
-        console.log("User trying to get logged in:", name);
+        const { name_or_mail, password } = req.body;
+        const user = await userService.loginUser(name_or_mail, password);
+        console.log("User trying to get logged in:", name_or_mail);
 
         if (user === true) {
             return res.status(200).json({
@@ -73,7 +73,7 @@ export async function loginUser(req: Request, res: Response): Promise<Response> 
             });
         } else {
             // Return a generic error message for both incorrect password and non-existent user
-            return res.status(401).json({ error: 'Invalid username or password' });
+            return res.status(401).json({ error: 'Invalid username/mail or password' });
         }
     } catch (error) {
         return res.status(500).json({ error: 'Failed to login user' });

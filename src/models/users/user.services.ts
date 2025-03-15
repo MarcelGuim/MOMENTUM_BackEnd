@@ -46,14 +46,15 @@ export class UserService {
     return await User.findByIdAndUpdate(userId, data, { new: true });
   }
 
-  async loginUser(name:string, password:string): Promise<boolean | null>{
-    const user2 = await User.findOne({name: name}).select('name password');
-    console.log("user2 is: " +user2);
-    if(user2 === null){
+  async loginUser(identifier:string, password:string): Promise<boolean | null>{
+    const isEmail = identifier.includes('@');
+    const query = isEmail ? { mail: identifier } : { name: identifier };
+    const user = await User.findOne(query).select('name mail password');
+    if(user === null){
         console.log("User not found")
         return null;
     }
-    const isMatch : boolean = await user2.isValidPassword(password);
+    const isMatch : boolean = await user.isValidPassword(password);
     if(isMatch){
         console.log("Correct user and password")
         return true;

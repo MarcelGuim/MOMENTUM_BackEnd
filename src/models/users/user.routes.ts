@@ -99,7 +99,7 @@ router.get("/activate/:name/:id", activateUser);
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               name_or_mail:
  *                 type: string
  *               password:
  *                 type: string
@@ -107,7 +107,7 @@ router.get("/activate/:name/:id", activateUser);
  *       200:
  *         description: User logged in
  *       401:
- *         description: Invalid username or password
+ *         description: Invalid username/password or password
  *       500:
  *         description: Failed to log in user
  */
