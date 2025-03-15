@@ -7,16 +7,16 @@ export interface IUsuari {
     mail: string;
     password: string;
     isDeleted: boolean;
-    isValidPassword: (password: string) => Promise<boolean>;
     activationId?: string;
+    isValidPassword: (password: string) => Promise<boolean>;
 }
-
 
 const UserSchema = new mongoose.Schema<IUsuari>({
     name: { 
         type: String, 
         required: true,
-        unique: true
+        unique: true,
+        index: true 
     },
     age: { 
         type: Number, 
@@ -24,7 +24,9 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     },
     mail: { 
         type: String, 
-        required: true 
+        required: true,
+        unique: true, 
+        index: true 
     },
     password: { 
         type: String, 
@@ -34,6 +36,10 @@ const UserSchema = new mongoose.Schema<IUsuari>({
         type: Boolean,
         required: true, 
         default: false
+    },
+    activationId: {
+        type: String,
+        sparse: true 
     }
 });
 

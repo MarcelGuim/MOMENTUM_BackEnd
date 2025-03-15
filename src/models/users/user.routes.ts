@@ -3,7 +3,18 @@ import { userValidationRules, userValidator } from './user.validation';
 
 const router = Router();
 
-import { createUser, getUserByName, hardDeleteUserByName, updateUserByName, loginUser, diguesHola, restoreUserByName, softDeleteUserByName, getUsersPaginated, activateUser } from './user.controller';
+import { 
+  createUser, 
+  getUserById, 
+  hardDeleteUserById, 
+  updateUserById, 
+  loginUser, 
+  diguesHola, 
+  restoreUserById, 
+  softDeleteUserById, 
+  getUsersPaginated, 
+  activateUser 
+} from './user.controller';
 
 /**
  * @swagger
@@ -19,9 +30,9 @@ router.get("/Hola", diguesHola);
 
 /**
  * @swagger
- * /users/register:
+ * /users:
  *   post:
- *     summary: Registra un nou usuari
+ *     summary: Register a new user
  *     tags: [users]
  *     requestBody:
  *       required: true
@@ -41,25 +52,10 @@ router.get("/Hola", diguesHola);
  *     responses:
  *       201:
  *         description: User Created
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   name:
- *                     type: string
- *                   age:
- *                     type: number
- *                   mail:
- *                     type: string
- *                   password:
- *                     type: string
  *       500:
  *         description: Failed to create user
  */
-router.post("/register",userValidationRules(),userValidator, createUser);
+router.post("", userValidationRules(), userValidator, createUser);
 
 /**
  * @swagger
@@ -94,7 +90,7 @@ router.get("/activate/:name/:id", activateUser);
  * @swagger
  * /users/login:
  *   post:
- *     summary: Inicia sessió d'un usuari
+ *     summary: Log in a user
  *     tags: [users]
  *     requestBody:
  *       required: true
@@ -111,50 +107,48 @@ router.get("/activate/:name/:id", activateUser);
  *       200:
  *         description: User logged in
  *       401:
- *         description: Incorrect password
- *       404:
- *         description: User not found
+ *         description: Invalid username or password
  *       500:
- *         description: Failed to login user
+ *         description: Failed to log in user
  */
 router.post("/login", loginUser);
 
 /**
  * @swagger
- * /users/{name}:
+ * /users/{userId}:
  *   get:
- *     summary: Obtenir les dades d'un usuari per nom
+ *     summary: Get user by ID
  *     tags: [users]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
- *         description: El nom de l'usuari
  *         schema:
  *           type: string
+ *         description: ID of the user
  *     responses:
  *       200:
  *         description: User found
  *       404:
- *         description: Usuari no trobat
+ *         description: User not found
  *       500:
  *         description: Failed to get user
  */
-router.get('/:name', getUserByName);
+router.get("/:userId", getUserById);
 
 /**
  * @swagger
- * /users/{name}:
+ * /users/{userId}:
  *   put:
- *     summary: Actualitza les dades d'un usuari
+ *     summary: Update user by ID
  *     tags: [users]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
- *         description: El nom de l'usuari
  *         schema:
  *           type: string
+ *         description: ID of the user
  *     requestBody:
  *       required: true
  *       content:
@@ -172,121 +166,107 @@ router.get('/:name', getUserByName);
  *                 type: string
  *     responses:
  *       200:
- *         description: User updated correctly
- *       400:
+ *         description: User updated
+ *       404:
  *         description: User not found
  *       500:
  *         description: Failed to update user
  */
-router.put('/:name', userValidationRules(),userValidator, updateUserByName);
+router.put("/:userId", userValidationRules(), userValidator, updateUserById);
 
 /**
  * @swagger
- * /users/{name}:
+ * /users/{userId}:
  *   delete:
- *     summary: Elimina un usuario por nombre (Hard delete)
+ *     summary: Delete user by ID (hard delete)
  *     tags: [users]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
- *         description: El nombre del usuario a eliminar
  *         schema:
  *           type: string
+ *         description: ID of the user to delete
  *     responses:
  *       200:
- *         description: Usuario eliminado
+ *         description: User deleted
  *       404:
- *         description: Usuario no encontrado
+ *         description: User not found
  *       500:
- *         description: Fallo al eliminar el usuario
+ *         description: Failed to delete user
  */
-router.delete('/:name', hardDeleteUserByName);
+router.delete("/:userId", hardDeleteUserById);
 
 /**
  * @swagger
- * /users/soft/{name}:
+ * /users/{userId}/soft:
  *   patch:
- *     summary: Elimina un usuario lógicamente por nombre (Soft delete)
+ *     summary: Soft delete user by ID
  *     tags: [users]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
- *         description: El nombre del usuario a eliminar lógicamente
  *         schema:
  *           type: string
+ *         description: ID of the user to soft delete
  *     responses:
  *       200:
- *         description: Usuario marcado como no disponible
+ *         description: User soft deleted
  *       404:
- *         description: Usuario no encontrado
+ *         description: User not found
  *       500:
- *         description: Fallo al marcar el usuario como no disponible
+ *         description: Failed to soft delete user
  */
-router.patch('/soft/:name', softDeleteUserByName);
+router.patch("/:userId/soft", softDeleteUserById);
 
 /**
  * @swagger
- * /users/restore/{name}:
+ * /users/{userId}/restore:
  *   patch:
- *     summary: Restaura un usuario marcado como no disponible (Soft undelete)
+ *     summary: Restore a soft-deleted user by ID
  *     tags: [users]
  *     parameters:
  *       - in: path
- *         name: name
+ *         name: userId
  *         required: true
- *         description: El nombre del usuario a restaurar
  *         schema:
  *           type: string
+ *         description: ID of the user to restore
  *     responses:
  *       200:
- *         description: Usuario restaurado
+ *         description: User restored
  *       404:
- *         description: Usuario no encontrado
+ *         description: User not found
  *       500:
- *         description: Fallo al restaurar el usuario
+ *         description: Failed to restore user
  */
-router.patch('/restore/:name', restoreUserByName);
+router.patch("/:userId/restore", restoreUserById);
 
 /**
  * @swagger
- * /users/page/{page}:
+ * /users:
  *   get:
- *     summary: Obtiene usuarios paginados
+ *     summary: Get paginated users
  *     tags: [users]
- *     description: Retorna una lista de usuarios en bloques de 5 o 10.
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: page
  *         required: true
  *         schema:
  *           type: integer
- *         description: Número de página
+ *         description: Page number
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *         description: Número de usuarios por página (opcional, por defecto 5)
+ *         description: Number of users per page (default 5)
  *     responses:
  *       200:
- *         description: Lista de usuarios paginada
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 users:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/User'
- *                 totalPages:
- *                   type: integer
- *                 currentPage:
- *                   type: integer
+ *         description: Paginated users
  *       500:
- *         description: Error en el servidor
+ *         description: Server error
  */
-router.get('/page/:page',getUsersPaginated);
+router.get("", getUsersPaginated);
 
 export default router;

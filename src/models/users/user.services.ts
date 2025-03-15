@@ -3,7 +3,9 @@ import User from './user.model';
 import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import e from 'express';
+import dotenv from 'dotenv';
 
+dotenv.config();
 let activations: Partial<IUsuari>[] = [];
 
 export class UserService {
@@ -17,7 +19,12 @@ export class UserService {
     mailOptions.to=user.mail;
     console.log("Creating user at the service:", user);
     activations.push(user);
-    mailOptions.text="The activation link is: http://localhost:8080/users/activate/"+user.name+"/"+id;//Link d'activació per localhost
+    const baseURL = process.env.NODE_ENV === 'production' 
+      ? process.env.APP_BASE_URL  // Use the URL from the environment for production
+      : 'http://localhost:8080';   // Fallback to localhost in development
+    mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`;
+  
+  mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`; 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.log('Error sending the email:', error);
@@ -29,13 +36,14 @@ export class UserService {
     });
     return true;
   }
-  async getUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOne({name});
-  }  
 
-  async updateUserByName(name: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
-    console.log("Updating user at the service:", data, name);
-    return await User.findOneAndUpdate({ name }, data, { new: true });
+  async getUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findById(userId);
+  }
+
+  async updateUserById(userId: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
+    console.log("Updating user at the service:", data, userId);
+    return await User.findByIdAndUpdate(userId, data, { new: true });
   }
 
   async loginUser(name:string, password:string): Promise<boolean | null>{
@@ -56,50 +64,43 @@ export class UserService {
     }
   }
 
-  async getUsersPaginated(page = 1, limit = 5): Promise<{users: IUsuari[]; totalPages:number; currentPage:number} | null> {
+  async getUsersPaginated(page = 1, limit = 5): Promise<{ users: IUsuari[]; totalPages: number; currentPage: number } | null> {
     const users = await User.find()
       .skip((page - 1) * limit)
       .sort({ name: 1 })
       .limit(limit);
-    return {users, currentPage:page, totalPages: Math.ceil(await User.countDocuments() / limit),};
+    return {
+      users,
+      currentPage: page,
+      totalPages: Math.ceil(await User.countDocuments() / limit),
+    };
   }
 
-  // Hard delete:
-  async hardDeleteUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOneAndDelete({name});
+  async hardDeleteUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findByIdAndDelete(userId);
   }
 
-  // Soft delete:
-  async softDeleteUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOneAndUpdate(
-      { name }, 
-      { isDeleted: true },
-      { new: true } 
-    );
+  async softDeleteUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findByIdAndUpdate(userId, { isDeleted: true }, { new: true });
   }
 
-  // Soft undelete:
-  async restoreUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOneAndUpdate(
-      { name }, 
-      { isDeleted: false },
-      { new: true }
-    );
+  async restoreUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findByIdAndUpdate(userId, { isDeleted: false }, { new: true });
   }
-  
-  async activateUser(name: string, id: string): Promise<IUsuari | null>{
-      console.log(activations.length);
-      let user:Partial<IUsuari> | void = activations.find((element) => {
-        if(element.name === name && element.activationId === id){
-          return element;
-        }
-      });
-      if(user === null || user === undefined){
-        return null;
+
+  async activateUser(name: string, id: string): Promise<IUsuari | null> {
+    console.log(activations.length);
+    let user: Partial<IUsuari> | void = activations.find((element) => {
+      if (element.name === name && element.activationId === id) {
+        return element;
       }
-      user.activationId = "";
-      const userSaved = new User(user);
-      return await userSaved.save();
+    });
+    if (user === null || user === undefined) {
+      return null;
+    }
+    user.activationId = "";
+    const userSaved = new User(user);
+    return await userSaved.save();
   }
 }
 

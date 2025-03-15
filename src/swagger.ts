@@ -54,12 +54,13 @@ const options = {
                         isDeleted: {
                             type: 'boolean',
                             default: false,
+                            readOnly: true, // Mark as read-only
                         },
                     },
                 },
                 Calendar: {
                     type: 'object',
-                    required: ['owner', 'name', 'appointments', 'invitees'],
+                    required: ['owner', 'name', 'appointments', 'invitees'], // Removed `isDeleted` from required
                     properties: {
                         owner: {
                             type: 'string',
@@ -86,12 +87,13 @@ const options = {
                         isDeleted: {
                             type: 'boolean',
                             default: false,
+                            readOnly: true, // Mark as read-only
                         },
                     },
                 },
                 Appointment: {
                     type: 'object',
-                    required: ['inTime', 'outTime', 'place', 'title'], // Actualizado para coincidir con el modelo
+                    required: ['inTime', 'outTime', 'place', 'title'], // Removed `isDeleted` from required
                     properties: {
                         inTime: {
                             type: 'string',
@@ -114,6 +116,7 @@ const options = {
                         isDeleted: {
                             type: 'boolean',
                             default: false,
+                            readOnly: true, // Mark as read-only
                             description: 'Indica si la cita está marcada como eliminada',
                         },
                     },
