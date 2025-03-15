@@ -2,12 +2,9 @@ import express from 'express';
 import userRoutes from './models/users/user.routes';
 import chatRoutes from './models/chats/chat.routes';
 import calendarRoutes from './models/calendari/calendar.routes'; // Importa las rutas de Calendar
+import locationRoutes from './models/location/location.routes';
 import connectDB from './database';
-import { setupSwagger } from './swagger'; 
-import { CalendarService } from './models/calendari/calendar.services';
-import Appointment, { IAppointment } from './models/appointment/appointment.model';
-import Calendar, { ICalendar } from './models/calendari/calendar.model';
-import User, { IUsuari } from './models/users/user.model';
+import { setupSwagger } from './swagger';
 import cors from "cors";
 
 // Configuración de Express
@@ -32,6 +29,7 @@ setupSwagger(app);
 app.use('/users', userRoutes); // Rutas de usuarios
 app.use('/chat', chatRoutes);  // Rutas de chats
 app.use('/calendars', calendarRoutes); // Rutas de calendarios
+app.use('/location', locationRoutes); // Rutas de ubicaciones
 
 const PORT = 8080;
 app.listen(PORT, () => {
