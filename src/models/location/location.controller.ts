@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getPlaces } from "./location.services";
+import { getPlaces, getRouteInfo } from "./location.services";
 
 export async function getPlacesHandler(req: Request, res: Response){
     try {
@@ -17,6 +17,26 @@ export async function getPlacesHandler(req: Request, res: Response){
         return res.json(places);
     } catch (error) {
         console.error(error)
+        return res.status(500).json(error);
+    }
+}
+
+export async function getRouteHandler(req: Request, res: Response){
+    try {
+        const {lon1, lat1, lon2, lat2, mode} = req.body;
+        const lon1_f = parseFloat(lon1);
+        const lat1_f = parseFloat(lat1);
+        const lon2_f = parseFloat(lon2);
+        const lat2_f = parseFloat(lat2);
+
+        if(isNaN(lon1_f) || isNaN(lat1_f) || isNaN(lon2_f) || isNaN(lat2_f)){
+            return res.status(400);
+        }
+
+        const route = await getRouteInfo(lon1_f, lat1_f, lon2_f, lat2_f, mode);
+        return res.json(route);
+    } catch (error) {
+        console.error(error);
         return res.status(500).json(error);
     }
 }

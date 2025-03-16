@@ -65,14 +65,15 @@ export class UserService {
     }
   }
 
-  async getUsersPaginated(page = 1, limit = 5): Promise<{ users: IUsuari[]; totalPages: number; currentPage: number } | null> {
-    const users = await User.find()
-      .skip((page - 1) * limit)
+  async getUsersPaginated(page = 1, limit = 5, getDeleted = false): Promise<{ users: IUsuari[]; totalPages: number; totalUsers: number, currentPage: number } | null> {
+    const users = await User.find(getDeleted ? {} : {isDeleted: false})
       .sort({ name: 1 })
+      .skip(page * limit)
       .limit(limit);
     return {
       users,
       currentPage: page,
+      totalUsers: await User.countDocuments(),
       totalPages: Math.ceil(await User.countDocuments() / limit),
     };
   }

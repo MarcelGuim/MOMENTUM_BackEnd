@@ -261,6 +261,11 @@ router.patch("/:userId/restore", restoreUserById);
  *         schema:
  *           type: integer
  *         description: Number of users per page (default 5)
+ *       - in: query
+ *         name: getDeleted
+ *         required: false
+ *         schema:
+ *           type: boolean
  *     responses:
  *       200:
  *         description: Paginated users

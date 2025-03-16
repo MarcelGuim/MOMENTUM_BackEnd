@@ -153,16 +153,26 @@ export async function activateUser(req: Request, res: Response): Promise<Respons
   }
 }
 
-export async function getUsersPaginated(req: Request, res: Response): Promise<Response> {
+type PaginatedUsersQueryParams = {
+  page: number,
+  limit: number | undefined,
+  getDeleted: string | undefined,
+}
+
+export async function getUsersPaginated(req: Request<{}, {}, {}, PaginatedUsersQueryParams>, res: Response): Promise<Response> {
   try {
-    const page = parseInt(req.params.page) || 1;
-    const result = await userService.getUsersPaginated(page, 5);
+    const page = req.query.page;
+    const limit = req.query.limit ?? 5;
+    const getDeleted = req.query.getDeleted == "true";
+
+    const result = await userService.getUsersPaginated(page, limit, getDeleted);
     if (result) {
       return res.status(200).json(result);
     } else {
       return res.status(404).json({ error: 'No users found' });
     }
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ error: 'Failed to fetch users' });
   }
 }
