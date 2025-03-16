@@ -11,7 +11,8 @@ import {
   loginUser, 
   diguesHola, 
   restoreUserById, 
-  softDeleteUserById, 
+  softDeleteUserById,
+  softDeleteUsersByMails,
   getUsersPaginated, 
   activateUser 
 } from './user.controller';
@@ -222,6 +223,36 @@ router.patch("/:userId/soft", softDeleteUserById);
 
 /**
  * @swagger
+ * /users/soft:
+ *   patch:
+ *     summary: Soft delete users by emails
+ *     tags: [users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usersMails:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of user email addresses to soft delete
+ *     responses:
+ *       200:
+ *         description: Users soft deleted successfully
+ *       400:
+ *         description: Invalid or missing user emails format
+ *       404:
+ *         description: Some users not found or already deleted
+ *       500:
+ *         description: Failed to soft delete users
+ */
+router.patch("/soft", softDeleteUsersByMails);
+
+/**
+ * @swagger
  * /users/{userId}/restore:
  *   patch:
  *     summary: Restore a soft-deleted user by ID
@@ -261,11 +292,6 @@ router.patch("/:userId/restore", restoreUserById);
  *         schema:
  *           type: integer
  *         description: Number of users per page (default 5)
- *       - in: query
- *         name: getDeleted
- *         required: false
- *         schema:
- *           type: boolean
  *     responses:
  *       200:
  *         description: Paginated users

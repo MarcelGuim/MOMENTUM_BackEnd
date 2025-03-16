@@ -121,6 +121,26 @@ export async function softDeleteUserById(req: Request, res: Response): Promise<R
     return res.status(500).json({ error: 'Failed to soft delete user' });
   }
 }
+export async function softDeleteUsersByMails(req: Request, res: Response): Promise<Response> {
+  try {
+    console.log("Body recibido;", req.body)
+    const { usersMails } = req.body;
+    if (!Array.isArray(usersMails) || usersMails.length === 0) {
+      return res.status(400).json({ error: 'Invalid format' });
+    }
+    const usersNum = usersMails.length;
+    const result = await userService.softDeleteUsersByMails(usersMails);
+    if (result === usersNum) {
+      return res.status(200).json({
+        message: "All Users soft deleted",
+      });
+    } else {
+      return res.status(404).json({ error: `Only ${result} users soft deleted successfully` });
+    }
+  } catch (error) {
+    return res.status(500).json({ error: 'Failed to soft delete user' });
+  }
+}
 
 export async function restoreUserById(req: Request, res: Response): Promise<Response> {
   try {

@@ -92,6 +92,12 @@ export class UserService {
     return await User.findByIdAndUpdate(userId, { isDeleted: true }, { new: true });
   }
 
+  async softDeleteUsersByMails(userMails: string[]): Promise<number | null> {
+    console.log(userMails);
+    const result = await User.updateMany({ mail: { $in: userMails } }, { isDeleted: true }, { new: true });
+    return result.modifiedCount
+  }
+
   async restoreUserById(userId: string): Promise<IUsuari | null> {
     return await User.findByIdAndUpdate(userId, { isDeleted: false }, { new: true });
   }
