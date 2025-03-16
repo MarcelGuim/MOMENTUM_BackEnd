@@ -9,32 +9,38 @@ dotenv.config();
 let activations: Partial<IUsuari>[] = [];
 
 export class UserService {
-  async createUser(user: Partial<IUsuari>): Promise<Boolean> {
-    console.log("Activations PRE: " + activations.length);
-    const id = crypto.randomBytes(20).toString('hex');
-    user.activationId = id;
-    if(user.mail === undefined){
-      return false;
-    }
-    mailOptions.to=user.mail;
-    console.log("Creating user at the service:", user);
-    activations.push(user);
-    const baseURL = process.env.NODE_ENV === 'production' 
-      ? process.env.APP_BASE_URL  // Use the URL from the environment for production
-      : 'http://localhost:8080';   // Fallback to localhost in development
-    mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`;
-  
-  mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`; 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.log('Error sending the email:', error);
-        return false;
-      } else {
-        console.log('Email sent: ' + info.response);
-        console.log("Activations POST: " + activations.length);
+  async createUser(user: Partial<IUsuari>): Promise<Number> {
+    const result = await User.findOne({$or: [{ mail: user.mail }, { name: user.name }]});
+    if (result) {
+      return 0;
+    } else {
+      console.log("Activations PRE: " + activations.length);
+      const id = crypto.randomBytes(20).toString('hex');
+      user.activationId = id;
+      if(user.mail === undefined){
+        return 1;
       }
-    });
-    return true;
+      mailOptions.to=user.mail;
+      console.log("Creating user at the service:", user);
+      activations.push(user);
+      const baseURL = process.env.NODE_ENV === 'production' 
+        ? process.env.APP_BASE_URL  // Use the URL from the environment for production
+        : 'http://localhost:8080';   // Fallback to localhost in development
+      mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`;
+  
+      mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`; 
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error sending the email:', error);
+          return 1;
+        } else {
+          console.log('Email sent: ' + info.response);
+          console.log("Activations POST: " + activations.length);
+        }
+      });
+      return 2;
+    }
+    
   }
 
   async getUserById(userId: string): Promise<IUsuari | null> {

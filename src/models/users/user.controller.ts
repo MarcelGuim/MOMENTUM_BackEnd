@@ -11,13 +11,16 @@ export async function createUser(req:Request, res:Response): Promise<Response> {
         const newUser: Partial<IUsuari> = {name,age,mail,password,isDeleted:false};
         console.log("Creating user:", { name, age, mail, password });
         const user = await userService.createUser(newUser);
-        if(user){
-            return res.status(200).json({
-                message:"Validate user in the email"
-            });
+        if(user===0){
+          return res.status(409).json({error: 'User already exists'});
+        }else if (user === 1){
+          return res.status(404).json({error: 'User not created, there has been an error'});
         }
         else{
-            return res.status(404).json({error: 'User not created, there has been an error'});
+          return res.status(200).json({
+            message:"Validate user in the email"
+          });
+            
         }
     }
     catch(error){
