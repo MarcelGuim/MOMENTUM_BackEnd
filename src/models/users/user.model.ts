@@ -43,9 +43,9 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     }
 });
 
-UserSchema.pre('find', function() {
-  this.where({ isDeleted: false });
-});
+// UserSchema.pre('find', function() {
+//   this.where({ isDeleted: false });
+// });
 
 UserSchema.pre('findOne', function() {
   this.where({ isDeleted: false });
