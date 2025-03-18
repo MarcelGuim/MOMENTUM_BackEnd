@@ -12,7 +12,7 @@ import {
   diguesHola, 
   restoreUserById, 
   softDeleteUserById,
-  softDeleteUsersByMails,
+  softDeleteUsersByIds,
   getUsersPaginated, 
   activateUser 
 } from './user.controller';
@@ -225,7 +225,7 @@ router.patch("/:userId/soft", softDeleteUserById);
  * @swagger
  * /users/soft:
  *   patch:
- *     summary: Soft delete users by emails
+ *     summary: Soft delete users by Ids
  *     tags: [users]
  *     requestBody:
  *       required: true
@@ -234,11 +234,11 @@ router.patch("/:userId/soft", softDeleteUserById);
  *           schema:
  *             type: object
  *             properties:
- *               usersMails:
+ *               usersIds:
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: List of user email addresses to soft delete
+ *                 description: List of user Ids to soft delete
  *     responses:
  *       200:
  *         description: Users soft deleted successfully
@@ -249,7 +249,7 @@ router.patch("/:userId/soft", softDeleteUserById);
  *       500:
  *         description: Failed to soft delete users
  */
-router.patch("/soft", softDeleteUsersByMails);
+router.patch("/soft", softDeleteUsersByIds);
 
 /**
  * @swagger

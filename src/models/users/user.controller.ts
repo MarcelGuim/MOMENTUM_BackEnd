@@ -67,9 +67,8 @@ export async function loginUser(req: Request, res: Response): Promise<Response> 
     console.log("Logging in user");
     try {
         const { name_or_mail, password } = req.body;
-        const user = await userService.loginUser(name_or_mail, password);
         console.log("User trying to get logged in:", name_or_mail);
-
+        const user = await userService.loginUser(name_or_mail, password);
         if (user === true) {
             return res.status(200).json({
                 message: "User logged in",
@@ -121,15 +120,15 @@ export async function softDeleteUserById(req: Request, res: Response): Promise<R
     return res.status(500).json({ error: 'Failed to soft delete user' });
   }
 }
-export async function softDeleteUsersByMails(req: Request, res: Response): Promise<Response> {
+export async function softDeleteUsersByIds(req: Request, res: Response): Promise<Response> {
   try {
     console.log("Body recibido;", req.body)
-    const { usersMails } = req.body;
-    if (!Array.isArray(usersMails) || usersMails.length === 0) {
+    const { usersIds } = req.body;
+    if (!Array.isArray(usersIds) || usersIds.length === 0) {
       return res.status(400).json({ error: 'Invalid format' });
     }
-    const usersNum = usersMails.length;
-    const result = await userService.softDeleteUsersByMails(usersMails);
+    const usersNum = usersIds.length;
+    const result = await userService.softDeleteUsersByIds(usersIds);
     if (result === usersNum) {
       return res.status(200).json({
         message: "All Users soft deleted",
