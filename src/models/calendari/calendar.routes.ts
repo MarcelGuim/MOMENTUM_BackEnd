@@ -54,32 +54,38 @@ router.post('/', createCalendar);
 
 /**
  * @swagger
- * /calendars/{userId}/appointments:
+ * /calendars/{calendarId}/appointments:
  *   get:
  *     summary: Obtiene todas las citas de un usuario
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userId
+ *         name: calendarId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: ID del calendario
  *     responses:
  *       200:
  *         description: Citas obtenidas exitosamente
  *       500:
  *         description: Error del servidor
  */
-router.get('/:userId/appointments', getAllAppointments);
+router.get('/:calendarId/appointments/', getAllAppointments);
 
 /**
  * @swagger
- * /calendars/{userId}/appointments:
+ * /calendars/{calendarId}/appointments:
  *   get:
  *     summary: Obtiene las citas de un usuario entre dos fechas
  *     tags: [Calendars]
  *     parameters:
+ *       - in: path
+ *         name: calendarId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del calendario
  *       - in: query
  *         name: startDate
  *         required: true
@@ -100,21 +106,21 @@ router.get('/:userId/appointments', getAllAppointments);
  *       500:
  *         description: Error del servidor
  */
-router.get('/:userId/appointments', getAppointmentsBetweenDates);
+router.get('/:calendarId/appointments/:d1/:d2', getAppointmentsBetweenDates);
 
 /**
  * @swagger
- * /calendars/{userId}/appointments/{date}:
+ * /calendars/{calendarId}/appointments/{date}:
  *   get:
  *     summary: Obtiene las citas de un usuario para un día específico
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userId
+ *         name: calendarId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: ID del calendario
  *       - in: path
  *         name: date
  *         required: true
@@ -128,7 +134,7 @@ router.get('/:userId/appointments', getAppointmentsBetweenDates);
  *       500:
  *         description: Error del servidor
  */
-router.get('/:userId/appointments/:date', getAppointmentsForADay);
+router.get('/:calendarId/appointments/:date', getAppointmentsForADay);
 
 /**
  * @swagger
@@ -182,17 +188,17 @@ router.post('/:calendarId/appointments', addAppointmentToCalendar);
 
 /**
  * @swagger
- * /calendars/{userId}/delete:
+ * /calendars/{calendarId}/delete:
  *   delete:
  *     summary: Elimina permanentemente los calendarios de un usuario
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userId
+ *         name: calendarId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: ID del calendario
  *     responses:
  *       200:
  *         description: Calendarios eliminados permanentemente
@@ -201,21 +207,21 @@ router.post('/:calendarId/appointments', addAppointmentToCalendar);
  *       500:
  *         description: Error al eliminar los calendarios
  */
-router.delete('/:userId', hardDeleteCalendarsUser);
+router.delete('/:calendarId', hardDeleteCalendarsUser);
 
 /**
  * @swagger
- * /calendars/{userId}/soft-delete:
+ * /calendars/{calendarId}/soft-delete:
  *   patch:
  *     summary: Marca como eliminado (soft delete) los calendarios de un usuario
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userId
+ *         name: calendarId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: ID del calendario
  *     responses:
  *       200:
  *         description: Calendarios marcados como eliminados
@@ -224,21 +230,21 @@ router.delete('/:userId', hardDeleteCalendarsUser);
  *       500:
  *         description: Error al marcar los calendarios como eliminados
  */
-router.patch('/:userId/soft-delete', softDeleteCalendarsUser);
+router.patch('/:calendarId/soft-delete', softDeleteCalendarsUser);
 
 /**
  * @swagger
- * /calendars/{userId}/restore:
+ * /calendars/{calendarId}/restore:
  *   patch:
  *     summary: Restaura los calendarios de un usuario (soft undelete)
  *     tags: [Calendars]
  *     parameters:
  *       - in: path
- *         name: userId
+ *         name: calendarId
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
+ *         description: ID del calendario
  *     responses:
  *       200:
  *         description: Calendarios restaurados
@@ -247,6 +253,6 @@ router.patch('/:userId/soft-delete', softDeleteCalendarsUser);
  *       500:
  *         description: Error al restaurar los calendarios
  */
-router.patch('/:userId/restore', restoreCalendarsUser);
+router.patch('/:calendarId/restore', restoreCalendarsUser);
 
 export default router;

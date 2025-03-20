@@ -34,9 +34,9 @@ export async function createCalendar(req: Request, res: Response): Promise<Respo
 export async function getAllAppointments(req: Request, res: Response): Promise<Response> {
     try {
         console.log("Finding all appointments")
-        const { userId } = req.params;
+        const {calendarId } = req.params;
 
-        const answer = await calendarService.getAllAppointments(userId);
+        const answer = await calendarService.getAllAppointments(calendarId);
 
         return res.status(200).json({
             message: "Appointments obtained",
@@ -53,11 +53,11 @@ export async function getAllAppointments(req: Request, res: Response): Promise<R
 export async function getAppointmentsBetweenDates(req: Request, res: Response): Promise<Response> {
     try {
         console.log("Finding appointments between two dates");
-        const { userId, d1, d2 } = req.params;
+        const { calendarId, d1, d2 } = req.params;
         const date1 = new Date(d1);
         const date2 = new Date(d2);
 
-        const answer = await calendarService.getAppointmentsBetweenDates(date1, date2, userId);
+        const answer = await calendarService.getAppointmentsBetweenDates(date1, date2, calendarId);
         return res.status(200).json({
             message: "Appointments obtained",
             appointments: answer,
@@ -73,11 +73,11 @@ export async function getAppointmentsBetweenDates(req: Request, res: Response): 
 export async function getAppointmentsForADay(req: Request, res: Response): Promise<Response> {
     try {
         console.log("Finding appointments for a day");
-        const { userId, date } = req.params;
+        const { calendarId, date } = req.params;
         const date1 = new Date(date);
 
         // Llamar al servicio
-        const answer = await calendarService.getAppointmentsForADay(date1, userId);
+        const answer = await calendarService.getAppointmentsForADay(date1, calendarId);
 
         console.log("Appointments obtained");
         return res.status(200).json({
@@ -143,8 +143,8 @@ export async function addAppointmentToCalendar(req: Request, res: Response): Pro
 
 export async function hardDeleteCalendarsUser(req: Request, res: Response) {
     try {
-        const { userId } = req.params;
-        const numDeleted = await calendarService.hardDeleteCalendarsUser(userId);
+        const { calendarId } = req.params;
+        const numDeleted = await calendarService.hardDeleteCalendarsUser(calendarId);
 
         if (numDeleted > 0) {
             return res.status(200).json({
@@ -161,16 +161,16 @@ export async function hardDeleteCalendarsUser(req: Request, res: Response) {
 
 export async function softDeleteCalendarsUser(req: Request, res: Response) {
     try {
-        const { userId } = req.params;
-        const numDeleted = await calendarService.softDeleteCalendarsUser(userId);
+        const { calendarId } = req.params;
+        const calendar = await calendarService.softDeleteCalendarsUser(calendarId);
 
-        if (numDeleted > 0) {
+        if (calendar !== null) {
             return res.status(200).json({
                 message: "Calendars soft deleted (marked as unavailable)",
-                numDeleted: numDeleted,
+                calendar: calendar,
             });
         } else {
-            return res.status(404).json({ error: "User had no calendars" });
+            return res.status(404).json({ error: "User had no calendar" });
         }
     } catch (error) {
         return res.status(500).json({ error: "Failed to soft delete calendars" });
@@ -179,18 +179,19 @@ export async function softDeleteCalendarsUser(req: Request, res: Response) {
 
 export async function restoreCalendarsUser(req: Request, res: Response) {
     try {
-        const { userId } = req.params;
-        const numRestored = await calendarService.restoreCalendarsUser(userId);
+        const { calendarId } = req.params;
+        const calendar = await calendarService.restoreCalendarsUser(calendarId);
 
-        if (numRestored > 0) {
+        if (calendar !== null) {
             return res.status(200).json({
                 message: "Calendars restored (marked as available)",
-                numRestored: numRestored,
+                calendar: calendar,
             });
         } else {
             return res.status(404).json({ error: "User had no calendars" });
         }
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ error: "Failed to restore calendars" });
     }
 }

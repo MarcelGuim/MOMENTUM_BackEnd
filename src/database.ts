@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
 class ConnectDB {
   private static connection: mongoose.Connection | null = null;
 

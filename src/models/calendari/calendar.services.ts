@@ -21,8 +21,8 @@ export class CalendarService {
         return await calendar.save(); // Devuelve el calendario creado
     }
 
-    async getAllAppointments(userId: string): Promise<IAppointment[]> {
-        const calendars = await Calendar.find({ owner: userId }).populate<{appointments: IAppointment[]}>({
+    async getAllAppointments(calendarId: string): Promise<IAppointment[]> {
+        const calendars = await Calendar.find({_id: calendarId}).populate<{appointments: IAppointment[]}>({
             path: 'appointments'
         });
         
@@ -31,9 +31,9 @@ export class CalendarService {
         return result;
     }
     
-    async getAppointmentsBetweenDates(startDate: Date, endDate: Date, userId: string): Promise<IAppointment[]> {
+    async getAppointmentsBetweenDates(startDate: Date, endDate: Date, calendarId: string): Promise<IAppointment[]> {
         // Cerca calendaris de l'usuari
-        const calendars = await Calendar.find({ owner: userId }).populate<{appointments: IAppointment[]}>({
+        const calendars = await Calendar.find({ _id: calendarId }).populate<{appointments: IAppointment[]}>({
             path: 'appointments',
             match: { inTime: { $gte: startDate, $lte: endDate } }
         });
@@ -43,12 +43,12 @@ export class CalendarService {
         return result;
     }
 
-    async getAppointmentsForADay(date: Date, userId: string): Promise<IAppointment[]> {
+    async getAppointmentsForADay(date: Date, calendarId: string): Promise<IAppointment[]> {
         // Obtener las citas para el día especificado
         const startOfDay = new Date(date.setHours(0, 0, 0, 0));
         const endOfDay = new Date(date.setHours(23, 59, 59, 999));
 
-        return await this.getAppointmentsBetweenDates(startOfDay, endOfDay, userId);
+        return await this.getAppointmentsBetweenDates(startOfDay, endOfDay, calendarId);
     }
 
     async getCalendarsOfUser(userId: string): Promise<ICalendar[]>{
@@ -72,24 +72,26 @@ export class CalendarService {
         );
     }
 
-    async hardDeleteCalendarsUser(userId: string): Promise<number> {
-        const result = await Calendar.deleteMany({ owner: userId });
+    async hardDeleteCalendarsUser(calendarId: string): Promise<number> {
+        const result = await Calendar.deleteMany({ _id: calendarId });
         return result.deletedCount;
     }
 
-    async softDeleteCalendarsUser(userId: string): Promise<number> {
-        const result = await Calendar.updateMany(
-            { owner: userId },
+    async softDeleteCalendarsUser(calendarId: string): Promise<ICalendar | null> {
+        const result = await Calendar.findOneAndUpdate(
+            { _id: calendarId },
             { isDeleted: true },
+            { new: true }
         );
-        return result.modifiedCount;
+        return result;
     }
 
-    async restoreCalendarsUser(userId: string): Promise<number> {
-        const result = await Calendar.updateMany(
-            { owner: userId },
+    async restoreCalendarsUser(calendarId: string): Promise<ICalendar | null> {
+        const result = await Calendar.findOneAndUpdate(
+            { _id: calendarId },
             { isDeleted: false },
+            { new: true }
         );
-        return result.modifiedCount;
+        return result;
     }
 }
