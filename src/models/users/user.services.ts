@@ -50,6 +50,7 @@ export class UserService {
   async updateUserById(userId: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
     console.log("Updating user at the service:", data, userId);
     return await User.findByIdAndUpdate(userId, data, { new: true });
+
   }
 
   async loginUser(identifier:string, password:string): Promise<boolean | null>{

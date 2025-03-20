@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { IUsuari } from './user.model';
 import { UserService } from './user.services';
+import bcrypt from 'bcrypt';
 
 const userService = new UserService();
 
@@ -48,7 +49,8 @@ export async function updateUserById(req: Request, res: Response): Promise<Respo
     const userId = req.params.userId;
     console.log("ID of the user to update:", userId);
     const { name, age, mail, password } = req.body as IUsuari;
-    const newUser: Partial<IUsuari> = { name, age, mail, password };
+    const hashedPassword = await bcrypt.hash(password, bcrypt.genSaltSync(8));
+    const newUser: Partial<IUsuari> = { name, age, mail, password: hashedPassword };
     const user = await userService.updateUserById(userId, newUser);
     if (user) {
       return res.status(200).json({
