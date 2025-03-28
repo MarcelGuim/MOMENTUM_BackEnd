@@ -77,6 +77,9 @@ export class UserService {
       .sort({ name: 1 })
       .skip(page * limit)
       .limit(limit);
+      users.forEach((user) => {
+        user.password = "";
+      });
     return {
       users,
       currentPage: page,

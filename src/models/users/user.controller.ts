@@ -191,6 +191,7 @@ export async function getUsersPaginated(req: Request<{}, {}, {}, PaginatedUsersQ
 
     const result = await userService.getUsersPaginated(page, limit, getDeleted);
     if (result) {
+      console.log(result);
       return res.status(200).json(result);
     } else {
       return res.status(404).json({ error: 'No users found' });
