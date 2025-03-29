@@ -8,7 +8,8 @@ import {
     softDeleteCalendarsUser,
     restoreCalendarsUser,
     getAllAppointments,
-    getAppointmentsBetweenDates
+    getAppointmentsBetweenDates,
+    editCalendar
 } from './calendar.controller';
 
 const router = Router();
@@ -254,5 +255,28 @@ router.patch('/:calendarId/soft-delete', softDeleteCalendarsUser);
  *         description: Error al restaurar los calendarios
  */
 router.patch('/:calendarId/restore', restoreCalendarsUser);
+
+/**
+ * @swagger
+ * /calendars/{calendarId}:
+ *   patch:
+ *     summary: Edita un calendario por ID
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: calendarId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del calendario
+ *     responses:
+ *       200:
+ *         description: Calendario editado
+ *       404:
+ *         description: Calendario o usuario no encontrado
+ *       500:
+ *         description: Error al editar el calendarios
+ */
+router.patch('/:calendarId', editCalendar);
 
 export default router;

@@ -94,4 +94,9 @@ export class CalendarService {
         );
         return result;
     }
+
+    async editCalendar(calendarId: string, changes: Partial<ICalendar>): Promise<ICalendar | null> {
+        const result = await Calendar.findByIdAndUpdate(calendarId, changes, {new: true});
+        return result;
+    }
 }
