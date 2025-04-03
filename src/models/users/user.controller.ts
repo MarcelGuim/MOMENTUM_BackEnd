@@ -44,24 +44,34 @@ export async function getUserById(req: Request, res: Response): Promise<Response
 }
 
 export async function updateUserById(req: Request, res: Response): Promise<Response> {
-  console.log("Updating user");
   try {
     const userId = req.params.userId;
-    console.log("ID of the user to update:", userId);
-    const { name, age, mail, password } = req.body as IUsuari;
-    const hashedPassword = await bcrypt.hash(password, bcrypt.genSaltSync(8));
-    const newUser: Partial<IUsuari> = { name, age, mail, password: hashedPassword };
-    const user = await userService.updateUserById(userId, newUser);
-    if (user) {
-      return res.status(200).json({
-        message: "User updated correctly",
-        user
-      });
+    const updateData: Partial<IUsuari> = req.body;
+
+    // Only hash password if it was provided and not empty
+    if (updateData.password && updateData.password.trim() !== '') {
+      updateData.password = await bcrypt.hash(updateData.password, bcrypt.genSaltSync(8));
     } else {
+      // Remove password field if empty or not provided
+      delete updateData.password;
+    }
+
+    const user = await userService.updateUserById(userId, updateData);
+    
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+    
+    return res.status(200).json({
+      message: "User updated successfully"
+    });
+
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to update user' + error });
+    console.error('Error updating user:', error);
+    return res.status(500).json({ 
+      error: 'Failed to update user',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 }
 

@@ -2,10 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 const { body, validationResult } = require('express-validator');
 
 export const userValidationRules = () => {
-    return[
-        body('mail').isEmail().withMessage("invalid email, try again"),
-        body('password').isLength({min:6}).withMessage("Try again, password is too short, minimum 6 values"),
-    ]
+  return [
+      body('mail')
+          .optional() // Only validate if mail is present
+          .isEmail()
+          .withMessage("Invalid email format"),
+          
+      body('password')
+          .optional() // Only validate if password is present
+          .isLength({ min: 6 })
+          .withMessage("Password must be at least 6 characters long")
+  ];
 }
 
 export async function userValidator (req: Request, res: Response, next: NextFunction) {
