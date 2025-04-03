@@ -162,7 +162,7 @@ export async function hardDeleteCalendarsUser(req: Request, res: Response) {
 export async function softDeleteCalendarsUser(req: Request, res: Response) {
     try {
         const { calendarId } = req.params;
-        const calendar = await calendarService.softDeleteCalendarsUser(calendarId);
+        const calendar = await calendarService.softDeleteCalendarUser(calendarId);
 
         if (calendar !== null) {
             return res.status(200).json({

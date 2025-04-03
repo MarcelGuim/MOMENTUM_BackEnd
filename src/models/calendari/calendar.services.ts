@@ -73,17 +73,46 @@ export class CalendarService {
     }
 
     async hardDeleteCalendarsUser(calendarId: string): Promise<number> {
-        const result = await Calendar.deleteMany({ _id: calendarId });
-        return result.deletedCount;
+        // First get the calendar to find its appointments
+        const calendar = await Calendar.findById(calendarId);
+        
+        if (!calendar) return 0;
+    
+        // Delete in parallel
+        const [calendarResult] = await Promise.all([
+            Calendar.deleteOne({ _id: calendarId }),
+            // Only delete appointments if they exist
+            ...(calendar.appointments.length > 0 ? [
+                Appointment.deleteMany({ _id: { $in: calendar.appointments } })
+            ] : [])
+        ]);
+    
+        return calendarResult.deletedCount;
     }
 
-    async softDeleteCalendarsUser(calendarId: string): Promise<ICalendar | null> {
-        const result = await Calendar.findOneAndUpdate(
-            { _id: calendarId },
-            { isDeleted: true },
-            { new: true }
-        );
-        return result;
+    async softDeleteCalendarUser(calendarId: string): Promise<ICalendar | null> {
+        // First get the calendar to find its appointments
+        const calendar = await Calendar.findById(calendarId);
+        
+        if (!calendar) return null;
+    
+        // Perform updates in parallel
+        await Promise.all([
+            Calendar.updateOne(
+                { _id: calendarId },
+                { $set: { isDeleted: true } }
+            ),
+            // Only update appointments if they exist
+            ...(calendar.appointments.length > 0 ? [
+                Appointment.updateMany(
+                    { _id: { $in: calendar.appointments } },
+                    { $set: { isDeleted: true } }
+                )
+            ] : [])
+        ]);
+    
+        // Return the updated calendar
+        return await Calendar.findById(calendarId);
     }
 
     async restoreCalendarsUser(calendarId: string): Promise<ICalendar | null> {
