@@ -99,4 +99,49 @@ export class CalendarService {
         const result = await Calendar.findByIdAndUpdate(calendarId, changes, {new: true});
         return result;
     }
+
+    async getEmptySlotForAUser(userId: string): Promise<[Date,Date][] | null> {
+        const user = await User.findById(userId);
+        if (user?._id) {
+            const calendar = await Calendar.find({owner: user._id});
+            if (calendar === null) return null;
+            let appointments: IAppointment[] = [];
+            for(let i = 0; i < calendar.length; i++){
+                const populatedCalendar = await calendar[i].populate('appointments');
+                const calendarAppointments = populatedCalendar.appointments as unknown as IAppointment[]
+                appointments.push(...calendarAppointments);
+            }
+            appointments.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
+            let slots:[Date,Date][] = [];
+            const startOfDay = new Date(appointments[0].inTime.getTime());
+            startOfDay.setUTCHours(0, 0, 0, 0);
+            const endOfDay = new Date(appointments[appointments.length - 1].outTime.getTime());
+            endOfDay.setUTCHours(23, 59, 59, 999);
+            slots.push([startOfDay, appointments[0].inTime]);
+            for (let i = 0; i < appointments.length - 1; i++){
+                slots.push([appointments[i].outTime, appointments[i+1].inTime])
+            }
+            slots.push([appointments[appointments.length -1 ].outTime, endOfDay]);
+            console.log(slots);
+            return slots;
+        }
+        else return null;
+    }
+
+    async getSlotsCommonForTwoCalnedars(user1Id: string, user2Id: string, date1: Date, date2: Date): Promise<Date | null | boolean> {
+        const user1: IUsuari | null = await User.findById(user1Id);
+        const user2: IUsuari | null = await User.findById(user2Id);
+        if (!user1 || !user2) return false;
+        const calendarUser1: ICalendar[] = await Calendar.find({owner: user1Id});
+        const calendarUser2: ICalendar[] = await Calendar.find({owner: user2Id});
+        console.log(calendarUser1);
+        console.log(calendarUser2);
+        if (!calendarUser1 || !calendarUser2) return true;
+        const namesCalendar1 = calendarUser1.map(element => element.calendarName);
+        const namesCalendar2 = calendarUser2.map(element => element.calendarName);
+        console.log("Calendars for user1: " + user1.name + " has calendars: " + namesCalendar1);
+        console.log("Calendars for user2: " + user2.name + " has calendars: " + namesCalendar2);
+        if(user1._id) this.getEmptySlotForAUser(user1._id.toString());
+        return null;
+    }
 }
