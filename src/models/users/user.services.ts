@@ -1,5 +1,7 @@
 import {IUsuari} from './user.model';
 import User from './user.model';
+import Calendar from '../calendari/calendar.model';
+import Appointment from '../appointment/appointment.model';
 import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import e from 'express';
@@ -93,13 +95,91 @@ export class UserService {
   }
 
   async softDeleteUserById(userId: string): Promise<IUsuari | null> {
-    return await User.findByIdAndUpdate(userId, { isDeleted: true }, { new: true });
+    // 1. Soft delete the user
+    const deletedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { isDeleted: true } },
+      { new: true }
+    );
+  
+    if (!deletedUser) return null;
+  
+    // 2. Find all calendars owned by this user
+    const calendars = await Calendar.find(
+      { owner: userId },
+      { appointments: 1 } // Only get the appointments array
+    );
+  
+    // 3. Extract all appointment IDs from these calendars
+    const appointmentIds = calendars.flatMap(c => c.appointments);
+  
+    // 4. Execute all cascade operations
+    await Promise.all([
+      // Soft delete all user's calendars
+      Calendar.updateMany(
+        { owner: userId },
+        { $set: { isDeleted: true } }
+      ),
+      
+      // Soft delete all appointments (if any exist)
+      ...(appointmentIds.length > 0 ? [
+        Appointment.updateMany(
+          { _id: { $in: appointmentIds } },
+          { $set: { isDeleted: true } }
+        )
+      ] : []),
+      
+      // Remove user from any invitees lists
+      Calendar.updateMany(
+        { invitees: userId },
+        { $pull: { invitees: userId } }
+      )
+    ]);
+  
+    return deletedUser;
   }
 
   async softDeleteUsersByIds(userIds: string[]): Promise<number | null> {
-    console.log(userIds);
-    const result = await User.updateMany({ _id: { $in: userIds }}, {$set:{ isDeleted: true }});
-    return result.modifiedCount
+    // 1. First soft delete the users
+    const userResult = await User.updateMany(
+      { _id: { $in: userIds } },
+      { $set: { isDeleted: true } }
+    );
+  
+    if (userResult.modifiedCount > 0) {
+      // 2. Find all calendars owned by these users to get appointment references
+      const calendars = await Calendar.find(
+        { owner: { $in: userIds } },
+        { appointments: 1, _id: 0 } // Only get appointments array
+      );
+  
+      // Extract all appointment IDs from these calendars
+      const appointmentIds = calendars.flatMap(c => c.appointments);
+  
+      // 3. Execute all cascade operations in parallel
+      await Promise.all([
+        // Soft delete all calendars owned by these users
+        Calendar.updateMany(
+          { owner: { $in: userIds } },
+          { $set: { isDeleted: true } }
+        ),   
+        // Soft delete all appointments from those calendars (if any exist)
+        ...(appointmentIds.length > 0 ? [
+          Appointment.updateMany(
+            { _id: { $in: appointmentIds } },
+            { $set: { isDeleted: true } }
+          )
+        ] : []),
+        
+        // Remove users from any invitees lists
+        Calendar.updateMany(
+          { invitees: { $in: userIds } },
+          { $pull: { invitees: { $in: userIds } } }
+        )
+      ]);
+    }
+  
+    return userResult.modifiedCount;
   }
 
   async restoreUserById(userId: string): Promise<IUsuari | null> {

@@ -35,6 +35,8 @@ const CalendarSchema = new mongoose.Schema<ICalendar>({
     }
 });
 
+
+// Hooks
 CalendarSchema.pre('find', function() {
     this.where({ isDeleted: false });
 });
