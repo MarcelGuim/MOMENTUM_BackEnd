@@ -208,3 +208,133 @@ export async function editCalendar(req: Request, res: Response) {
         return res.status(500).json({ error: "Failed to edit calendar" });
     }
 }
+
+export async function getCommonSlotsForTwoCalendars(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("Finding common slots between two calendars");
+        
+        const { date1, date2, user1Id, user2Id } = req.body;
+        if (!date1 || !date2 || !user1Id || !user2Id) {
+            return res.status(400).json({
+                message: "All parameters are required in the request body"
+            });
+        }
+        const startDate = new Date(date1);
+        const endDate = new Date(date2);
+        const result = await calendarService.getSlotsCommonForTwoCalendars(
+            user1Id, 
+            user2Id, 
+            startDate, 
+            endDate
+        );
+        if (result === 0) {
+            return res.status(404).json({
+                message: "One or both users not found"
+            });
+        } else if (result === 1) {
+            return res.status(404).json({
+                message: "One or both users have no calendars"
+            });
+        } else if (result === 2){
+            return res.status(405).json({
+                message: "Error getting empty slots for user1"
+            });
+        } else if (result === 3) {
+            return res.status(405).json({
+                message: "Error getting empty slots for user2"
+            });
+        } else if (result === 4){
+            return res.status(406).json({
+                message: "User 1 has no empty slots in the given range"
+            });
+        } else if (result === 5) {
+            return res.status(406).json({
+                message: "User 2 has no empty slots in the given range"
+            }); 
+        } else if (result === null) {
+            return res.status(404).json({
+                message: "No common slots found"
+            });
+        } else {
+            return res.status(200).json({
+                message: "Common slots found",
+                commonSlots: result
+            });
+        }
+    } catch (error) {
+        console.log("Server Error", error);
+        return res.status(500).json({
+            message: "Server Error"
+        });
+    }
+}
+
+export async function getCommonSlotsForNCalendars(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("Finding common slots between multiple calendars");
+        
+        const { userIds } = req.body;
+        const { date1, date2 } = req.body;
+
+        if (!userIds || !Array.isArray(userIds) || userIds.length < 2) {
+            return res.status(400).json({
+                message: "An array of at least 2 user IDs is required"
+            });
+        }
+
+        if (!date1 || !date2) {
+            return res.status(400).json({
+                message: "Both date1 and date2 are required in the request body"
+            });
+        }
+        const startDate = new Date(date1);
+        const endDate = new Date(date2);
+        const result = await calendarService.getSlotsCommonForNCalendars(
+            userIds, 
+            startDate, 
+            endDate
+        );
+
+    
+        if (Array.isArray(result)) {
+            const [errorType, affectedUserIds] = result;
+            
+            if (errorType === 1) {
+                return res.status(404).json({
+                    message: "Some users were not found",
+                    userIdsNotFound: affectedUserIds
+                });
+            } else if (errorType === 2) {
+                return res.status(404).json({
+                    message: "Some users have no calendars",
+                    userIdsWithNoCalendars: affectedUserIds
+                });
+            } else if (errorType === 3) {
+                return res.status(404).json({
+                    message: "Some users have no empty slots in the given range",
+                    userIdsWithNoEmptySlots: affectedUserIds
+                });
+            }
+            else {
+                console.log("Server Error");
+                return res.status(500).json({
+                    message: "Server Error"
+                });
+            }
+        } else if (result === null) {
+            return res.status(404).json({
+                message: "No common slots found across all calendars"
+            });
+        } else {
+            return res.status(201).json({
+                message: "Common slots found across all calendars",
+                commonSlots: result
+            });
+        }
+    } catch (error) {
+        console.log("Server Error", error);
+        return res.status(500).json({
+            message: "Server Error"
+        });
+    }
+}

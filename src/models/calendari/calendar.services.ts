@@ -129,48 +129,154 @@ export class CalendarService {
         return result;
     }
 
-    async getEmptySlotForAUser(userId: string): Promise<[Date,Date][] | null> {
+    async getEmptySlotForAUser(userId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
         const user = await User.findById(userId);
         if (user?._id) {
             const calendar = await Calendar.find({owner: user._id});
-            if (calendar === null) return null;
+            if (calendar.length === 0) return null;
             let appointments: IAppointment[] = [];
-            for(let i = 0; i < calendar.length; i++){
-                const populatedCalendar = await calendar[i].populate('appointments');
-                const calendarAppointments = populatedCalendar.appointments as unknown as IAppointment[]
+            const populatedCalendars = await Promise.all(
+                calendar.map(cal => cal.populate('appointments'))
+            );
+            populatedCalendars.forEach(populatedCalendar => {
+                const calendarAppointments = populatedCalendar.appointments as unknown as IAppointment[];
                 appointments.push(...calendarAppointments);
-            }
+            });
             appointments.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
+            const appointmentsInRange: IAppointment[] = appointments.filter(appointment =>
+                appointment.inTime >= date1 && appointment.outTime <= date2
+            );
+            if(appointmentsInRange.length === 0) return [[date1, date2]];
+            appointmentsInRange.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
             let slots:[Date,Date][] = [];
-            const startOfDay = new Date(appointments[0].inTime.getTime());
-            startOfDay.setUTCHours(0, 0, 0, 0);
-            const endOfDay = new Date(appointments[appointments.length - 1].outTime.getTime());
-            endOfDay.setUTCHours(23, 59, 59, 999);
-            slots.push([startOfDay, appointments[0].inTime]);
-            for (let i = 0; i < appointments.length - 1; i++){
-                slots.push([appointments[i].outTime, appointments[i+1].inTime])
-            }
-            slots.push([appointments[appointments.length -1 ].outTime, endOfDay]);
-            console.log(slots);
+            const startOfPeriod = new Date(date1);
+            const endOfPeriod = new Date(date2);
+            slots.push([startOfPeriod, appointmentsInRange[0].inTime]);
+            appointmentsInRange.forEach((appointmentsInRange1, i) => {
+                if (i < appointmentsInRange.length - 1) {
+                    slots.push([appointmentsInRange1.outTime, appointmentsInRange[i + 1].inTime]);
+                }
+            });
+            slots.push([appointmentsInRange[appointmentsInRange.length -1 ].outTime, endOfPeriod]);
             return slots;
         }
         else return null;
     }
 
-    async getSlotsCommonForTwoCalnedars(user1Id: string, user2Id: string, date1: Date, date2: Date): Promise<Date | null | boolean> {
+  /*   async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date,Date][], array2: [Date,Date][]): Promise<[Date,Date][] | null> {
+        let result: [Date,Date][] = [];
+        array1.forEach(item1 => {
+            let found = false;
+            array2.forEach(item2 => {
+                if (!found){
+                    if (item1[0].toISOString() >= item2[0].toISOString() && item1[1].toISOString() <= item2[1].toISOString()) {
+                        result.push(item1); 
+                        found = true;
+                    }
+                    else if (item2[0].toISOString() >= item1[0].toISOString() && item2[1].toISOString() <= item1[1].toISOString()) {
+                        result.push(item2);
+                        found = true;
+                    }
+                    else if (item1[0].toISOString() >= item2[0].toISOString() && item1[1].toISOString() >= item2[1].toISOString() && item1[0].toISOString() !== item2[1].toISOString() && item1[0].toISOString() < item2[1].toISOString()) {
+                        result.push([item1[0], item2[1]]);
+                        found = true;
+                    }
+                    else if (item2[0].toISOString() >= item1[0].toISOString() && item2[1].toISOString() >= item1[1].toISOString() && item2[0].toISOString() != item1[1].toISOString() && item2[0].toISOString() < item1[1].toISOString()){
+                        result.push([item2[0], item1[1]]);
+                        found = true;
+                    }
+                } else {}
+            });
+        });
+
+        if (result.length > 0) return result;
+        return null;
+    } */ 
+
+    async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date, Date][],array2: [Date, Date][]): Promise<[Date, Date][] | null> {
+        const result: [Date, Date][] = [];
+        
+        for (const item1 of array1) {
+            for (const item2 of array2) {
+                const start = new Date(Math.max(item1[0].getTime(), item2[0].getTime()));
+                const end = new Date(Math.min(item1[1].getTime(), item2[1].getTime()));
+                
+                if (start < end) {
+                    result.push([start, end]);
+                }
+            }
+        }
+        this.logDatesInISOFormat(result,"");
+        return result.length > 0 ? result : null;
+    }
+  
+    async getMachingDatesForNEmptySoltsArrays(arrays: [Date, Date][][]): Promise<[Date, Date][] | null> {
+        let result: [Date, Date][] | null = arrays[0];
+            for (let array of arrays) {
+                result = await this.getMatchingDatesForTwoEmptySlotsArrays(result as [Date, Date][], array);
+                this.logDatesInISOFormat(result as [Date,Date][],"")
+            }
+        return result;
+    }
+
+    async getSlotsCommonForTwoCalendars(user1Id: string, user2Id: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
         const user1: IUsuari | null = await User.findById(user1Id);
         const user2: IUsuari | null = await User.findById(user2Id);
-        if (!user1 || !user2) return false;
-        const calendarUser1: ICalendar[] = await Calendar.find({owner: user1Id});
-        const calendarUser2: ICalendar[] = await Calendar.find({owner: user2Id});
-        console.log(calendarUser1);
-        console.log(calendarUser2);
-        if (!calendarUser1 || !calendarUser2) return true;
-        const namesCalendar1 = calendarUser1.map(element => element.calendarName);
-        const namesCalendar2 = calendarUser2.map(element => element.calendarName);
-        console.log("Calendars for user1: " + user1.name + " has calendars: " + namesCalendar1);
-        console.log("Calendars for user2: " + user2.name + " has calendars: " + namesCalendar2);
-        if(user1._id) this.getEmptySlotForAUser(user1._id.toString());
+        if (!user1 || !user2) return 0;
+        let emptySlotsUser1: [Date, Date][] | null | number = null;
+        let emptySlotsUser2: [Date, Date][] | null | number = null;
+
+        if (user1._id && user2._id) {
+            emptySlotsUser1 = await this.getEmptySlotForAUser(user1._id.toString(), date1, date2);
+            emptySlotsUser2 = await this.getEmptySlotForAUser(user2._id.toString(), date1, date2);
+            if ( emptySlotsUser1 == null ||emptySlotsUser2 == null) return 1;
+            else if (typeof emptySlotsUser1 === 'number') return 2;
+            else if (typeof emptySlotsUser2 === 'number') return 3;     
+            else if (emptySlotsUser1.length === 0) return 4;
+            else if (emptySlotsUser2.length === 0) return 5;
+            return await this.getMatchingDatesForTwoEmptySlotsArrays(emptySlotsUser1, emptySlotsUser2);
+        } 
         return null;
+    }
+
+    async getSlotsCommonForNCalendars(userIDs: string[], date1: Date, date2: Date): Promise<[Date,Date][] | null | number | [number,string[]]> {
+        let userIDsNotFound: [number, string[]] = [1, []];
+    
+        await Promise.all(userIDs.map(async (userId) => { 
+            const user: IUsuari | null = await User.findById(userId); 
+            if (!user) userIDsNotFound[1].push(userId);
+        }));
+        
+        if (userIDsNotFound[1].length > 0) {
+            return userIDsNotFound;
+        }
+        
+        let emptySlots: [Date, Date][][] = [];
+        let userIDsWithNoCalendars: [number, string[]] = [2, []];
+        let userIDsWithNoEmptySlots: [number, string[]] = [3, []];
+        
+        await Promise.all(userIDs.map(async (userId) => {
+            let item: [Date, Date][] | null | number = await this.getEmptySlotForAUser(userId, date1, date2);
+            if (!item){
+                console.log(`User with ID ${userId} has no calendars`);
+                userIDsWithNoCalendars[1].push(userId);
+            }else if (typeof item === 'number') {
+                console.log(`User with ID ${userId} has no empty slots ${item}`);
+                userIDsWithNoEmptySlots[1].push(userId);
+            } else {
+                emptySlots.push(item);
+            }
+        }));
+        if (userIDsWithNoCalendars[1].length > 0) {
+            return userIDsWithNoCalendars;
+        } else if (userIDsWithNoEmptySlots[1].length > 0) {
+            return userIDsWithNoEmptySlots;
+        }
+        return await this.getMachingDatesForNEmptySoltsArrays(emptySlots);
+    }
+
+    async logDatesInISOFormat(dates: [Date, Date][], message: string): Promise<void> {
+        let datesInISO: [string, string][] = dates.map(date => [date[0].toISOString(), date[1].toISOString()]);
+        console.log(message,datesInISO);
     }
 }

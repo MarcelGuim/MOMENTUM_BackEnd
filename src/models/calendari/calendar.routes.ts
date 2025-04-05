@@ -9,7 +9,9 @@ import {
     restoreCalendarsUser,
     getAllAppointments,
     getAppointmentsBetweenDates,
-    editCalendar
+    editCalendar,
+    getCommonSlotsForNCalendars,
+    getCommonSlotsForTwoCalendars
 } from './calendar.controller';
 
 const router = Router();
@@ -278,5 +280,157 @@ router.patch('/:calendarId/restore', restoreCalendarsUser);
  *         description: Error al editar el calendarios
  */
 router.patch('/:calendarId', editCalendar);
+
+/**
+ * @swagger
+ * /calendars/common-slots/two-users:
+ *   post:
+ *     summary: Obtiene los slots comunes entre dos calendarios de usuarios
+ *     tags: [Calendars]
+ *     description: Encuentra los intervalos de tiempo disponibles comunes entre dos usuarios en un rango de fechas dado
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user1Id
+ *               - user2Id
+ *               - date1
+ *               - date2
+ *             properties:
+ *               user1Id:
+ *                 type: string
+ *                 description: ID del primer usuario
+ *               user2Id:
+ *                 type: string
+ *                 description: ID del segundo usuario
+ *               date1:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de inicio del rango (ISO 8601)
+ *               date2:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de fin del rango (ISO 8601)
+ *     responses:
+ *       200:
+ *         description: Slots comunes encontrados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 commonSlots:
+ *                   type: array
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                       format: date-time
+ *                     description: Par de fechas [inicio, fin] que representan un slot común
+ *       400:
+ *         description: Faltan parámetros requeridos en el cuerpo de la petición
+ *       404:
+ *         description: Usuario(s) no encontrado(s) o sin calendarios
+ *       405:
+ *         description: Error obteniendo slots vacíos para uno de los usuarios
+ *       406:
+ *         description: Uno de los usuarios no tiene slots vacíos en el rango dado
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/common-slots/two-users', getCommonSlotsForTwoCalendars);
+
+/**
+ * @swagger
+ * /calendars/common-slots/multiple-users:
+ *   post:
+ *     summary: Obtiene los slots comunes entre múltiples calendarios de usuarios
+ *     tags: [Calendars]
+ *     description: Encuentra los intervalos de tiempo disponibles comunes entre varios usuarios en un rango de fechas dado
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIds
+ *               - date1
+ *               - date2
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 minItems: 2
+ *                 items:
+ *                   type: string
+ *                 description: Array de IDs de usuarios (mínimo 2)
+ *               date1:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de inicio del rango (ISO 8601)
+ *               date2:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de fin del rango (ISO 8601)
+ *     responses:
+ *       201:
+ *         description: Slots comunes encontrados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 commonSlots:
+ *                   type: array
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                       format: date-time
+ *                     description: Par de fechas [inicio, fin] que representan un slot común
+ *       400:
+ *         description: Faltan parámetros requeridos o el array de userIds no es válido
+ *       404:
+ *         description: Usuario(s) no encontrado(s), sin calendarios o sin slots vacíos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     userIdsNotFound:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     userIdsWithNoCalendars:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                 - type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                     userIdsWithNoEmptySlots:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
+
 
 export default router;

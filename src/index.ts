@@ -37,6 +37,3 @@ app.listen(PORT, () => {
     console.log('Servidor en marxa a http://localhost:8080');
     console.log('Documentació Swagger a http://localhost:8080/Swagger');
 });
-
-const calendarService = new CalendarService();
-calendarService.getSlotsCommonForTwoCalnedars("67e7ae243f91b19339d1e940", "67e7b5d31d03109980457859", new Date(), new Date())
