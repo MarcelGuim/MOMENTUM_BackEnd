@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { userValidationRules, userValidator } from './user.validation';
+import { verifyRefresh, authenticate } from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -14,7 +15,9 @@ import {
   softDeleteUserById,
   softDeleteUsersByIds,
   getUsersPaginated, 
-  activateUser 
+  activateUser,
+  refresh,
+  logout 
 } from './user.controller';
 
 /**
@@ -89,33 +92,6 @@ router.get("/activate/:name/:id", activateUser);
 
 /**
  * @swagger
- * /users/login:
- *   post:
- *     summary: Log in a user
- *     tags: [users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name_or_mail:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: User logged in
- *       401:
- *         description: Invalid username/password or password
- *       500:
- *         description: Failed to log in user
- */
-router.post("/login", loginUser);
-
-/**
- * @swagger
  * /users/{userId}:
  *   get:
  *     summary: Get user by ID
@@ -135,7 +111,7 @@ router.post("/login", loginUser);
  *       500:
  *         description: Failed to get user
  */
-router.get("/:userId", getUserById);
+router.get("/:userId",getUserById);
 
 /**
  * @swagger
@@ -298,6 +274,133 @@ router.patch("/:userId/restore", restoreUserById);
  *       500:
  *         description: Server error
  */
-router.get("", getUsersPaginated);
+router.get("",getUsersPaginated);
+
+/**
+ * @swagger
+ * /users/login:
+ *   post:
+ *     summary: Log in a user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name_or_mail, password]
+ *             properties:
+ *               name_or_mail:
+ *                 type: string
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "securePassword123"
+ *     responses:
+ *       200:
+ *         description: Successfully logged in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 accessToken:
+ *                   type: string
+ *                   description: JWT access token
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *             description: HTTP-only refresh token cookie
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Server error
+ */
+router.post("/login", loginUser);
+
+/**
+ * @swagger
+ * /users/refresh:
+ *   post:
+ *     summary: Refresh access token using a valid refresh token
+ *     description: |
+ *       Generates a new access token while maintaining the original refresh token.
+ *       Requires the refresh token to be sent as an HTTP-only cookie.
+ *     tags: [Authentication]
+ *     security: []  # No Bearer token needed (uses cookie)
+ *     responses:
+ *       200:
+ *         description: New access token generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: New short-lived JWT access token
+ *                   example: "eyJhbGciOiJIUzI..."
+ *                 debug: 
+ *                   type: object
+ *                   description: Only present in development environment
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     tokenExpiresIn: 
+ *                       type: string
+ *                       example: "15m"
+ *                   x-example: { userId: "507f1f77bcf86cd799439011", tokenExpiresIn: "15m" }
+ *       401:
+ *         description: |
+ *           Failure scenarios:
+ *           - Invalid refresh token
+ *           - Missing user ID in payload
+ *           - User account not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token refresh failed"
+ *                 details:
+ *                   type: object
+ *                   description: Only present in development
+ *                   properties:
+ *                     suggestion:
+ *                       type: string
+ *                     timestamp:
+ *                       type: string
+ *                   x-example: { suggestion: "Check refresh token validity", timestamp: "2023-11-21T12:00:00Z" }
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/refresh', verifyRefresh, refresh);
+
+/**
+ * @swagger
+ * /users/logout:
+ *   post:
+ *     summary: Log out user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *             description: Clears the refresh token cookie
+ *       500:
+ *         description: Server error
+ */
+router.post('/logout', authenticate, logout);
 
 export default router;

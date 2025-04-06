@@ -1,6 +1,9 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const options = {
     definition: {
@@ -12,10 +15,17 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:8080',
+                url: process.env.APP_BASE_URL || 'http://localhost:8080',
             },
         ],
         components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                }
+            },
             schemas: {
                 Chat: {
                     type: 'object',
@@ -123,6 +133,9 @@ const options = {
                 },
             },
         },
+        security: [{
+            bearerAuth: []
+        }]
     },
     apis: ['./src/**/*.ts'], // Busca en todos los archivos TypeScript en la carpeta src
 };
@@ -131,5 +144,14 @@ const swaggerSpec = swaggerJSDoc(options);
 
 export function setupSwagger(app: Application): void {
     console.log('Setting up Swagger');
+
+    const swaggerOptions = {
+        swaggerOptions: {
+            requestInterceptor: (req: any, res: Response) => {  // Explicitly define the types of req and res
+                req.credentials = 'include'; // Attach credentials (for example, cookies) to the request if needed
+                return req;
+            }
+        }
+    };
     app.use('/Swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }

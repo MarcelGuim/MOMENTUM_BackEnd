@@ -2,9 +2,90 @@ import { Request, Response } from 'express';
 import { IUsuari } from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
+import { AuthenticatedRequest, LoginRequestBody } from '../../types';
 
 const userService = new UserService();
+// PART AUTH
+export const loginUser = async (req: Request, res: Response) => {
+  try {
+    const { name_or_mail, password } = req.body as LoginRequestBody;
+    const { user, accessToken, refreshToken } = await userService.loginUser(name_or_mail, password);
 
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    console.log('Sending refreshToken in cookie:', refreshToken);
+    console.log('Sending accessToken in response:', { accessToken });
+
+    return res.json({
+      user,
+      accessToken // Store this in localStorage
+    });
+  } catch (error: any) {
+    return res.status(401).json({ error: error.message });
+  }
+};
+
+export const refresh = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    console.log('Extracted userId:', userId || 'UNDEFINED');
+
+    if (!userId) {
+      console.error('Invalid token payload - missing userId');
+      throw new Error('Invalid token payload');
+    }
+
+    const { accessToken } = await userService.refreshTokens(userId);
+    
+    console.log('Tokens generated:', {
+      accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : 'UNDEFINED',
+    });
+
+    console.log('Returning new accessToken to client');
+    return res.json({ 
+      accessToken,
+      debug: process.env.NODE_ENV === 'development' ? {
+        userId,
+        tokenExpiresIn: '15m' // Match your JWT expiry
+      } : undefined
+    });
+
+  } catch (error: any) {
+    console.error('Refresh failed:', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : 'HIDDEN IN PRODUCTION',
+      timestamp: new Date().toISOString()
+    });
+
+    return res.status(401).json({ 
+      error: error.message || 'Token refresh failed',
+      ...(process.env.NODE_ENV === 'development' && {
+        details: {
+          suggestion: 'Check if user exists and refresh token is valid',
+          timestamp: new Date().toISOString()
+        }
+      })
+    });
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie('refreshToken');
+    return res.json({ message: 'Logged out successfully' });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+
+//PART CRUD
 export async function createUser(req:Request, res:Response): Promise<Response> {
     console.log("Creating user");
     try{
@@ -73,25 +154,6 @@ export async function updateUserById(req: Request, res: Response): Promise<Respo
       details: error instanceof Error ? error.message : String(error)
     });
   }
-}
-
-export async function loginUser(req: Request, res: Response): Promise<Response> {
-    console.log("Logging in user");
-    try {
-        const { name_or_mail, password } = req.body;
-        console.log("User trying to get logged in:", name_or_mail);
-        const user = await userService.loginUser(name_or_mail, password);
-        if (user === true) {
-            return res.status(200).json({
-                message: "User logged in",
-            });
-        } else {
-            // Return a generic error message for both incorrect password and non-existent user
-            return res.status(401).json({ error: 'Invalid username/mail or password' });
-        }
-    } catch (error) {
-        return res.status(500).json({ error: 'Failed to login user' });
-    }
 }
 
 export async function diguesHola(req: Request, res: Response): Promise<Response> {

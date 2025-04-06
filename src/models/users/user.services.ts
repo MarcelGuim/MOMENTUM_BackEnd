@@ -6,11 +6,55 @@ import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import e from 'express';
 import dotenv from 'dotenv';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
 
 dotenv.config();
 let activations: Partial<IUsuari>[] = [];
 
 export class UserService {
+  // PART AUTH
+  async loginUser(identifier:string, password:string){
+    const isEmail = identifier.includes('@');
+    const query = isEmail ? { mail: identifier } : { name: identifier };
+    const user = await User.findOne(query).select('+password');
+    if (!user) {
+      throw new Error('User not found');
+    }
+    const isMatch : boolean = await user.isValidPassword(password);
+    if(!isMatch){
+      throw new Error('Invalid password');
+    }
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    
+    const userWithoutPassword = user.toObject() as Partial<IUsuari>;
+    delete userWithoutPassword.password;
+
+    return {
+      user: userWithoutPassword,
+      accessToken,
+      refreshToken
+    };
+  }
+
+  async refreshTokens(userId: string) {
+    // 1. Fetch user (automatically excludes soft-deleted via hook)
+    const user = await User.findById(userId)
+      .select('+mail +isDeleted'); // Explicitly check deletion status
+  
+    // 2. Validate user state
+    if (!user || user.isDeleted) {
+      throw new Error('Invalid or inactive user');
+    }
+  
+    // 3. Generate tokens
+    return {
+      accessToken: generateAccessToken(user)
+    };
+  }
+
+
+  // PART CRUD
   async createUser(user: Partial<IUsuari>): Promise<Number> {
     const result = await User.findOne({$or: [{ mail: user.mail }, { name: user.name }]});
     if (result) {
@@ -55,33 +99,11 @@ export class UserService {
 
   }
 
-  async loginUser(identifier:string, password:string): Promise<boolean | null>{
-    const isEmail = identifier.includes('@');
-    const query = isEmail ? { mail: identifier } : { name: identifier };
-    const user = await User.findOne(query).select('name mail password');
-    if(user === null){
-        console.log("User not found")
-        return null;
-    }
-    const isMatch : boolean = await user.isValidPassword(password);
-    if(isMatch){
-        console.log("Correct user and password")
-        return true;
-    }
-    else{
-        console.log("The password was incorrect")
-        return false;
-    }
-  }
-
   async getUsersPaginated(page = 1, limit = 5, getDeleted = false): Promise<{ users: IUsuari[]; totalPages: number; totalUsers: number, currentPage: number } | null> {
     const users = await User.find(getDeleted ? {} : {isDeleted: false})
       .sort({ name: 1 })
       .skip(page * limit)
       .limit(limit);
-      users.forEach((user) => {
-        user.password = "";
-      });
     return {
       users,
       currentPage: page,
@@ -89,6 +111,7 @@ export class UserService {
       totalPages: Math.ceil(await User.countDocuments() / limit),
     };
   }
+
 
   async hardDeleteUserById(userId: string): Promise<IUsuari | null> {
     return await User.findByIdAndDelete(userId);

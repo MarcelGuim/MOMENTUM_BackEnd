@@ -30,7 +30,8 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     },
     password: { 
         type: String, 
-        required: true 
+        required: true,
+        select: false  
     },
     isDeleted: {
         type: Boolean,
@@ -39,7 +40,8 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     },
     activationId: {
         type: String,
-        sparse: true 
+        sparse: true ,
+        select: false
     }
 });
 
