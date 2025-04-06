@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken } from '../utils/jwt.utils';
-import { TokenPayload } from '../utils/jwt.utils';
-import { AuthenticatedRequest } from '../types';
 
-export const authenticate = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+
+export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   console.log('--- authenticate middleware triggered ---');
   console.log('Incoming headers:', JSON.stringify(req.headers, null, 2));
   
@@ -51,7 +50,7 @@ export const authenticate = (req: AuthenticatedRequest, res: Response, next: Nex
   }
 };
 
-export const verifyRefresh = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const verifyRefresh = (req: Request, res: Response, next: NextFunction) => {
   console.log('--- verifyRefresh middleware triggered ---');
   console.log('Incoming cookies:', req.cookies);
   

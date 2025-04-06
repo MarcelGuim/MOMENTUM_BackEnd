@@ -3,7 +3,7 @@ import { IUsuari } from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
-import { AuthenticatedRequest, LoginRequestBody } from '../../types';
+import { LoginRequestBody } from '../../types';
 
 const userService = new UserService();
 // PART AUTH
@@ -31,7 +31,7 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-export const refresh = async (req: AuthenticatedRequest, res: Response) => {
+export const refresh = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
     console.log('Extracted userId:', userId || 'UNDEFINED');

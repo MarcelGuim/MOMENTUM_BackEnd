@@ -6,12 +6,6 @@ export interface LoginRequestBody {
     name_or_mail: string;
     password: string;
   }
-
-// Optionally, if you want a custom request interface in your middleware:
-export interface AuthenticatedRequest extends Request {
-  user?: TokenPayload;
-}
-  
 declare global {
   namespace Express {
     export interface Request {
@@ -19,3 +13,10 @@ declare global {
     }
   }
 }
+
+// Optionally, if you want a custom request interface in your middleware:
+/*
+export interface AuthenticatedRequest extends Request {
+  user?: TokenPayload;
+}
+*/
