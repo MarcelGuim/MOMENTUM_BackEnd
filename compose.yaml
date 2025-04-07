@@ -1,0 +1,21 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: momentum-mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - "momentum-network"
+  
+  backend:
+    image: momentum-backend:latest
+    container_name: momentum-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - "momentum-network"
+    environment:
+      MONGODB_URI: "mongodb://momentum-mongodb:27017/momentum"
+
+networks:
+  momentum-network:
