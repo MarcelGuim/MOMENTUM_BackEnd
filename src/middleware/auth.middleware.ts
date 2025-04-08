@@ -9,7 +9,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1]; // Bearer <token>
 
-  console.log('Extracted token:', token ? `${token.substring(0, 10)}...` : 'NOT FOUND');
+  console.log('Extractgited token:', token ? `${token.substring(0, 10)}...` : 'NOT FOUND');
 
   if (!token) {
     console.error('No token provided in authorization header');

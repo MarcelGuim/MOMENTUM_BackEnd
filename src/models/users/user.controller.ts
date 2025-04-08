@@ -77,6 +77,7 @@ export const refresh = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   try {
+    console.log(`User ${req.user?.userId || 'UNKNOWN'} has logged out.`);
     res.clearCookie('refreshToken');
     return res.json({ message: 'Logged out successfully' });
   } catch (error: any) {
