@@ -3,6 +3,7 @@ import userRoutes from './models/users/user.routes';
 import chatRoutes from './models/chats/chat.routes';
 import calendarRoutes from './models/calendari/calendar.routes'; // Importa las rutas de Calendar
 import locationRoutes from './models/location/location.routes';
+import workersRoutes from './models/worker/worker.routes'; // Importa las rutas de Workers
 import connectDB from './database';
 import { setupSwagger } from './swagger';
 import cors from "cors";
@@ -19,7 +20,7 @@ app.use(cookieParser());
 // Configuración global de CORS
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:4200",
+    origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE","PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true // This is crucial for cookies to work cross-origin
@@ -36,6 +37,7 @@ app.use('/users', userRoutes); // Rutas de usuarios
 app.use('/chat', chatRoutes);  // Rutas de chats
 app.use('/calendars', calendarRoutes); // Rutas de calendarios
 app.use('/location', locationRoutes); // Rutas de ubicaciones
+app.use('/workers', workersRoutes); // Rutas de ubicaciones
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;

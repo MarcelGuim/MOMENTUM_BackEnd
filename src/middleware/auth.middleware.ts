@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken } from '../utils/jwt.utils';
+import Worker from '../models/worker/worker.model';
 
-
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   console.log('--- authenticate middleware triggered ---');
   console.log('Incoming headers:', JSON.stringify(req.headers, null, 2));
   
@@ -29,6 +29,15 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     });
     
     req.user = decoded;
+    const worker = await Worker.findById(decoded.userId);
+    if (!worker) {
+      console.error('Worker not found for the provided token');
+      return res.status(404).json({ error: 'Worker not found' });
+    }
+
+    req.worker = worker; 
+    
+    
     next();
   } catch (error: any) {
     console.error('Token verification failed:', {

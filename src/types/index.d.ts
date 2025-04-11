@@ -1,4 +1,5 @@
 
+import { IWorker } from '../models/worker/worker.model';
 import { TokenPayload } from '../utils/jwt.utils';
 import { Request } from 'express';
 
@@ -10,6 +11,7 @@ declare global {
   namespace Express {
     export interface Request {
       user?: TokenPayload;
+      worker?: IWorker;
     }
   }
 }
