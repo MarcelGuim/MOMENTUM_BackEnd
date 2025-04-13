@@ -5,7 +5,7 @@ import { AuthService } from './auth.services';
 const authService = new AuthService();
 
 export const loginUser = async (req: Request, res: Response) => {
-    try {
+  try {
       const { name_or_mail, password } = req.body as LoginRequestBody;
       const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password);
   
@@ -19,7 +19,7 @@ export const loginUser = async (req: Request, res: Response) => {
       console.log('Sending refreshToken in cookie:', refreshToken);
       console.log('Sending accessToken in response:',  accessToken );
   
-      return res.json({
+      return res.status(200).json({
         user,
         accessToken // Store this in localStorage
       });
