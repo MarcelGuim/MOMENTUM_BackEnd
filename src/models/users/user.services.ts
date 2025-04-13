@@ -60,14 +60,12 @@ export class UserService {
     if (result) {
       return 0;
     } else {
-      console.log("Activations PRE: " + activations.length);
       const id = crypto.randomBytes(20).toString('hex');
       user.activationId = id;
       if(user.mail === undefined){
         return 1;
       }
       mailOptions.to=user.mail;
-      console.log("Creating user at the service:", user);
       activations.push(user);
       const baseURL = process.env.NODE_ENV === 'production' 
         ? process.env.APP_BASE_URL  // Use the URL from the environment for production
@@ -81,7 +79,6 @@ export class UserService {
           return 1;
         } else {
           console.log('Email sent: ' + info.response);
-          console.log("Activations POST: " + activations.length);
         }
       });
       return 2;
@@ -210,18 +207,22 @@ export class UserService {
   }
 
   async activateUser(name: string, id: string): Promise<IUsuari | null> {
-    console.log(activations.length);
-    let user: Partial<IUsuari> | void = activations.find((element) => {
-      if (element.name === name && element.activationId === id) {
-        return element;
-      }
-    });
-    if (user === null || user === undefined) {
+    console.log("Activating user...");
+    const index = activations.findIndex(
+      (element) => element.name === name && element.activationId === id,
+    );
+  
+    if (index === -1) {
       return null;
     }
+  
+    const user = activations[index];
+    activations.splice(index, 1);
+  
     user.activationId = "";
     const userSaved = new User(user);
     return await userSaved.save();
+
   }
 }
 

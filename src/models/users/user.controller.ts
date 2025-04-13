@@ -8,6 +8,7 @@ import { LoginRequestBody } from '../../types';
 const userService = new UserService();
 // PART AUTH
 export const loginUser = async (req: Request, res: Response) => {
+
   try {
     const { name_or_mail, password } = req.body as LoginRequestBody;
     const { user, accessToken, refreshToken } = await userService.loginUser(name_or_mail, password);
@@ -22,7 +23,7 @@ export const loginUser = async (req: Request, res: Response) => {
     console.log('Sending refreshToken in cookie:', refreshToken);
     console.log('Sending accessToken in response:', { accessToken });
 
-    return res.json({
+    return res.status(200).json({
       user,
       accessToken // Store this in localStorage
     });
@@ -92,7 +93,6 @@ export async function createUser(req:Request, res:Response): Promise<Response> {
     try{
         const{name,age,mail,password} = req.body as IUsuari
         const newUser: Partial<IUsuari> = {name,age,mail,password,isDeleted:false};
-        console.log("Creating user:", { name, age, mail, password });
         const user = await userService.createUser(newUser);
         if(user===0){
           return res.status(409).json({error: 'User already exists'});
