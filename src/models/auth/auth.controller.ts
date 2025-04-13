@@ -24,7 +24,7 @@ export const loginUser = async (req: Request, res: Response) => {
         accessToken // Store this in localStorage
       });
     } catch (error: any) {
-      return res.status(401).json({ error: error.message });
+      return res.status(401).json({ error: "Invalid Credentials" });
     }
   };
   

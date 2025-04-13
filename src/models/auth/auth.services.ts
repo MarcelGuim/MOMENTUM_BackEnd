@@ -4,8 +4,6 @@ import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils
 import { UserRole } from '../../types';
 import { ModelType } from '../../types'; 
 
-
-
 export class AuthService {
   async loginUser(identifier:string, password:string){
     const isEmail = identifier.includes('@');
