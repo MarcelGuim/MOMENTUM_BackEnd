@@ -1,5 +1,81 @@
 import { Request, Response } from "express";
 import { getPlaces, getRouteInfo } from "./location.services";
+import { ILocation } from "./location.model";
+import { createLocation, getLocationById, getAllLocations, deleteLocationById, updateLocationById} from "./location.services";
+import { PlaceQueryResult, RouteQuertResult } from "./location.interfaces";
+
+//CRUD
+
+export async function createLocationHandler(req:Request, res:Response): Promise<Response> {
+    console.log("Creating location");
+    try{
+        const { nombre, address, rating, ubicacion } = req.body as ILocation;
+        const newLocation: Partial<ILocation> = { nombre, address, rating, ubicacion };
+        console.log("Creating location:", { nombre, address, rating, ubicacion });
+        const location = await createLocation(newLocation);
+        if (location === 0) {
+            return res.status(409).json({ error: 'Location already exists' });
+        } else if (location === 1) {
+            return res.status(404).json({ error: 'Location not created, there has been an error' });
+        } else {
+            return res.status(200).json({
+                message: "Location created successfully"
+            });
+        }
+    }
+    catch (error){
+        return res.status(500).json({ error: 'Failed to create location' });
+    }
+}
+
+export async function getLocationByIdHandler(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    try {
+        const location = await getLocationById(id);
+        if (!location) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        return res.json(location);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch location' });
+    }
+}
+
+export async function getAllLocationsHandler(req: Request, res: Response): Promise<Response> {
+    try {
+        const locations = await getAllLocations();
+        return res.json(locations);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch locations' });
+    }
+}
+export async function deleteLocationByIdHandler(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    try {
+        const location = await deleteLocationById(id);
+        if (!location) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        return res.json(location);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to delete location' });
+    }
+}
+export async function updateLocationByIdHandler(req: Request, res: Response): Promise<Response> {
+    const { id } = req.params;
+    const data = req.body as Partial<ILocation>;
+    try {
+        const location = await updateLocationById(id, data);
+        if (!location) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        return res.json(location);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to update location' });
+    }
+}   
+
+
 
 export async function getPlacesHandler(req: Request, res: Response){
     try {

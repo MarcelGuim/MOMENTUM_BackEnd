@@ -1,8 +1,177 @@
 import { Router } from "express";
-import { getPlacesHandler, getRouteHandler } from "./location.controller";
+import { createLocationHandler, getLocationByIdHandler, getAllLocationsHandler, updateLocationByIdHandler, deleteLocationByIdHandler, getPlacesHandler, getRouteHandler } from "./location.controller";
 
 const router = Router();
 
+/**
+ * @swagger
+ * /location:
+ *   post:
+ *     summary: Crea una nueva ubicación
+ *     tags: [location]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nombre
+ *               - address
+ *               - rating
+ *               - ubicacion
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 example: "Parque del Retiro"
+ *               address:
+ *                 type: string
+ *                 example: "Calle de Alfonso XII, Madrid"
+ *               rating:
+ *                 type: number
+ *                 format: float
+ *                 example: 4.5
+ *               ubicacion:
+ *                 type: object
+ *                 required:
+ *                   - type
+ *                   - coordinates
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [Point]
+ *                     example: "Point"
+ *                   coordinates:
+ *                     type: array
+ *                     minItems: 2
+ *                     maxItems: 2
+ *                     items:
+ *                       type: number
+ *                     example: [-3.70379, 40.41678]  # [longitude, latitude]
+ *     responses:
+ *       200:
+ *         description: Location created successfully
+ *       409:
+ *         description: Location already exists
+ *       404:
+ *         description: Location not created, there has been an error
+ *       500:
+ *         description: Failed to create location
+ */
+router.post('/', createLocationHandler);
+
+/**
+ * @swagger
+ * /location/{id}:
+ *   get:
+ *     summary: Obté una ubicació per ID
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Ok
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/:id', getLocationByIdHandler);
+
+/**
+ * @swagger
+ * /location:
+ *   get:
+ *     summary: Llista totes les ubicacions
+ *     tags: [location]
+ *     responses:
+ *       200:
+ *         description: Ok
+ *       500:
+ *         description: Internal Server Error
+ */
+router.get('/', getAllLocationsHandler);
+
+/**
+ * @swagger
+ * /location/{id}:
+ *   put:
+ *     summary: Actualiza una ubicación existente
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la ubicación a actualizar
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               rating:
+ *                 type: number
+ *                 format: float
+ *               ubicacion:
+ *                 type: object
+ *                 required:
+ *                   - type
+ *                   - coordinates
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     enum: [Point]
+ *                   coordinates:
+ *                     type: array
+ *                     minItems: 2
+ *                     maxItems: 2
+ *                     items:
+ *                       type: number
+ *     responses:
+ *       200:
+ *         description: Ubicación actualizada con éxito
+ *       400:
+ *         description: Solicitud incorrecta
+ *       404:
+ *         description: Ubicación no encontrada
+ *       500:
+ *         description: Error del servidor
+ */
+
+router.put('/:id', updateLocationByIdHandler);
+
+/**
+ * @swagger
+ * /location/{id}:
+ *   delete:
+ *     summary: Elimina una ubicació
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *       404:
+ *         description: Not Found
+ *       500:
+ *         description: Internal Server Error
+ */
+router.delete('/:id', deleteLocationByIdHandler);
 
 /**
  * @swagger
@@ -36,7 +205,6 @@ const router = Router();
  *         description: Internal Server Error
  */
 router.post('/search', getPlacesHandler);
-
 
 /**
  * @swagger

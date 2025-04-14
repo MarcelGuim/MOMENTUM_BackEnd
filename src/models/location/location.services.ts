@@ -1,4 +1,38 @@
 import { PlaceQueryResult, RouteQuertResult } from "./location.interfaces";
+import Location from './location.model';
+import { ILocation } from './location.model';
+
+//CRUD
+
+export async function createLocation(location: Partial<ILocation>): Promise<Number> {
+    const result = await Location.findOne({$or: [{ address: location.address }, { nombre: location.nombre }]});
+    if (result) {
+      return 0;
+    } else {
+      const newLocation = new Location(location);
+      await newLocation.save();
+      return 1;
+    }
+}
+
+export async function getLocationById(id: string): Promise<ILocation | null> {
+    const location = await Location.findById(id);
+    return location;
+}
+
+export async function getAllLocations(): Promise<ILocation[]> {
+    const locations = await Location.find({});
+    return locations;
+}
+
+export async function deleteLocationById(id: string): Promise<ILocation | null> {
+    const location = await Location.findByIdAndDelete(id);
+    return location;
+}
+
+export async function updateLocationById(id: string, data: Partial<ILocation>): Promise<ILocation | null> {
+    return await Location.findByIdAndUpdate(id, data, { new: true });
+}
 
 
 
