@@ -3,6 +3,8 @@ import { IUsuari } from '../users/user.model';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
 import { UserRole } from '../../types';
 import { ModelType } from '../../types'; 
+import axios from 'axios';
+import { encrypt } from '../../utils/bcrypt.handle'; // Adjust the path as needed
 
 export class AuthService {
   async loginUser(identifier:string, password:string){
@@ -55,4 +57,65 @@ export class AuthService {
       accessToken,
     };
   }
+  async googleAuth(code: string) {
+
+    try {
+        console.log("Client ID:", '104261057122-bd1sulgdh5m811ppg1tfgev3jqidnb3u.apps.googleusercontent.com');
+        console.log("Client Secret:", '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');
+        console.log("Redirect URI:", 'http://localhost:9000/api/auth/google/callback');
+      interface TokenResponse {
+            access_token: string;
+            expires_in: number;
+            scope: string;
+            token_type: string;
+            id_token?: string;
+        }
+        //axios --> llibreria que s'utilitza per a fer peticions HTTP
+        const tokenResponse = await axios.post<TokenResponse>('https://oauth2.googleapis.com/token', {
+            code,
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL,
+            grant_type: 'authorization_code'
+        });
+
+        const access_token = tokenResponse.data.access_token;
+        console.log("Access Token:", access_token); 
+        // Obté el perfil d'usuari
+        const profileResponse = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+            params: { access_token},
+            headers: { Accept: 'application/json',},
+            
+        });
+
+        const profile = profileResponse.data as {name:string, email: string; id: string };
+        console.log("Access profile:", profile); 
+        // Busca o crea el perfil a la BBDD
+        let user = await User.findOne({ 
+            $or: [{name: profile.name},{ email: profile.email }, { googleId: profile.id }] 
+        });
+
+        if (!user) {
+            const randomPassword = Math.random().toString(36).slice(-8);
+            const passHash = await encrypt(randomPassword);
+            user = await User.create({
+                name: profile.name,
+                email: profile.email,
+                googleId: profile.id,
+                password: passHash,
+            });
+        }
+
+        // Genera el token JWT
+        const accessToken = generateAccessToken(user.id, ModelType.USER);
+        const refreshToken = generateRefreshToken(user.id, ModelType.USER);
+
+        console.log(accessToken, refreshToken);
+        return { accessToken, refreshToken, user };
+
+    } catch (error: any) {
+        console.error('Google Auth Error:', error.response?.data || error.message); // Log detallado
+        throw new Error('Error en autenticación con Google');
+    }
+  };
 }

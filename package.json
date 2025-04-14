@@ -13,7 +13,9 @@
   "license": "MIT",
   "dependencies": {
     "@types/express-validator": "^2.20.33",
+    "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -26,6 +28,7 @@
     "swagger-ui-express": "^4.6.3"
   },
   "devDependencies": {
+    "@types/axios": "^0.9.36",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
