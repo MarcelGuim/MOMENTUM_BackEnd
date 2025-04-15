@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { getPlaces, getRouteInfo } from "./location.services";
 import { ILocation } from "./location.model";
 import { createLocation, getLocationById, getAllLocations, deleteLocationById, updateLocationById} from "./location.services";
@@ -7,24 +7,30 @@ import { PlaceQueryResult, RouteQuertResult } from "./location.interfaces";
 //CRUD
 
 export async function createLocationHandler(req:Request, res:Response): Promise<Response> {
-    console.log("Creating location");
     try{
-        const { nombre, address, rating, ubicacion } = req.body as ILocation;
-        const newLocation: Partial<ILocation> = { nombre, address, rating, ubicacion };
-        console.log("Creating location:", { nombre, address, rating, ubicacion });
-        const location = await createLocation(newLocation);
+        console.log("Creating location");
+        const locationreveived: Partial<ILocation> = req.body;
+        const location = await createLocation(locationreveived);
+        
+        if (location === -1) {
+            return res.status(409).json({ message: 'Location already exists' });
+        }
         if (location === 0) {
-            return res.status(409).json({ error: 'Location already exists' });
-        } else if (location === 1) {
-            return res.status(404).json({ error: 'Location not created, there has been an error' });
+            return res.status(400).json({ message: 'Error with data format in schedule' });
+        }
+        if (location === 1) {
+            console.error("ServiceTypes of location are not valid");
+            return res.status(400).json({ message: 'ServiceTypes of location are not valid' });
         } else {
-            return res.status(200).json({
-                message: "Location created successfully"
+            return res.status(201).json({
+                message: "Location created successfully",
+                location: location
             });
         }
     }
     catch (error){
-        return res.status(500).json({ error: 'Failed to create location' });
+        console.error("Failed to create location",error);
+        return res.status(500).json({ message: 'Failed to create location' });
     }
 }
 

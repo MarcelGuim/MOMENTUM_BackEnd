@@ -1,17 +1,49 @@
 import { PlaceQueryResult, RouteQuertResult } from "./location.interfaces";
 import Location from './location.model';
 import { ILocation } from './location.model';
-
+import { locationServiceType } from '../../enums/locationServiceType.enum';
+import { locationSchedule } from '../../enums/locationSchedule.enum';
 //CRUD
 
-export async function createLocation(location: Partial<ILocation>): Promise<Number> {
+export async function createLocation(location: Partial<ILocation>): Promise<ILocation|Number> {
+    //Mirem que els serviceTypes siguin vàlids
+    if (location.serviceType && Array.isArray(location.serviceType)) {
+        const invalidServiceTypes = location.serviceType.filter(
+            (type) => !Object.values(locationServiceType).includes(type)
+        );
+
+        if (invalidServiceTypes.length > 0) {
+            //Retorna un 1 si el servicetype no forma part de enum de locationServiceType
+            return 1; 
+        }
+    }
+    //Mirem que les dades de schedule siguin valides
+    if (location.schedule && Array.isArray(location.schedule)) {
+        const invalidSchedules = location.schedule.filter((entry) => {
+            // Verificar que el dia sigui valid
+            if (!Object.values(locationSchedule).includes(entry.day)) {
+                return true;
+            }
+            // Verificar que las hores estiguin en format HH:mm
+            const timeRegex = /^([0-1]\d|2[0-3]):([0-5]\d)$/;
+            if (!timeRegex.test(entry.open) || !timeRegex.test(entry.close)) {
+                return true;
+            }
+
+            // Verificar que l'hora de tancament sigui posterior a l'hora d'obertura
+            return entry.open >= entry.close;
+        });
+
+        if (invalidSchedules.length > 0) {
+            return 0;
+        }
+    }
     const result = await Location.findOne({$or: [{ address: location.address }, { nombre: location.nombre }]});
-    if (result) {
-      return 0;
+    if (result !== null) {
+      return -1;
     } else {
       const newLocation = new Location(location);
-      await newLocation.save();
-      return 1;
+      return await newLocation.save();
     }
 }
 

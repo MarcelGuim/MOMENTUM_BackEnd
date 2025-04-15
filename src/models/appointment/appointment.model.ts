@@ -1,14 +1,18 @@
-import { Schema, model, Document, ObjectId } from 'mongoose';
+import mongoose, { Schema, model, Document, ObjectId, Mongoose } from 'mongoose';
+import { appointmentServiceType } from '../../enums/appointmentServiceType.enum';
+import { appointmentState } from '../../enums/appointmentState.enum';
 
 export interface IAppointment {
     _id?: ObjectId;
     inTime: Date;
     outTime: Date;
-    place: string;
     title: string;
+    description?: string;
+    location?: mongoose.Types.ObjectId;
+    serviceType: appointmentServiceType;
+    appointmentState?: appointmentState;
     isDeleted: boolean;
 }
-
 const AppointmentSchema = new Schema<IAppointment>({
     inTime: {
         type: Date,
@@ -18,13 +22,30 @@ const AppointmentSchema = new Schema<IAppointment>({
         type: Date,
         required: true
     },
-    place: {
-        type: String,
-        required: true
-    },
     title: {
         type: String,
         required: true
+    },
+    description: {
+        type: String,
+        required: false
+    },
+    location: {
+        type: mongoose.Schema.Types.ObjectId, 
+        required: false,
+        ref: 'Location'
+    },
+    serviceType: {
+        type: String,
+        enum: Object.values(appointmentServiceType),
+        required: true, 
+        default: appointmentServiceType.PERSONAL,
+    },
+    appointmentState: {
+        type: String,
+        enum: Object.values(appointmentState), 
+        required: false,
+        default: appointmentState.REQUESTED,
     },
     isDeleted: {
         type: Boolean,

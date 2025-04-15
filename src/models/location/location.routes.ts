@@ -7,7 +7,7 @@ const router = Router();
  * @swagger
  * /location:
  *   post:
- *     summary: Crea una nueva ubicación
+ *     summary: Crear una nova ubicació
  *     tags: [location]
  *     requestBody:
  *       required: true
@@ -18,19 +18,24 @@ const router = Router();
  *             required:
  *               - nombre
  *               - address
+ *               - phone
  *               - rating
  *               - ubicacion
+ *               - serviceType
+ *               - schedule
  *             properties:
  *               nombre:
  *                 type: string
- *                 example: "Parque del Retiro"
+ *                 example: "Centre Salut Integral"
  *               address:
  *                 type: string
- *                 example: "Calle de Alfonso XII, Madrid"
+ *                 example: "Carrer del Nord, 10, Lleida"
+ *               phone:
+ *                 type: string
+ *                 example: "+34 973 123 456"
  *               rating:
  *                 type: number
- *                 format: float
- *                 example: 4.5
+ *                 example: 4.6
  *               ubicacion:
  *                 type: object
  *                 required:
@@ -47,16 +52,114 @@ const router = Router();
  *                     maxItems: 2
  *                     items:
  *                       type: number
- *                     example: [-3.70379, 40.41678]  # [longitude, latitude]
+ *                     example: [0.6255, 41.6171]
+ *               serviceType:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum:
+ *                     - haircut
+ *                     - hair coloring
+ *                     - hair treatment
+ *                     - beard trim
+ *                     - facial cleansing
+ *                     - makeup
+ *                     - manicure
+ *                     - pedicure
+ *                     - eyebrows and lashes
+ *                     - waxing
+ *                     - relaxing massage
+ *                     - medical appointment
+ *                     - physiotherapy
+ *                     - therapy session
+ *                     - dentist appointment
+ *                     - nutritionist
+ *                     - gym workout
+ *                     - yoga class
+ *                     - pilates class
+ *                     - boxing class
+ *                     - swimming session
+ *                     - personal training
+ *                     - restaurant reservation
+ *                     - takeaway order
+ *                     - catering service
+ *                     - private dinner
+ *                     - wine tasting
+ *                     - tattoo
+ *                     - piercing
+ *                     - language class
+ *                     - music lesson
+ *                     - dance class
+ *                     - coaching session
+ *                 example: ["gym workout", "relaxing massage", "haircut"]
+ *               schedule:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [day, open, close]
+ *                   properties:
+ *                     day:
+ *                       type: string
+ *                       enum:
+ *                         - monday
+ *                         - tuesday
+ *                         - wednesday
+ *                         - thursday
+ *                         - friday
+ *                         - saturday
+ *                         - sunday
+ *                       example: monday
+ *                     open:
+ *                       type: string
+ *                       example: "09:00"
+ *                     close:
+ *                       type: string
+ *                       example: "20:00"
  *     responses:
- *       200:
- *         description: Location created successfully
+ *       201:
+ *         description: Ubicació creada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Location created successfully
+ *                 location:
+ *                   $ref: '#/components/schemas/Location'
+ *       400:
+ *         description: Format de dades incorrecte o tipus de servei invàlid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   oneOf:
+ *                     - example: Error with data format in schedule
+ *                     - example: ServiceTypes of location are not valid
  *       409:
- *         description: Location already exists
- *       404:
- *         description: Location not created, there has been an error
+ *         description: La ubicació ja existeix
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Location already exists
  *       500:
- *         description: Failed to create location
+ *         description: Error intern del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to create location
  */
 router.post('/', createLocationHandler);
 

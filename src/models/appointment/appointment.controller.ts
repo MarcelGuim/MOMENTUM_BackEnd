@@ -6,50 +6,66 @@ const appointmentService = new AppointmentService();
 
 // Crear una nueva cita
 export async function createAppointment(req: Request, res: Response): Promise<Response> {
-  try {
-    const { inTime, outTime, place, title } = req.body;
-    const newAppointment: Partial<IAppointment> = { inTime, outTime, place, title };
-    const appointment = await appointmentService.createAppointment(newAppointment);
-    return res.status(200).json({
-      message: "Appointment created",
-      appointment
-    });
-  } catch (error) {
-    return res.status(500).json({ error: 'Failed to create appointment' });
-  }
+    try {
+        console.log("Creating appointment");
+        const appointment: Partial<IAppointment> = req.body;
+        const answer = await appointmentService.createAppointment(appointment);
+        
+        return res.status(200).json({
+          message: "Appointment created",
+          appointment: answer
+        });
+    } catch (error) {
+        console.log("Failed to create appointment");
+        return res.status(500).json({
+            message: "Failed to create appointment"
+        });
+    }
 }
+
 
 // Obtener cita por ID
 export async function getAppointmentById(req: Request, res: Response): Promise<Response> {
   try {
     const { id } = req.params;
     const appointment = await appointmentService.getAppointmentById(id);
-    if (appointment) {
-      return res.status(200).json(appointment);
+    if (appointment != null) {
+      return res.status(200).json({
+        message: "Appointment found",
+        appointment: appointment
+      });
     } else {
-      return res.status(404).json({ error: 'Appointment not found' });
+      console.log("Appointment not found");
+      return res.status(404).json({ message: 'Appointment not found' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to get appointment' });
+    console.log("Server ERROR: ", error);
+    return res.status(500).json({
+        message: "Server ERROR, failed to get appointment"
+    });
   }
 }
+
+
 
 // Actualizar cita por ID
 export async function updateAppointmentById(req: Request, res: Response): Promise<Response> {
   try {
     const { id } = req.params;
-    const { inTime, outTime, place, title } = req.body;
-    const updatedAppointment = await appointmentService.updateAppointmentById(id, { inTime, outTime, place, title });
-    if (updatedAppointment) {
+    const appointment: IAppointment = req.body;
+    const updatedAppointment = await appointmentService.updateAppointmentById(id,appointment);
+    if (updatedAppointment != null) {
       return res.status(200).json({
         message: "Appointment updated successfully",
-        updatedAppointment
+        appointment: updatedAppointment
       });
     } else {
-      return res.status(404).json({ error: 'Appointment not found' });
+      console.log('Appointment not found');
+      return res.status(404).json({ message: 'Appointment not found' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to update appointment' });
+    console.log("Server ERROR: ", error);
+    return res.status(500).json({ message: 'Failed to update appointment' });
   }
 }
 
@@ -61,13 +77,15 @@ export async function hardDeleteAppointmentById(req: Request, res: Response): Pr
     if (appointment) {
       return res.status(200).json({
         message: "Appointment deleted",
-        appointment
+        appointment: appointment
       });
     } else {
-      return res.status(404).json({ error: 'Appointment not found' });
+      console.log('Appointment not found');
+      return res.status(404).json({ message: 'Appointment not found' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to delete appointment' });
+    console.log("Server ERROR: ", error);
+    return res.status(500).json({ message: 'Failed to delete appointment' });
   }
 }
 
@@ -79,13 +97,15 @@ export async function softDeleteAppointmentById(req: Request, res: Response): Pr
     if (appointment) {
       return res.status(200).json({
         message: "Appointment soft deleted (marked as unavailable)",
-        appointment
+        appointment: appointment
       });
     } else {
-      return res.status(404).json({ error: 'Appointment not found' });
+      console.log('Appointment not found');
+      return res.status(404).json({ message: 'Appointment not found' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to soft delete appointment' });
+    console.log("Server ERROR: ", error);
+    return res.status(500).json({ message: 'Failed to soft delete appointment' });
   }
 }
 
@@ -97,12 +117,14 @@ export async function restoreAppointmentById(req: Request, res: Response): Promi
     if (appointment) {
       return res.status(200).json({
         message: "Appointment restored (marked as available)",
-        appointment
+        appointment: appointment
       });
     } else {
-      return res.status(404).json({ error: 'Appointment not found' });
+      console.log('Appointment not found');
+      return res.status(404).json({ message: 'Appointment not found' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to restore appointment' });
+    console.log("Server ERROR: ", error);
+    return res.status(500).json({ message: 'Failed to restore appointment' });
   }
 }
