@@ -6,6 +6,7 @@ import {
   getChat,
   createChat,
   getLast20Messages,
+  getChatId,
 } from './chat.controller';
 
 const router = Router();
@@ -140,6 +141,32 @@ router.get("/messages/:chatId", getLast20Messages);
  */
 router.get("/:user1ID/:user2ID", getChat);
 
+/**
+ * @swagger
+ * /chat/{user1ID}/{user2ID}:
+ *   get:
+ *     summary: Obté el id del xat entre dos usuaris
+ *     tags: [Chat]
+ *     parameters:
+ *       - in: path
+ *         name: user1ID
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: user2ID
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Xat trobat
+ *       404:
+ *         description: Xat o usuaris no trobats
+ *       500:
+ *         description: Error inesperat
+ */
+router.get("/id/:user1ID/:user2ID", getChatId);
 /**
  * @swagger
  * /chat/create:

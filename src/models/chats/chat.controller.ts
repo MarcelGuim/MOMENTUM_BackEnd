@@ -33,9 +33,10 @@ export async function sendMessage(req: Request, res: Response): Promise<Response
 }
 
 export async function getPeopleWithWhomUserChatted(req: Request, res: Response): Promise<Response> {
+    console.log("getting users with whom user chatted, user is: ");
     try {
         const userId = req.params.userId;
-
+        console.log(userId)
         const people = await chatService.getPeopleWithWhomUserChatted(userId);
         if (people.length === 0) {
             return res.status(404).json({ error: "No people found" });
@@ -55,7 +56,6 @@ export async function getPeopleWithWhomUserChatted(req: Request, res: Response):
 export async function getChat(req: Request, res: Response): Promise<Response> {
     try {
         const { user1ID, user2ID } = req.params;
-
         const chat = await chatService.getChat(user1ID, user2ID);
         return res.status(200).json(chat);
     } catch (error: any) {
@@ -69,6 +69,27 @@ export async function getChat(req: Request, res: Response): Promise<Response> {
         }
 
         return res.status(500).json({ error: 'Unexpected error getting chat' });
+    }
+}
+
+export async function getChatId(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("getting chat id ");
+        const { user1ID, user2ID } = req.params;
+        const chat = await chatService.getChatId(user1ID, user2ID);
+        console.log("success");
+        return res.status(200).json(chat);
+    } catch (error: any) {
+        console.error("Error getting chat Id:", error.message);
+
+        if (error.message === "Users not found") {
+            return res.status(404).json({ error: "One or both users not found" });
+        }
+        if (error.message === "Chat not found") {
+            return res.status(404).json({ error: "Chat not found" });
+        }
+
+        return res.status(500).json({ error: 'Unexpected error getting chat ID' });
     }
 }
 

@@ -14,6 +14,15 @@ export class ChatService {
         return chat;
     }
 
+    async getChatId(user1ID:string, user2ID:string): Promise<String> {
+        const user1 = await User.findById(user1ID);
+        const user2 = await User.findById(user2ID);
+        if (user1 === null || user2 === null) throw new Error("Users not found");
+        const chat:IChat | null = await Chat.findOne({$or: [{user1: user1ID, user2: user2ID}, {user1: user2ID, user2: user1ID}]});
+        if (chat === null) throw new Error("Chat not found");
+        return chat._id?.toString() || ""; 
+    }
+
     async sendMessage(chatId: string, userFrom:string, message:string): Promise<Boolean | null> {
         const chatForTest = await Chat.findById(chatId);
         if (chatForTest === null) throw new Error("Chat not found");
@@ -32,13 +41,16 @@ export class ChatService {
         else return false;
     }
 
-    async getPeopleWithWhomUserChatted(userId: string): Promise<string[]> {
+    async getPeopleWithWhomUserChatted(userId: string): Promise<[string,string][]> {
         const user = await User.findById(userId);
         if (user === null) throw new Error("User not found");
         const chats = await Chat.find({$or: [{user1: userId}, {user2: userId}]});
         const people = chats.map(chat => chat.user1.toString() === userId ? chat.user2.toString() : chat.user1.toString());
-        const peopleNames = await Promise.all(people.map(async (personId) => { const user = await User.findById(personId); return user?.name; }));
-        return peopleNames.filter((name): name is string => name !== undefined);
+        const peopleNames = await Promise.all(people.map(async (personId) => { 
+            const user = await User.findById(personId); 
+            return user?.name && user?._id ? [user.name, user._id.toString()] : null; 
+        }));
+        return peopleNames.filter((entry): entry is [string, string] => entry !== null);
     }
 
     async createChat(user1ID: string, user2ID: string): Promise<IChat> {
