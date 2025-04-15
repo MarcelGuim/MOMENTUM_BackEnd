@@ -20,7 +20,7 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     },
     age: { 
         type: Number, 
-        required: true 
+        required: false 
     },
     mail: { 
         type: String, 

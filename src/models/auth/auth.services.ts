@@ -62,7 +62,7 @@ export class AuthService {
     try {
         console.log("Client ID:", '104261057122-bd1sulgdh5m811ppg1tfgev3jqidnb3u.apps.googleusercontent.com');
         console.log("Client Secret:", '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');
-        console.log("Redirect URI:", 'http://localhost:9000/api/auth/google/callback');
+        console.log("Redirect URI:", 'http://localhost:9000/api/auth/google/callback'); // modificar uri per la ruta de angular quan exitsteixi.
       interface TokenResponse {
             access_token: string;
             expires_in: number;
@@ -73,9 +73,9 @@ export class AuthService {
         //axios --> llibreria que s'utilitza per a fer peticions HTTP
         const tokenResponse = await axios.post<TokenResponse>('https://oauth2.googleapis.com/token', {
             code,
-            client_id: process.env.GOOGLE_CLIENT_ID,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET,
-            redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL,
+            client_id: '104261057122-bd1sulgdh5m811ppg1tfgev3jqidnb3u.apps.googleusercontent.com',
+            client_secret: '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',
+            redirect_uri: 'http://localhost:8080/auth/google/callback' ,
             grant_type: 'authorization_code'
         });
 
@@ -88,11 +88,11 @@ export class AuthService {
             
         });
 
-        const profile = profileResponse.data as {name:string, email: string; id: string };
+        const profile = profileResponse.data as {name:string, email: string };
         console.log("Access profile:", profile); 
         // Busca o crea el perfil a la BBDD
         let user = await User.findOne({ 
-            $or: [{name: profile.name},{ email: profile.email }, { googleId: profile.id }] 
+            $or: [{name: profile.name},{ mail: profile.email }] 
         });
 
         if (!user) {
@@ -100,8 +100,7 @@ export class AuthService {
             const passHash = await encrypt(randomPassword);
             user = await User.create({
                 name: profile.name,
-                email: profile.email,
-                googleId: profile.id,
+                mail: profile.email,
                 password: passHash,
             });
         }
