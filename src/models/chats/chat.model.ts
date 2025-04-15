@@ -1,30 +1,40 @@
-import { Schema, model, Document } from 'mongoose';
+import mongoose, { Schema, model, Document } from 'mongoose';
 
 const ChatSchema = new Schema<IChat>({
-    from: { 
-        type: String, 
+    user1: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', 
         required: true 
     },
-    to: { 
-        type: String, 
-        required: true, 
-    },
-    message: { 
-        type: String, 
+    user2: { 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User', 
         required: true 
     },
-    recieved:{
-        type: Boolean,
-        default: false
-    }
+    messages: [
+        {
+          from: { type: String, required: true },
+          text: { type: String, required: true },
+          received: { type: Boolean, required: true },
+          timestamp: { type: Date, required: true },
+          _id: false
+        }
+      ]//El format del missatge és: [Emisor (el receptor ja és implicit), missatge, rebut? (True/False)]
 });
 
 export interface IChat{
-    from: string;
-    to: string;
-    message: string;
-    recieved: boolean;
+    user1: mongoose.Types.ObjectId;
+    user2: mongoose.Types.ObjectId;
+    messages: IMessage[];
+    _id?: mongoose.Types.ObjectId;
 }
+
+export interface IMessage {
+    from: string;
+    text: string;
+    received: boolean;
+    timestamp: Date;
+  }
 
 
 const Chat = model<IChat>('Chat', ChatSchema);

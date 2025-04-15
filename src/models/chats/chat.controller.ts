@@ -4,55 +4,108 @@ import { ChatService } from './chat.services';
 
 const chatService = new ChatService();
 
-export async function sendMessage(req:Request, res:Response): Promise<Response> {
-    console.log("sending message");
-    try{
-        const{from, to, message, recieved} = req.body as IChat;
-        const newChat: Partial<IChat> = {from, to, message, recieved};
-        console.log("Sending chat:", { from,to,message,recieved });
-        const chat = await chatService.sendMessage(newChat);
-        return res.status(200).json({
-            message:"Chat sent",
-            chat
+export async function sendMessage(req: Request, res: Response): Promise<Response> {
+    try {
+        const { chatId, userFrom, message } = req.body;
+
+        const updatedChat = await chatService.sendMessage(chatId, userFrom, message);
+        if (updatedChat === true) return res.status(200).json({
+            message: "Message sent successfully"
         });
-    }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to send chat' });
+        else return res.status(505).json({
+            error: "Message not sent"
+        });
+    } catch (error: any) {
+        console.error("Error sending message:", error.message);
+
+        if (error.message === "Chat not found") {
+            return res.status(404).json({ error: "Chat not found" });
+        }
+        if (error.message === "Users not found") {
+            return res.status(404).json({ error: "One or both users not found" });
+        }
+        if (error.message === "User not in chat") {
+            return res.status(403).json({ error: "User is not part of this chat" });
+        }
+
+        return res.status(500).json({ error: 'Unexpected error sending message' });
     }
 }
 
-export async function getPeopleWithWhomUserChatted(req:Request, res:Response): Promise<Response>{
-    try{
-        const name1 = req.params.name;
-        const people = await chatService.getPeopleWithWhomUserChatted(name1);
-        if(people.length === 0){
-            console.log("No people found");
-            return res.status(404).json({error: 'No people found'});
+export async function getPeopleWithWhomUserChatted(req: Request, res: Response): Promise<Response> {
+    try {
+        const userId = req.params.userId;
+
+        const people = await chatService.getPeopleWithWhomUserChatted(userId);
+        if (people.length === 0) {
+            return res.status(404).json({ error: "No people found" });
         }
-        else{
-            console.log("People found");
-            return res.status(200).json(people);
+        return res.status(200).json(people);
+    } catch (error: any) {
+        console.error("Error getting people:", error.message);
+
+        if (error.message === "User not found") {
+            return res.status(404).json({ error: "User not found" });
         }
-    }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to get people' });
+
+        return res.status(500).json({ error: 'Unexpected error getting people' });
     }
 }
 
-export async function getChatsWithUser(req:Request, res:Response): Promise<Response>{
-    try{
-        const{name1, name2} = req.params;
-        const chats = await chatService.getChatsWithUser(name1, name2);
-        if(chats.length === 0){
-            console.log("No chats found");
-            return res.status(404).json({error: 'No chats found'});
+export async function getChat(req: Request, res: Response): Promise<Response> {
+    try {
+        const { user1ID, user2ID } = req.params;
+
+        const chat = await chatService.getChat(user1ID, user2ID);
+        return res.status(200).json(chat);
+    } catch (error: any) {
+        console.error("Error getting chat:", error.message);
+
+        if (error.message === "Users not found") {
+            return res.status(404).json({ error: "One or both users not found" });
         }
-        else{
-            console.log("Chats found");
-            return res.status(200).json(chats);
+        if (error.message === "Chat not found") {
+            return res.status(404).json({ error: "Chat not found" });
         }
+
+        return res.status(500).json({ error: 'Unexpected error getting chat' });
     }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to get chats' });
+}
+
+export async function createChat(req: Request, res: Response): Promise<Response> {
+    try {
+        const { user1ID, user2ID } = req.body;
+
+        const newChat = await chatService.createChat(user1ID, user2ID);
+        return res.status(201).json({
+            message: "Chat created",
+            chat: newChat
+        });
+    } catch (error: any) {
+        console.error("Error creating chat:", error.message);
+
+        if (error.message === "Chat already exists") {
+            return res.status(409).json({ error: "Chat already exists" });
+        }
+
+        return res.status(500).json({ error: 'Unexpected error creating chat' });
     }
-}   
+}
+
+export async function getLast20Messages(req: Request, res: Response): Promise<Response> {
+    console.log("1");
+    try {
+        const { chatId } = req.params;
+        console.log("Chat ID:", chatId); // Log the chatId for debugging
+        const messages = await chatService.getLast20MessagesOfChat(chatId);
+        return res.status(200).json(messages);
+    } catch (error: any) {
+        console.error("Error getting last 20 messages:", error.message);
+
+        if (error.message === "Chat not found") {
+            return res.status(404).json({ error: "Chat not found" });
+        }
+
+        return res.status(500).json({ error: 'Unexpected error getting messages' });
+    }
+}
