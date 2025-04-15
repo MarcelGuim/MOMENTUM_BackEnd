@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createLocationHandler, getLocationByIdHandler, getAllLocationsHandler, updateLocationByIdHandler, deleteLocationByIdHandler, getPlacesHandler, getRouteHandler } from "./location.controller";
+import { createLocationHandler, getLocationByIdHandler, getAllLocationsHandler, updateLocationByIdHandler, deleteLocationByIdHandler, getAllLocationsByServiceTypeHandler, getLocationsNearHandler, getPlacesHandler, getRouteHandler } from "./location.controller";
 
 const router = Router();
 
@@ -203,7 +203,7 @@ router.get('/', getAllLocationsHandler);
  * @swagger
  * /location/{id}:
  *   put:
- *     summary: Actualiza una ubicación existente
+ *     summary: Actualitza una ubicació existent
  *     tags: [location]
  *     parameters:
  *       - in: path
@@ -211,21 +211,31 @@ router.get('/', getAllLocationsHandler);
  *         required: true
  *         schema:
  *           type: string
- *         description: ID de la ubicación a actualizar
+ *         description: ID de la ubicació a actualitzar
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - nombre
+ *               - address
+ *               - phone
+ *               - rating
+ *               - ubicacion
+ *               - serviceType
+ *               - schedule
+ *               - isDeleted
  *             properties:
  *               nombre:
  *                 type: string
  *               address:
  *                 type: string
+ *               phone:
+ *                 type: string
  *               rating:
  *                 type: number
- *                 format: float
  *               ubicacion:
  *                 type: object
  *                 required:
@@ -241,17 +251,112 @@ router.get('/', getAllLocationsHandler);
  *                     maxItems: 2
  *                     items:
  *                       type: number
+ *               serviceType:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   enum:
+ *                     - haircut
+ *                     - hair coloring
+ *                     - hair treatment
+ *                     - beard trim
+ *                     - facial cleansing
+ *                     - makeup
+ *                     - manicure
+ *                     - pedicure
+ *                     - eyebrows and lashes
+ *                     - waxing
+ *                     - relaxing massage
+ *                     - medical appointment
+ *                     - physiotherapy
+ *                     - therapy session
+ *                     - dentist appointment
+ *                     - nutritionist
+ *                     - gym workout
+ *                     - yoga class
+ *                     - pilates class
+ *                     - boxing class
+ *                     - swimming session
+ *                     - personal training
+ *                     - restaurant reservation
+ *                     - takeaway order
+ *                     - catering service
+ *                     - private dinner
+ *                     - wine tasting
+ *                     - tattoo
+ *                     - piercing
+ *                     - language class
+ *                     - music lesson
+ *                     - dance class
+ *                     - coaching session
+ *               schedule:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [day, open, close]
+ *                   properties:
+ *                     day:
+ *                       type: string
+ *                       enum:
+ *                         - monday
+ *                         - tuesday
+ *                         - wednesday
+ *                         - thursday
+ *                         - friday
+ *                         - saturday
+ *                         - sunday
+ *                     open:
+ *                       type: string
+ *                     close:
+ *                       type: string
+ *               isDeleted:
+ *                 type: boolean
  *     responses:
  *       200:
- *         description: Ubicación actualizada con éxito
+ *         description: Ubicació actualitzada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Location updated successfully
+ *                 location:
+ *                   $ref: '#/components/schemas/Location'
  *       400:
- *         description: Solicitud incorrecta
+ *         description: Format de dades incorrecte o tipus de servei invàlid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   oneOf:
+ *                     - example: Error with data format in schedule
+ *                     - example: ServiceTypes of location are not valid
  *       404:
- *         description: Ubicación no encontrada
+ *         description: La ubicació no existeix
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Location not found
  *       500:
- *         description: Error del servidor
+ *         description: Error intern del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to update location
  */
-
 router.put('/:id', updateLocationByIdHandler);
 
 /**
@@ -275,6 +380,176 @@ router.put('/:id', updateLocationByIdHandler);
  *         description: Internal Server Error
  */
 router.delete('/:id', deleteLocationByIdHandler);
+
+/**
+ * @swagger
+ * /location/serviceType/{serviceType}:
+ *   get:
+ *     summary: Obtener todas las ubicaciones por tipo de servicio
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: serviceType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - haircut
+ *             - hair coloring
+ *             - hair treatment
+ *             - beard trim
+ *             - facial cleansing
+ *             - makeup
+ *             - manicure
+ *             - pedicure
+ *             - eyebrows and lashes
+ *             - waxing
+ *             - relaxing massage
+ *             - medical appointment
+ *             - physiotherapy
+ *             - therapy session
+ *             - dentist appointment
+ *             - nutritionist
+ *             - gym workout
+ *             - yoga class
+ *             - pilates class
+ *             - boxing class
+ *             - swimming session
+ *             - personal training
+ *             - restaurant reservation
+ *             - takeaway order
+ *             - catering service
+ *             - private dinner
+ *             - wine tasting
+ *             - tattoo
+ *             - piercing
+ *             - language class
+ *             - music lesson
+ *             - dance class
+ *             - coaching session
+ *         description: Tipo de servicio por el cual filtrar las ubicaciones
+ *     responses:
+ *       200:
+ *         description: Lista de ubicaciones filtradas por tipo de servicio
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Location'
+ *       400:
+ *         description: Tipo de servicio inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid service type
+ *       500:
+ *         description: Error interno del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to fetch locations
+ */
+router.get('/serviceType/:serviceType', getAllLocationsByServiceTypeHandler);
+
+
+
+/**
+ * @swagger
+ * /location/nearby:
+ *   get:
+ *     summary: Buscar ubicaciones por tipo de servicio y distancia cercana
+ *     tags: [location]
+ *     parameters:
+ *       - in: query
+ *         name: lon
+ *         required: true
+ *         schema:
+ *           type: number
+ *           example: 0.6255
+ *         description: Longitud del punto de referencia
+ *       - in: query
+ *         name: lat
+ *         required: true
+ *         schema:
+ *           type: number
+ *           example: 41.6171
+ *         description: Latitud del punto de referencia
+ *       - in: query
+ *         name: distance
+ *         required: true
+ *         schema:
+ *           type: number
+ *           example: 5000
+ *         description: Distancia máxima en metros (por ejemplo, 5000 metros equivale a 5 km)
+ *       - in: query
+ *         name: serviceType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum:
+ *             - haircut
+ *             - hair coloring
+ *             - hair treatment
+ *             - beard trim
+ *             - facial cleansing
+ *             - makeup
+ *             - manicure
+ *             - pedicure
+ *             - eyebrows and lashes
+ *             - waxing
+ *             - relaxing massage
+ *             - medical appointment
+ *             - physiotherapy
+ *             - therapy session
+ *             - dentist appointment
+ *             - nutritionist
+ *             - gym workout
+ *             - yoga class
+ *             - pilates class
+ *             - boxing class
+ *             - swimming session
+ *             - personal training
+ *             - restaurant reservation
+ *             - takeaway order
+ *             - catering service
+ *             - private dinner
+ *             - wine tasting
+ *             - tattoo
+ *             - piercing
+ *             - language class
+ *             - music lesson
+ *             - dance class
+ *             - coaching session
+ *           example: haircut
+ *         description: Tipo de servicio a buscar
+ *     responses:
+ *       200:
+ *         description: Lista de ubicaciones cercanas encontradas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Location'
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/nearby', getLocationsNearHandler);
+
+
+
+
 
 /**
  * @swagger

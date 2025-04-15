@@ -3,8 +3,8 @@ import Location from './location.model';
 import { ILocation } from './location.model';
 import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { locationSchedule } from '../../enums/locationSchedule.enum';
-//CRUD
 
+//CRUD
 export async function createLocation(location: Partial<ILocation>): Promise<ILocation|Number> {
     //Mirem que els serviceTypes siguin vàlids
     if (location.serviceType && Array.isArray(location.serviceType)) {
@@ -66,6 +66,34 @@ export async function updateLocationById(id: string, data: Partial<ILocation>): 
     return await Location.findByIdAndUpdate(id, data, { new: true });
 }
 
+export async function getAllLocationsByServiceType(serviceType: locationServiceType): Promise<ILocation[]> {
+    const locations = await Location.find({ serviceType: serviceType });
+    return locations;
+}
+
+//Funció per obtenir ubicacions a prop d'un punt donat amb un tipus de servei específic
+export async function getLocationsNearByServiceType(
+    lat: number,
+    lon: number,
+    maxDistanceKm: number,
+    serviceType: locationServiceType
+  ): Promise<ILocation[]> {
+    // Convertimos distancia a metros porque Mongo espera metros
+    const maxDistanceMeters = maxDistanceKm * 1000;
+  
+    return await Location.find({
+      ubicacion: {
+        $nearSphere: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [lon, lat], // Mongo espera [long, lat]
+          },
+          $maxDistance: maxDistanceMeters
+        }
+      },
+      serviceType: serviceType
+    });
+}
 
 
 export async function getPlaces(lonmin: number, latmin: number, lonmax: number, latmax: number, query: string): Promise<PlaceQueryResult[]>{

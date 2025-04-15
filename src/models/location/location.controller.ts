@@ -1,7 +1,8 @@
 import e, { Request, Response } from "express";
 import { getPlaces, getRouteInfo } from "./location.services";
 import { ILocation } from "./location.model";
-import { createLocation, getLocationById, getAllLocations, deleteLocationById, updateLocationById} from "./location.services";
+import { createLocation, getLocationById, getAllLocations, deleteLocationById, updateLocationById, getAllLocationsByServiceType, getLocationsNearByServiceType} from "./location.services";
+import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { PlaceQueryResult, RouteQuertResult } from "./location.interfaces";
 
 //CRUD
@@ -79,9 +80,64 @@ export async function updateLocationByIdHandler(req: Request, res: Response): Pr
     } catch (error) {
         return res.status(500).json({ error: 'Failed to update location' });
     }
-}   
+}
 
+export async function getAllLocationsByServiceTypeHandler(req: Request, res: Response): Promise<Response> {
+    const { serviceType } = req.params;
+    try {
+        if (!Object.values(locationServiceType).includes(serviceType as locationServiceType)) {
+            return res.status(400).json({ error: 'Invalid service type' });
+        }
+        const locations = await getAllLocationsByServiceType(serviceType as locationServiceType);
+        return res.json(locations);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch locations' });
+    }
+}
 
+export async function getLocationsNearHandler(req: Request, res: Response): Promise<Response> {
+    console.log("✅ Entrando a getLocationsNearHandler");
+  const { lat, lon, distance, serviceType } = req.query;
+
+  // Validación básica
+  if (!lat || !lon || !distance || !serviceType) {
+    return res.status(400).json({ error: 'Missing query parameters: lat, lon, distance, or serviceType' });
+  }
+
+  // Validación de tipos
+  if (isNaN(parseFloat(lat as string)) || isNaN(parseFloat(lon as string)) || isNaN(parseFloat(distance as string))) {
+    return res.status(400).json({ error: 'lat, lon, and distance must be valid numbers' });
+  }
+
+  if (parseFloat(distance as string) <= 0) {
+    return res.status(400).json({ error: 'distance must be a positive number' });
+  }
+
+  // Validación del serviceType
+  if (!Object.values(locationServiceType).includes(serviceType as locationServiceType)) {
+    return res.status(400).json({ 
+      error: 'Invalid service type. Valid values are: ' + Object.values(locationServiceType).join(', ') 
+    });
+  }
+
+  try {
+    const results = await getLocationsNearByServiceType(
+      parseFloat(lat as string),
+      parseFloat(lon as string),
+      parseFloat(distance as string),
+      serviceType as locationServiceType
+    );
+
+    if (results.length === 0) {
+      return res.status(200).json({ message: 'No nearby locations found', results });
+    }
+
+    return res.json(results);
+  } catch (err) {
+    console.error('Error fetching nearby locations:', err);
+    return res.status(500).json({ error: 'Failed to fetch nearby locations' });
+  }
+}
 
 export async function getPlacesHandler(req: Request, res: Response){
     try {
