@@ -2,11 +2,21 @@ import jwt from 'jsonwebtoken';
 import { IUsuari } from '../models/users/user.model';
 import { UserRole } from '../types';
 import { ModelType } from '../types';
+import type { CookieOptions } from 'express';
 
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'access_secret_123';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh_secret_123';
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
+
+export const refreshTokenCookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  domain: process.env.NODE_ENV === 'production' ? '.yourdomain.com' : undefined,
+  path: '/'
+};
 
 export interface AccessTokenPayload {
     userId: string; // MongoId de User o Treballador (depenent del cas)
