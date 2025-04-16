@@ -6,6 +6,7 @@ export interface ICalendar {
     appointments: mongoose.Types.ObjectId[];
     invitees: mongoose.Types.ObjectId[];
     isDeleted: boolean;
+    defaultColour?: string;
     _id?: mongoose.Types.ObjectId;
 }
 
@@ -21,13 +22,18 @@ const CalendarSchema = new mongoose.Schema<ICalendar>({
     },
     appointments: [{ 
         type: mongoose.Schema.Types.ObjectId, // Usar Schema.Types.ObjectId
-        ref: 'Appointment'
+        ref: 'Appointment',
+        default: [],
     }],
     invitees: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: [],
     }],
+    defaultColour: {
+        type: String,
+        required: false,
+    },
     isDeleted: {
         type: Boolean,
         required: true,

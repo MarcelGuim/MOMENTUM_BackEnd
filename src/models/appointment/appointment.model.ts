@@ -6,6 +6,7 @@ export interface IAppointment {
     outTime: Date;
     place: string;
     title: string;
+    colour?: string;
     isDeleted: boolean;
 }
 
@@ -25,6 +26,10 @@ const AppointmentSchema = new Schema<IAppointment>({
     title: {
         type: String,
         required: true
+    },
+    colour: {
+        type: String,
+        required: false
     },
     isDeleted: {
         type: Boolean,
