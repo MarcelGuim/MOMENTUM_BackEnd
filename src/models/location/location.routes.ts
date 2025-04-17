@@ -464,7 +464,7 @@ router.get('/serviceType/:serviceType', getAllLocationsByServiceTypeHandler);
 
 /**
  * @swagger
- * /location/nearby:
+ * /location/search/nearby:
  *   get:
  *     summary: Buscar ubicaciones por tipo de servicio y distancia cercana
  *     tags: [location]
@@ -545,7 +545,7 @@ router.get('/serviceType/:serviceType', getAllLocationsByServiceTypeHandler);
  *       500:
  *         description: Error del servidor
  */
-router.get('/nearby', getLocationsNearHandler);
+router.get('/search/nearby', getLocationsNearHandler);
 
 
 
