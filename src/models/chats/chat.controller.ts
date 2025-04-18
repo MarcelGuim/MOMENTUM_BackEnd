@@ -5,9 +5,10 @@ import { ChatService } from './chat.services';
 const chatService = new ChatService();
 
 export async function sendMessage(req: Request, res: Response): Promise<Response> {
+    console.log("sending message to chat ");
     try {
         const { chatId, userFrom, message } = req.body;
-
+        console.log(chatId,userFrom,message)
         const updatedChat = await chatService.sendMessage(chatId, userFrom, message);
         if (updatedChat === true) return res.status(200).json({
             message: "Message sent successfully"
@@ -114,7 +115,7 @@ export async function createChat(req: Request, res: Response): Promise<Response>
 }
 
 export async function getLast20Messages(req: Request, res: Response): Promise<Response> {
-    console.log("1");
+    console.log("getting the last 20 messages of chat ");
     try {
         const { chatId } = req.params;
         console.log("Chat ID:", chatId); // Log the chatId for debugging

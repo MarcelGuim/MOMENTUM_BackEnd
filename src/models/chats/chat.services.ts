@@ -71,6 +71,7 @@ export class ChatService {
 
 
     async getLast20MessagesOfChat(chatId: string): Promise<IMessage[]> {
+        console.log(chatId);
         const chat = await Chat.findById(chatId);
         if (chat === null) throw new Error("Chat not found");
         return await chat.messages.slice(-20).reverse();
