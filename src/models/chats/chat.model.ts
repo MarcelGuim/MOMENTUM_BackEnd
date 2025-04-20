@@ -15,7 +15,6 @@ const ChatSchema = new Schema<IChat>({
         {
           from: { type: String, required: true },
           text: { type: String, required: true },
-          received: { type: Boolean, required: true },
           timestamp: { type: Date, required: true },
           _id: false
         }
@@ -32,7 +31,6 @@ export interface IChat{
 export interface IMessage {
     from: string;
     text: string;
-    received: boolean;
     timestamp: Date;
   }
 

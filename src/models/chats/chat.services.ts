@@ -33,7 +33,6 @@ export class ChatService {
         const messageToBeSaved: IMessage = {
             from: userFrom,
             text: message,
-            received: false,
             timestamp: new Date()
           };        
         const chat = await Chat.findByIdAndUpdate(chatId, {$push: { messages: messageToBeSaved } }, {new: true});
