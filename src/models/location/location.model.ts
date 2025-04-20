@@ -20,6 +20,8 @@ export interface ILocation extends Document {
     open: string;  // HH:mm
     close: string; // HH:mm
   }[];
+  business: mongoose.Types.ObjectId;
+  workers: mongoose.Types.ObjectId[];
   isDeleted: boolean;
 }
 //const LocationSchema: Schema = new Schema({
@@ -67,6 +69,18 @@ const LocationSchema = new mongoose.Schema<ILocation>({
       }
     ],
   },
+  business: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'Business'
+  },
+  workers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: 'Worker'
+    }
+  ],
   isDeleted: {
     type: Boolean,
     required: true,

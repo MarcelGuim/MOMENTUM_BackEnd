@@ -4,7 +4,6 @@ import { verifyRefresh, authenticate } from '../../middleware/auth.middleware';
 import {
   diguesHola,
   createWorker,
-  activateWorker,
   getWorkerById,
   updateWorkerById,
   hardDeleteWorkerById,
@@ -63,9 +62,9 @@ router.get("/Hola", diguesHola);
  *                 type: string
  *               password:
  *                 type: string
- *               empresa:
+ *               location:
  *                 type: string
- *                 description: ID de la empresa asociada
+ *                 description: ID de la location asociada
  *     responses:
  *       201:
  *         description: Trabajador creado
@@ -73,31 +72,6 @@ router.get("/Hola", diguesHola);
  *         description: Error al crear trabajador
  */
 router.post("", workerValidationRules(), workerValidator, createWorker);
-
-/**
- * @swagger
- * /workers/activate/{name}/{id}:
- *   get:
- *     summary: Activar cuenta de trabajador
- *     tags: [workers]
- *     parameters:
- *       - in: path
- *         name: name
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Cuenta activada
- *       404:
- *         description: Trabajador no encontrado
- */
-router.get("/activate/:name/:id", activateWorker);
 
 /**
  * @swagger

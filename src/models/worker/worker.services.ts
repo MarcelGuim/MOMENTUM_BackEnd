@@ -1,17 +1,15 @@
 // cal modificar certes parts per localitzacions varies i empreses, mirar imatge, sobretot pel tema serveis. Els que hi ha s'han de complir tot i això.
 
-import {IWorker} from './worker.model';
-import Worker from './worker.model';
+import Worker, {IWorker} from './worker.model';
 import Calendar from '../calendari/calendar.model';
 import Appointment from '../appointment/appointment.model';
-import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import e from 'express';
 import dotenv from 'dotenv';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
+import Location from '../location/location.model';
 
 dotenv.config();
-let activations: Partial<IWorker>[] = [];
 
 export class WorkerService {
     async loginWorker(identifier:string, password:string){
@@ -55,37 +53,17 @@ export class WorkerService {
     }
     // CRUD:
 
-    async createWorker(worker: Partial<IWorker>): Promise<Number> {
+    async createWorker(worker: Partial<IWorker>): Promise<IWorker | null> {
         const result = await Worker.findOne({$or: [{ mail: worker.mail }, { name: worker.name }]});
-        if (result) {
-          return 0;
-        } else {
-          console.log("Activations PRE: " + activations.length);
-          const id = crypto.randomBytes(20).toString('hex');
-          worker.activationId = id;
-          if(worker.mail === undefined){
-            return 1;
-          }
-          mailOptions.to=worker.mail;
-          console.log("Creating user at the service:", worker);
-          activations.push(worker);
-          const baseURL = process.env.NODE_ENV === 'production' 
-            ? process.env.APP_BASE_URL  // Use the URL from the environment for production
-            : 'http://localhost:8080';   // Fallback to localhost in development
-          mailOptions.text = `${baseURL}/users/activate/${worker.name}/${id}`;
-      
-          mailOptions.text = `${baseURL}/users/activate/${worker.name}/${id}`; 
-          transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-              console.log('Error sending the email:', error);
-              return 1;
-            } else {
-              console.log('Email sent: ' + info.response);
-              console.log("Activations POST: " + activations.length);
-            }
-          });
-          return 2;
-        }    
+        if(result) return null;
+        else
+        {
+          const newWorker = new Worker(worker);
+          const savedWorker = await newWorker.save();
+          console.log("Worker created successfully");
+          await Location.findByIdAndUpdate(worker.location, { $push: { workers: savedWorker._id } });
+          return savedWorker;
+        }
     }
     async getWorkerById(workerId: string): Promise<IWorker | null> {
         return await Worker.findById(workerId);
@@ -218,34 +196,4 @@ export class WorkerService {
         return await Worker.findByIdAndUpdate(userId, { isDeleted: false }, { new: true });
     }
 
-    async activateWorker(name: string, id: string): Promise<IWorker | null> {
-        console.log(activations.length);
-        let worker: Partial<IWorker> | void = activations.find((element) => {
-          if (element.name === name && element.activationId === id) {
-            return element;
-          }
-        });
-        if (worker === null || worker === undefined) {
-          return null;
-        }
-        worker.activationId = "";
-        const userSaved = new Worker(worker);
-        return await userSaved.save();
-    }
-
-
 }
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'momentumea2025@gmail.com', // La teva adreça de correu
-    pass: 'vlzf cjuw duop bnko'       // La teva contrasenya (potser hauries d'utilitzar un "App Password" si tens 2FA activat)
-  }
-});
-
-const mailOptions = {
-  from: 'momentumea2025@gmail.com',
-  to: '',
-  subject: 'New user created',
-  text: ''
-};

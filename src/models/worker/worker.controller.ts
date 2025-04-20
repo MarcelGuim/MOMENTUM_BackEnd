@@ -93,20 +93,15 @@ export const logout = async (req: Request, res: Response) => {
 export async function createWorker(req:Request, res:Response): Promise<Response> {
     console.log("Creating worker");
     try{
-        const{name,age,mail,password, empresa, role, } = req.body as IWorker
-        const newWorker: Partial<IWorker> = {name,age,mail,password, empresa, role, isDeleted:false};
-        console.log("Creating worker:", { name, age, mail, password });
+        const{name,age,mail,password, location, role, } = req.body as IWorker
+        const newWorker: Partial<IWorker> = {name,age,mail,password, location, role, isDeleted:false};
         const worker = await workerService.createWorker(newWorker);
-        if(worker===0){
-          return res.status(409).json({error: 'Worker already exists'});
-        }else if (worker === 1){
-          return res.status(404).json({error: 'Worker not created, there has been an error'});
+        if (!worker) {
+          console.log("Worker already exists:");
+          return res.status(409).json({ error: 'Worker already exists' });
         }
         else{
-          return res.status(200).json({
-            message:"Validate worker in the email"
-          });
-            
+          return res.status(201).json({ message: 'Worker  created', data: worker });
         }
     }
     catch(error){
@@ -233,23 +228,6 @@ export async function restoreWorkerById(req: Request, res: Response): Promise<Re
     }
   } catch (error) {
     return res.status(500).json({ error: 'Failed to restore worker' });
-  }
-}
-
-export async function activateWorker(req: Request, res: Response): Promise<Response> {
-  try {
-    const { name, id } = req.params;
-    const worker = await workerService.activateWorker(name, id);
-    if (worker) {
-      return res.status(200).json({
-        message: "Worker activated",
-        worker
-      });
-    } else {
-      return res.status(404).json({ error: 'Worker not found or invalid activation' });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: 'Failed to activate worker' });
   }
 }
 

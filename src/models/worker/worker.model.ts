@@ -9,7 +9,7 @@ export interface IWorker {
     age: number;
     mail: string;
     role: WorkerRole;
-    empresa: mongoose.Types.ObjectId[];
+    location: mongoose.Types.ObjectId[];
     password: string;
     isDeleted: boolean;
     activationId?: string;
@@ -49,9 +49,9 @@ const WorkerSchema = new mongoose.Schema<IWorker>({
         enum: Object.values(WorkerRole), 
         default: WorkerRole.USER,
       },
-    empresa: [{ 
-        type: mongoose.Schema.Types.ObjectId, // Usar Schema.Types.ObjectId
-        ref: 'Empresa',
+      location: [{ 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Location',
         }],
     activationId: {
         type: String,

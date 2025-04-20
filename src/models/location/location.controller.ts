@@ -1,17 +1,17 @@
 import e, { Request, Response } from "express";
-import { getPlaces, getRouteInfo } from "./location.services";
 import { ILocation } from "./location.model";
-import { createLocation, getLocationById, getAllLocations, deleteLocationById, updateLocationById, getAllLocationsByServiceType, getLocationsNearByServiceType} from "./location.services";
+import { LocationService } from "./location.services";
 import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { PlaceQueryResult, RouteQuertResult } from "./location.interfaces";
 
 //CRUD
+const locationService = new LocationService();
 
 export async function createLocationHandler(req:Request, res:Response): Promise<Response> {
     try{
         console.log("Creating location");
         const locationreveived: Partial<ILocation> = req.body;
-        const location = await createLocation(locationreveived);
+        const location = await locationService.createLocation(locationreveived);
         
         if (location === -1) {
             return res.status(409).json({ message: 'Location already exists' });
@@ -38,7 +38,7 @@ export async function createLocationHandler(req:Request, res:Response): Promise<
 export async function getLocationByIdHandler(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     try {
-        const location = await getLocationById(id);
+        const location = await locationService.getLocationById(id);
         if (!location) {
             return res.status(404).json({ error: 'Location not found' });
         }
@@ -50,7 +50,7 @@ export async function getLocationByIdHandler(req: Request, res: Response): Promi
 
 export async function getAllLocationsHandler(req: Request, res: Response): Promise<Response> {
     try {
-        const locations = await getAllLocations();
+        const locations = await locationService.getAllLocations();
         return res.json(locations);
     } catch (error) {
         return res.status(500).json({ error: 'Failed to fetch locations' });
@@ -59,7 +59,7 @@ export async function getAllLocationsHandler(req: Request, res: Response): Promi
 export async function deleteLocationByIdHandler(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
     try {
-        const location = await deleteLocationById(id);
+        const location = await locationService.deleteLocationById(id);
         if (!location) {
             return res.status(404).json({ error: 'Location not found' });
         }
@@ -72,7 +72,7 @@ export async function updateLocationByIdHandler(req: Request, res: Response): Pr
     const { id } = req.params;
     const data = req.body as Partial<ILocation>;
     try {
-        const location = await updateLocationById(id, data);
+        const location = await locationService.updateLocationById(id, data);
         if (!location) {
             return res.status(404).json({ error: 'Location not found' });
         }
@@ -88,7 +88,7 @@ export async function getAllLocationsByServiceTypeHandler(req: Request, res: Res
         if (!Object.values(locationServiceType).includes(serviceType as locationServiceType)) {
             return res.status(400).json({ error: 'Invalid service type' });
         }
-        const locations = await getAllLocationsByServiceType(serviceType as locationServiceType);
+        const locations = await locationService.getAllLocationsByServiceType(serviceType as locationServiceType);
         return res.json(locations);
     } catch (error) {
         return res.status(500).json({ error: 'Failed to fetch locations' });
@@ -121,7 +121,7 @@ export async function getLocationsNearHandler(req: Request, res: Response): Prom
   }
 
   try {
-    const results = await getLocationsNearByServiceType(
+    const results = await locationService.getLocationsNearByServiceType(
       parseFloat(lat as string),
       parseFloat(lon as string),
       parseFloat(distance as string),
@@ -139,7 +139,7 @@ export async function getLocationsNearHandler(req: Request, res: Response): Prom
   }
 }
 
-export async function getPlacesHandler(req: Request, res: Response){
+export async function getPlacesHandler(req: Request, res: Response): Promise<Response> {
     try {
         const { lonmin, latmin, lonmax, latmax, query } = req.body;
         const lonmin_f = parseFloat(lonmin);
@@ -151,7 +151,7 @@ export async function getPlacesHandler(req: Request, res: Response){
             return res.status(400);
         }
 
-        const places = await getPlaces(lonmin_f, latmin_f, lonmax_f, latmax_f, query);
+        const places = await locationService.getPlaces(lonmin_f, latmin_f, lonmax_f, latmax_f, query);
         return res.json(places);
     } catch (error) {
         console.error(error)
@@ -159,7 +159,7 @@ export async function getPlacesHandler(req: Request, res: Response){
     }
 }
 
-export async function getRouteHandler(req: Request, res: Response){
+export async function getRouteHandler(req: Request, res: Response): Promise<Response> {
     try {
         const {lon1, lat1, lon2, lat2, mode} = req.body;
         const lon1_f = parseFloat(lon1);
@@ -171,10 +171,49 @@ export async function getRouteHandler(req: Request, res: Response){
             return res.status(400);
         }
 
-        const route = await getRouteInfo(lon1_f, lat1_f, lon2_f, lat2_f, mode);
+        const route = await locationService.getRouteInfo(lon1_f, lat1_f, lon2_f, lat2_f, mode);
         return res.json(route);
     } catch (error) {
         console.error(error);
         return res.status(500).json(error);
+    }
+}
+
+export async function getWorkersOfLocation(req: Request, res: Response): Promise<Response> {
+    try {
+        const { id } = req.params;
+        const workers = await locationService.getWorkersOfLocation(id);
+        if (!workers) {
+            return res.status(404).json({ error: 'Workers of location not found' });
+        }
+        return res.status(201).json(workers);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch workers' });
+    }
+}
+
+export async function getLocationByNameHandler(req: Request, res: Response): Promise<Response> {
+    try {
+        const { name } = req.params;
+        const location = await locationService.getLocationByName(name);
+        if (!location) {
+            return res.status(404).json({ error: 'Location not found' });
+        }
+        return res.json(location);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch location' });
+    }
+}
+
+export async function getBussinessIdFromLocationId(req: Request, res: Response): Promise<Response> {
+    try {
+        const { id } = req.params;
+        const businessId = await locationService.getBusinessIdFromLocationId(id);
+        if (!businessId) {
+            return res.status(404).json({ error: 'Business ID not found' });
+        }
+        return res.json(businessId);
+    } catch (error) {
+        return res.status(500).json({ error: 'Failed to fetch business ID' });
     }
 }

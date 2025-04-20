@@ -1,5 +1,16 @@
 import { Router } from "express";
-import { createLocationHandler, getLocationByIdHandler, getAllLocationsHandler, updateLocationByIdHandler, deleteLocationByIdHandler, getAllLocationsByServiceTypeHandler, getLocationsNearHandler, getPlacesHandler, getRouteHandler } from "./location.controller";
+import { createLocationHandler, 
+    getLocationByIdHandler, 
+    getAllLocationsHandler, 
+    updateLocationByIdHandler, 
+    deleteLocationByIdHandler, 
+    getAllLocationsByServiceTypeHandler, 
+    getLocationsNearHandler, 
+    getPlacesHandler, 
+    getRouteHandler,
+    getBussinessIdFromLocationId,
+    getLocationByNameHandler,
+    getWorkersOfLocation } from "./location.controller";
 
 const router = Router();
 
@@ -23,6 +34,8 @@ const router = Router();
  *               - ubicacion
  *               - serviceType
  *               - schedule
+ *               - business
+ *               - workers
  *             properties:
  *               nombre:
  *                 type: string
@@ -115,6 +128,14 @@ const router = Router();
  *                     close:
  *                       type: string
  *                       example: "20:00"
+ *               business:
+ *                 type: string
+ *                 example: "businessId123"
+ *               workers:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["worker1Id", "Worker2Id"]
  *     responses:
  *       201:
  *         description: Ubicació creada correctament
@@ -617,5 +638,74 @@ router.post('/search', getPlacesHandler);
  *         description: Internal Server Error
  */
 router.post('/route', getRouteHandler);
+
+/**
+ * @swagger
+ * /location/{id}/workers:
+ *   get:
+ *     summary: Obté els treballadors d'una ubicació
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de la ubicació
+ *     responses:
+ *       200:
+ *         description: Llista de treballadors
+ *       404:
+ *         description: No s'han trobat treballadors
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/:id/workers', getWorkersOfLocation);
+
+/**
+ * @swagger
+ * /location/name/{name}:
+ *   get:
+ *     summary: Obté una ubicació pel seu nom
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Nom de la ubicació
+ *     responses:
+ *       200:
+ *         description: Dades de la ubicació
+ *       404:
+ *         description: Ubicació no trobada
+ *       500:
+ *         description: Error del servidor
+ */
+router.get('/name/:name', getLocationByNameHandler);
+
+/**
+ * @swagger
+ * /location/{id}/business:
+ *   get:
+ *     summary: Obté l'ID del negoci associat a una ubicació
+ *     tags: [location]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Location Id
+ *     responses:
+ *       200:
+ *         description: ID found
+ *       404:
+ *         description: Business not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/:id/business', getBussinessIdFromLocationId);
 
 export default router;

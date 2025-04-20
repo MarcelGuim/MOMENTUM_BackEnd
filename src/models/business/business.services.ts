@@ -2,8 +2,9 @@ import Business, { IBusiness } from "./business.model";
 import Location, { ILocation } from "../location/location.model";
 import mongoose from "mongoose";
 import { locationServiceType } from '../../enums/locationServiceType.enum';
-import { createLocation } from "../location/location.services";
+import { LocationService } from "../location/location.services";
 
+const locationService = new LocationService();
 export class BusinessService{
     async createBusiness(data: Partial<IBusiness>): Promise<IBusiness | null | number> {
         //Verificar que el nom del business no existeix
@@ -11,8 +12,9 @@ export class BusinessService{
         if (existingBusiness !== null) {
             return -1; 
         }
- 
-        if (Array.isArray(data.location) && data.location.length > 0) {
+        const business = new Business(data);
+        return await business.save();
+/*         if (Array.isArray(data.location) && data.location.length > 0) {
            
             //Verificar si el format dels ID de locations és vàlid
             const invalidFormatIds = data.location.filter(
@@ -41,7 +43,7 @@ export class BusinessService{
         else {
             // Retorna null si no s'han passat locations
             return null; 
-        }
+        } */
     }
    
     //Funció que retorna tots els Business amb les corresponents locations
@@ -130,7 +132,7 @@ export class BusinessService{
             return null; // Retorna null si no es troba el business
         }
 
-        const location = await createLocation(locationData);
+        const location = await locationService.createLocation(locationData);
 
         if (location === -1) {
             return -2; // Ja existeix (nom o adreça duplicada)
