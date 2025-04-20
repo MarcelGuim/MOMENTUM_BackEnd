@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { userValidationRules, userValidator } from '../../middleware/user.validation';
+import { changePasswordValidator } from '../../middleware/changePasswordValidation';
 import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
 
 const router = Router();
@@ -15,6 +16,7 @@ import {
   softDeleteUsersByIds,
   getUsersPaginated, 
   activateUser,
+  changePassword
 } from './user.controller';
 
 /**
@@ -109,6 +111,63 @@ router.get("/activate/:name/:id", activateUser);
  *         description: Failed to get user
  */
 router.get("/:userId",getUserById);
+
+/**
+ * @swagger
+ * /users/{userId}/password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user whose password is being changed
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 description: The user’s current password
+ *               newPassword:
+ *                 type: string
+ *                 description: The new password (min. 6 characters)
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *           example:
+ *             currentPassword: oldPass123
+ *             newPassword: newPass456
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Current password is incorrect
+ *       404:
+ *         description: User not found
+ *       422:
+ *         description: Validation error (e.g., missing fields or too short newPassword)
+ *       500:
+ *         description: Server error
+ */
+router.put("/:userId/password", verifyToken, requireOwnership('userId'), changePasswordValidator, changePassword );
 
 /**
  * @swagger
@@ -272,5 +331,7 @@ router.patch("/:userId/restore", restoreUserById);
  *         description: Server error
  */
 router.get("",getUsersPaginated);
+
+
 
 export default router;
