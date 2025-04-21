@@ -83,6 +83,7 @@ export async function updateLocationByIdHandler(req: Request, res: Response): Pr
 }
 
 export async function getAllLocationsByServiceTypeHandler(req: Request, res: Response): Promise<Response> {
+    console.log("getting all locations of a service type")
     const { serviceType } = req.params;
     try {
         if (!Object.values(locationServiceType).includes(serviceType as locationServiceType)) {

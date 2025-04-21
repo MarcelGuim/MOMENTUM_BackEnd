@@ -481,8 +481,6 @@ router.delete('/:id', deleteLocationByIdHandler);
  */
 router.get('/serviceType/:serviceType', getAllLocationsByServiceTypeHandler);
 
-
-
 /**
  * @swagger
  * /location/search/nearby:
@@ -567,10 +565,6 @@ router.get('/serviceType/:serviceType', getAllLocationsByServiceTypeHandler);
  *         description: Error del servidor
  */
 router.get('/search/nearby', getLocationsNearHandler);
-
-
-
-
 
 /**
  * @swagger
