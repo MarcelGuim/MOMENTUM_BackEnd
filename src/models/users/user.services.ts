@@ -1,40 +1,241 @@
 import {IUsuari} from './user.model';
 import User from './user.model';
+import Calendar from '../calendari/calendar.model';
+import Appointment from '../appointment/appointment.model';
+import nodemailer from 'nodemailer';
+import * as crypto from "node:crypto";
+import e from 'express';
+import dotenv from 'dotenv';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
+
+dotenv.config();
+let activations: Partial<IUsuari>[] = [];
 
 export class UserService {
-  async createUser(data: Partial<IUsuari>): Promise<IUsuari> {
-    const user = new User(data);
-    console.log("Creating user at the service:", user);
-    return await user.save();
-  }
-  async getUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOne({name});
-  }  
-
-  async deleteUserByName(name: string): Promise<IUsuari | null> {
-    return await User.findOneAndDelete({name});
-  }
-
-  async updateUserByName(name: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
-    console.log("Updating user at the service:", data, name);
-    return await User.findOneAndUpdate({ name }, data, { new: true });
-  }
-
-  async loginUser(name:string, password:string): Promise<boolean | null>{
-    const user2: Partial<IUsuari> | null = await User.findOne({name: name}).select('name password');
-    console.log("user2 is: " +user2);
-    if(user2 === null){
-        console.log("User not found")
-        return null;
+  // PART AUTH
+  async loginUser(identifier:string, password:string){
+    const isEmail = identifier.includes('@');
+    const query = isEmail ? { mail: identifier } : { name: identifier };
+    const user = await User.findOne(query).select('+password');
+    if (!user) {
+      throw new Error('User not found');
     }
-    else if(user2.password === password){
-        console.log("Correct user and password")
-        return true;
+    const isMatch : boolean = await user.isValidPassword(password);
+    if(!isMatch){
+      throw new Error('Invalid password');
     }
-    else{
-        console.log("The password was incorrect")
-        return false;
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    
+    const userWithoutPassword = user.toObject() as Partial<IUsuari>;
+    delete userWithoutPassword.password;
+
+    return {
+      user: userWithoutPassword,
+      accessToken,
+      refreshToken
+    };
+  }
+
+  async refreshTokens(userId: string) {
+    // 1. Fetch user (automatically excludes soft-deleted via hook)
+    const user = await User.findById(userId)
+      .select('+mail +isDeleted'); // Explicitly check deletion status
+  
+    // 2. Validate user state
+    if (!user || user.isDeleted) {
+      throw new Error('Invalid or inactive user');
     }
+  
+    // 3. Generate tokens
+    return {
+      accessToken: generateAccessToken(user)
+    };
+  }
+
+
+  // PART CRUD
+  async createUser(user: Partial<IUsuari>): Promise<Number> {
+    const result = await User.findOne({$or: [{ mail: user.mail }, { name: user.name }]});
+    if (result) {
+      return 0;
+    } else {
+      console.log("Activations PRE: " + activations.length);
+      const id = crypto.randomBytes(20).toString('hex');
+      user.activationId = id;
+      if(user.mail === undefined){
+        return 1;
+      }
+      mailOptions.to=user.mail;
+      console.log("Creating user at the service:", user);
+      activations.push(user);
+      const baseURL = process.env.NODE_ENV === 'production' 
+        ? process.env.APP_BASE_URL  // Use the URL from the environment for production
+        : 'http://localhost:8080';   // Fallback to localhost in development
+      mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`;
+  
+      mailOptions.text = `${baseURL}/users/activate/${user.name}/${id}`; 
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error sending the email:', error);
+          return 1;
+        } else {
+          console.log('Email sent: ' + info.response);
+          console.log("Activations POST: " + activations.length);
+        }
+      });
+      return 2;
+    }
+    
+  }
+
+  async getUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findById(userId);
+  }
+
+  async updateUserById(userId: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
+    console.log("Updating user at the service:", data, userId);
+    return await User.findByIdAndUpdate(userId, data, { new: true });
+
+  }
+
+  async getUsersPaginated(page = 1, limit = 5, getDeleted = false): Promise<{ users: IUsuari[]; totalPages: number; totalUsers: number, currentPage: number } | null> {
+    const users = await User.find(getDeleted ? {} : {isDeleted: false})
+      .sort({ name: 1 })
+      .skip(page * limit)
+      .limit(limit);
+    return {
+      users,
+      currentPage: page,
+      totalUsers: await User.countDocuments(),
+      totalPages: Math.ceil(await User.countDocuments() / limit),
+    };
+  }
+
+
+  async hardDeleteUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findByIdAndDelete(userId);
+  }
+
+  async softDeleteUserById(userId: string): Promise<IUsuari | null> {
+    // 1. Soft delete the user
+    const deletedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { isDeleted: true } },
+      { new: true }
+    );
+  
+    if (!deletedUser) return null;
+  
+    // 2. Find all calendars owned by this user
+    const calendars = await Calendar.find(
+      { owner: userId },
+      { appointments: 1 } // Only get the appointments array
+    );
+  
+    // 3. Extract all appointment IDs from these calendars
+    const appointmentIds = calendars.flatMap(c => c.appointments);
+  
+    // 4. Execute all cascade operations
+    await Promise.all([
+      // Soft delete all user's calendars
+      Calendar.updateMany(
+        { owner: userId },
+        { $set: { isDeleted: true } }
+      ),
+      
+      // Soft delete all appointments (if any exist)
+      ...(appointmentIds.length > 0 ? [
+        Appointment.updateMany(
+          { _id: { $in: appointmentIds } },
+          { $set: { isDeleted: true } }
+        )
+      ] : []),
+      
+      // Remove user from any invitees lists
+      Calendar.updateMany(
+        { invitees: userId },
+        { $pull: { invitees: userId } }
+      )
+    ]);
+  
+    return deletedUser;
+  }
+
+  async softDeleteUsersByIds(userIds: string[]): Promise<number | null> {
+    // 1. First soft delete the users
+    const userResult = await User.updateMany(
+      { _id: { $in: userIds } },
+      { $set: { isDeleted: true } }
+    );
+  
+    if (userResult.modifiedCount > 0) {
+      // 2. Find all calendars owned by these users to get appointment references
+      const calendars = await Calendar.find(
+        { owner: { $in: userIds } },
+        { appointments: 1, _id: 0 } // Only get appointments array
+      );
+  
+      // Extract all appointment IDs from these calendars
+      const appointmentIds = calendars.flatMap(c => c.appointments);
+  
+      // 3. Execute all cascade operations in parallel
+      await Promise.all([
+        // Soft delete all calendars owned by these users
+        Calendar.updateMany(
+          { owner: { $in: userIds } },
+          { $set: { isDeleted: true } }
+        ),   
+        // Soft delete all appointments from those calendars (if any exist)
+        ...(appointmentIds.length > 0 ? [
+          Appointment.updateMany(
+            { _id: { $in: appointmentIds } },
+            { $set: { isDeleted: true } }
+          )
+        ] : []),
+        
+        // Remove users from any invitees lists
+        Calendar.updateMany(
+          { invitees: { $in: userIds } },
+          { $pull: { invitees: { $in: userIds } } }
+        )
+      ]);
+    }
+  
+    return userResult.modifiedCount;
+  }
+
+  async restoreUserById(userId: string): Promise<IUsuari | null> {
+    return await User.findByIdAndUpdate(userId, { isDeleted: false }, { new: true });
+  }
+
+  async activateUser(name: string, id: string): Promise<IUsuari | null> {
+    console.log(activations.length);
+    let user: Partial<IUsuari> | void = activations.find((element) => {
+      if (element.name === name && element.activationId === id) {
+        return element;
+      }
+    });
+    if (user === null || user === undefined) {
+      return null;
+    }
+    user.activationId = "";
+    const userSaved = new User(user);
+    return await userSaved.save();
   }
 }
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'momentumea2025@gmail.com', // La teva adreça de correu
+    pass: 'vlzf cjuw duop bnko'       // La teva contrasenya (potser hauries d'utilitzar un "App Password" si tens 2FA activat)
+  }
+});
+
+const mailOptions = {
+  from: 'momentumea2025@gmail.com',
+  to: '',
+  subject: 'New user created',
+  text: ''
+};
