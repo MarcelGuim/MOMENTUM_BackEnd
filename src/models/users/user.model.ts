@@ -1,22 +1,9 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
-export interface IUsuari {
-    _id?: mongoose.ObjectId;
-    name: string;
-    age: number;
-    mail: string;
-    password: string;
-    isDeleted: boolean;
-    activationId?: string;
-    isValidPassword: (password: string) => Promise<boolean>;
-}
 
 const UserSchema = new mongoose.Schema<IUsuari>({
     name: { 
         type: String, 
-        required: true,
-        unique: true,
-        index: true 
+        required: true 
     },
     age: { 
         type: Number, 
@@ -24,47 +11,29 @@ const UserSchema = new mongoose.Schema<IUsuari>({
     },
     mail: { 
         type: String, 
-        required: true,
-        unique: true, 
-        index: true 
+        required: true, 
+        //unique: true 
     },
     password: { 
         type: String, 
-        required: true,
-        select: false  
+        required: true 
     },
-    isDeleted: {
-        type: Boolean,
-        required: true, 
-        default: false
-    },
-    activationId: {
-        type: String,
-        sparse: true ,
-        select: false
+    available:{
+        type:Boolean,
+        required:true,
+        default: true
     }
 });
 
-// UserSchema.pre('find', function() {
-//   this.where({ isDeleted: false });
-// });
-
-UserSchema.pre('findOne', function() {
-  this.where({ isDeleted: false });
-});
-
-UserSchema.pre('save',async function(next) {
-    const hashedPassword= await bcrypt.hash(this.password, bcrypt.genSaltSync(8));
-    this.password = hashedPassword;
-    next();
-});
-
-UserSchema.method('isValidPassword',async function(password: string): Promise<boolean> {
-    const isValid =  await bcrypt.compare(password, this.password);
-    return isValid;
-});
+export interface IUsuari{
+    _id?:mongoose.ObjectId
+    name: string;
+    age: number;
+    mail: string;
+    password: string;
+    available:boolean;
+}
 
 
 const User = mongoose.model<IUsuari>('User', UserSchema);
-
 export default User;
