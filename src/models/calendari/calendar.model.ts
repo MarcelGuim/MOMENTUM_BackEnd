@@ -1,49 +1,19 @@
 import mongoose from "mongoose";
-
-export interface ICalendar {
-    owner: mongoose.Types.ObjectId;
-    calendarName: string;
-    appointments: mongoose.Types.ObjectId[];
-    invitees: mongoose.Types.ObjectId[];
-    isDeleted: boolean;
-    _id?: mongoose.Types.ObjectId;
-}
+import Appointment  from '../appointment/appointment.model';
 
 const CalendarSchema = new mongoose.Schema<ICalendar>({
-    owner: { 
-        type: mongoose.Schema.Types.ObjectId, // Usar Schema.Types.ObjectId
-        required: true,
-        ref: 'User'
+    user:{ 
+        type: mongoose.Types.ObjectId,
+        required:true
     },
-    calendarName: {
-        type: String,
-        required: true,
-    },
-    appointments: [{ 
-        type: mongoose.Schema.Types.ObjectId, // Usar Schema.Types.ObjectId
-        ref: 'Appointment'
-    }],
-    invitees: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: [],
-    }],
-    isDeleted: {
-        type: Boolean,
-        required: true,
-        default: false
-    }
+    appointments: [{ type: mongoose.Types.ObjectId, ref: Appointment }]
 });
 
+export interface ICalendar{
+    user: mongoose.ObjectId;
+    appointments: mongoose.ObjectId[];
+}
 
-// Hooks
-CalendarSchema.pre('find', function() {
-    this.where({ isDeleted: false });
-});
-
-CalendarSchema.pre('findOne', function() {
-    this.where({ isDeleted: false });
-});
 
 const Calendar = mongoose.model<ICalendar>('Calendar', CalendarSchema);
 export default Calendar;

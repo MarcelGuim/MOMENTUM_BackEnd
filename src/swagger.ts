@@ -1,9 +1,7 @@
+
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const options = {
     definition: {
@@ -15,17 +13,10 @@ const options = {
         },
         servers: [
             {
-                url: process.env.APP_BASE_URL || 'http://localhost:8080',
+                url: 'http://localhost:8080',
             },
         ],
         components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: 'http',
-                    scheme: 'bearer',
-                    bearerFormat: 'JWT',
-                }
-            },
             schemas: {
                 Chat: {
                     type: 'object',
@@ -47,7 +38,7 @@ const options = {
                 },
                 User: {
                     type: 'object',
-                    required: ['name', 'age', 'mail', 'password'],
+                    required: ['name', 'age', 'mail','password'],
                     properties: {
                         name: {
                             type: 'string',
@@ -61,203 +52,18 @@ const options = {
                         password: {
                             type: 'string',
                         },
-                        isDeleted: {
-                            type: 'boolean',
-                            default: false,
-                            readOnly: true, // Mark as read-only
-                        },
-                    },
-                },
-                Calendar: {
-                    type: 'object',
-                    required: ['owner', 'name', 'appointments', 'invitees'], // Removed `isDeleted` from required
-                    properties: {
-                        owner: {
-                            type: 'string',
-                            description: 'ID del usuario asociado',
-                        },
-                        name: {
-                            type: 'string',
-                            description: 'Displayed name of the calendar',
-                        },
-                        appointments: {
-                            type: 'array',
-                            items: {
-                                type: 'string',
-                            },
-                            description: 'IDs de las citas',
-                        },
-                        invitees: {
-                            type: 'array',
-                            items: {
-                                type: 'string',
-                                description: 'IDs dels usuaris amb accés al calendari'
-                            }
-                        },
-                        isDeleted: {
-                            type: 'boolean',
-                            default: false,
-                            readOnly: true, // Mark as read-only
-                        },
-                    },
-                },
-                Appointment: {
-                    type: 'object',
-                    required: ['inTime', 'outTime', 'place', 'title'], // Removed `isDeleted` from required
-                    properties: {
-                        inTime: {
-                            type: 'string',
-                            format: 'date-time',
-                            description: 'Fecha y hora de inicio',
-                        },
-                        outTime: {
-                            type: 'string',
-                            format: 'date-time',
-                            description: 'Fecha y hora de fin',
-                        },
-                        place: {
-                            type: 'string',
-                            description: 'Lugar de la cita',
-                        },
-                        title: {
-                            type: 'string',
-                            description: 'Título de la cita',
-                        },
-                        isDeleted: {
-                            type: 'boolean',
-                            default: false,
-                            readOnly: true, // Mark as read-only
-                            description: 'Indica si la cita está marcada como eliminada',
-                        },
-                    },
-                },
-                Business: {
-                    type: 'object',
-                    required: ['name', 'location'],
-                    properties: {
-                      name: {
-                        type: 'string',
-                        example: 'Anytime fitness',
-                      },
-                      location: {
-                        type: 'array',
-                        items: {
-                          type: 'string',
-                          description: 'IDs dels locations associats al negoci',
-                        },
-                        example: ['661f5c0f7d4f1e3f8e8b4567', '661f5c0f7d4f1e3f8e8b4568'],
-                      },
-                      isDeleted: {
-                        type: 'boolean',
-                        default: false,
-                        readOnly: true, // Mark as read-only
-                        description: 'Indica si el negoci está marcat com eliminat',
-                      },
-                    },
-                },
-                Location: {
-                    type: 'object',
-                    required: ['nombre', 'address', 'phone', 'rating', 'ubicacion', 'serviceType', 'schedule'],
-                    properties: {
-                      _id: {
-                        type: 'string',
-                        example: '6620162b9b1c1c6a0d5f739e',
-                      },
-                      nombre: {
-                        type: 'string',
-                        example: 'Saló de Bellesa El Mirall',
-                      },
-                      address: {
-                        type: 'string',
-                        example: 'Carrer dels Pins, 42, Girona',
-                      },
-                      phone: {
-                        type: 'string',
-                        example: '+34 612 345 678',
-                      },
-                      rating: {
-                        type: 'number',
-                        example: 4.7,
-                      },
-                      ubicacion: {
-                        type: 'object',
-                        required: ['type', 'coordinates'],
-                        properties: {
-                          type: {
-                            type: 'string',
-                            enum: ['Point'],
-                            example: 'Point',
-                          },
-                          coordinates: {
-                            type: 'array',
-                            minItems: 2,
-                            maxItems: 2,
-                            items: {
-                              type: 'number',
-                            },
-                            example: [2.1744, 41.4036],
-                          },
-                        },
-                      },
-                      serviceType: {
-                        type: 'array',
-                        items: {
-                          type: 'string',
-                          description: 'Un dels valors definits a locationServiceType (ex: "massage", "tattoo", "gym workout", etc.)',
-                        },
-                        example: ['massage', 'gym workout'],
-                      },
-                      schedule: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          required: ['day', 'open', 'close'],
-                          properties: {
-                            day: {
-                              type: 'string',
-                              description: 'Un dels dies de la setmana: monday, tuesday, etc.',
-                              example: 'monday',
-                            },
-                            open: {
-                              type: 'string',
-                              example: '09:00',
-                            },
-                            close: {
-                              type: 'string',
-                              example: '20:00',
-                            },
-                          },
-                        },
-                      },
-                      isDeleted: {
-                        type: 'boolean',
-                        default: false,
-                        readOnly: true,
-                        description: 'Indica si la ubicació està marcada com eliminada',
-                      },
                     },
                 },
             },
         },
-        security: [{
-            bearerAuth: []
-        }]
     },
-    apis: ['./src/**/*.ts'], // Busca en todos los archivos TypeScript en la carpeta src
+    //apis: ['./models/chats/chat.routes.ts', './models/users/user.routes.ts'], // Archivos donde están definidos los endpoints
+    apis: ['./src/**/*.ts']
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 
 export function setupSwagger(app: Application): void {
     console.log('Setting up Swagger');
-
-    const swaggerOptions = {
-        swaggerOptions: {
-            requestInterceptor: (req: any, res: Response) => {  // Explicitly define the types of req and res
-                req.credentials = 'include'; // Attach credentials (for example, cookies) to the request if needed
-                return req;
-            }
-        }
-    };
     app.use('/Swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }

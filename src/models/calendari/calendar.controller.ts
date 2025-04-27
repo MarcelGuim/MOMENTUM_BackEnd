@@ -5,105 +5,32 @@ import {IAppointment} from '../appointment/appointment.model'
 
 const calendarService = new CalendarService();
 
-export async function createCalendar(req: Request, res: Response): Promise<Response> {
-    try {
+export async function createCalendar(req:Request, res:Response): Promise<Response>{
+    try{
         console.log("Creating calendar");
-        const calendar: Partial<ICalendar> = req.body;
+        const calendar:Partial<ICalendar> = req.body;
         const answer = await calendarService.createCalendar(calendar);
-
-        if (answer === null) {
-            console.log("User not found or invalid calendar name");
+        if(!answer){
+            console.log("User not found");
             return res.status(404).json({
-                message: "User not found or invalid calendar name"
-            });
-        } else {
-            console.log("Calendar created");
-            return res.status(201).json({
-                message: "Calendar created",
-                calendar: answer
+                message:"User not found"
             });
         }
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
+        else if (answer){
+            console.log("The user already has a calendar");
+            return res.status(405).json({
+                message:"The user already has a calendar"
+            });
+        }
+        else{
+            console.log("Calendar created");
+            return res.status(201).json({
+                message:"Calendar created",
+                answer
+            });
+        }
     }
-}
-
-export async function getAllAppointments(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding all appointments")
-        const {calendarId } = req.params;
-
-        const answer = await calendarService.getAllAppointments(calendarId);
-
-        return res.status(200).json({
-            message: "Appointments obtained",
-            appointments: answer,
-        })
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
-    }
-}
-
-export async function getAppointmentsBetweenDates(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding appointments between two dates");
-        const { calendarId, d1, d2 } = req.params;
-        const date1 = new Date(d1);
-        const date2 = new Date(d2);
-
-        const answer = await calendarService.getAppointmentsBetweenDates(date1, date2, calendarId);
-        return res.status(200).json({
-            message: "Appointments obtained",
-            appointments: answer,
-        })
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
-    }
-}
-
-export async function getAppointmentsForADay(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding appointments for a day");
-        const { calendarId, date } = req.params;
-        const date1 = new Date(date);
-
-        // Llamar al servicio
-        const answer = await calendarService.getAppointmentsForADay(date1, calendarId);
-
-        console.log("Appointments obtained");
-        return res.status(200).json({
-            message: "Appointments obtained",
-            appointments: answer
-        });
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
-    }
-}
-
-export async function getCalendarsOfUser(req:Request, res:Response): Promise<Response>{
-    try{
-        console.log("Finding the calendars of a user");
-        const { userId } = req.params;
-        const answer = await calendarService.getCalendarsOfUser(userId);
-
-        console.log("Calendar obtained");
-        return res.status(200).json({
-            message:"Calendar obtained",
-            calendars: answer
-        });
-    } catch(error){
+    catch(error){
         console.log("Server Error")
         return res.status(500).json({
             message:"Server Error"
@@ -111,230 +38,104 @@ export async function getCalendarsOfUser(req:Request, res:Response): Promise<Res
     }
 }
 
-export async function addAppointmentToCalendar(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Adding an appointment to the calendar of a user");
-        const { calendarId } = req.params;
-        const appointment: Partial<IAppointment> = req.body;
-
-        // Llamar al servicio
-        const answer = await calendarService.addAppointmentToCalendar(calendarId, appointment);
-
-        // Manejar la respuesta del servicio
-        if (answer === null) {
-            console.log("Calendar not found");
+export async function getAppointmentsForADay(req:Request, res:Response): Promise<Response>{
+        //retorna true si no hi ha user amb aquell nom
+        //retorna false si l'usuari no te calendari
+        //retorna els appointments si tot ha anat bé
+    try{
+        console.log("Finding appointments for a day");
+        const {name,date1} = req.params;
+        const date = new Date(date1);        
+        const answer = await calendarService.getAppointmentsForADay(date,name);
+        if(!answer){
+            console.log("The user has no calendar");
             return res.status(404).json({
-                message: "Calendar not found"
-            });
-        } else {
-            console.log("Appointment added to calendar");
-            return res.status(201).json({
-                message: "Appointment added to calendar",
-                calendar: answer
+                message:"The user has no calendar"
             });
         }
-    } catch (error) {
-        console.log("Server Error");
+        else if (answer){
+            console.log("User not found");
+            return res.status(405).json({
+                message:"User not found"
+            });
+        }
+        else{
+            console.log("Appointments obtained");
+            return res.status(201).json({
+                message:"Appointments obtained",
+                answer
+            });
+        }
+    }
+    catch(error){
+        console.log("Server Error")
         return res.status(500).json({
-            message: "Server Error"
+            message:"Server Error"
         });
     }
 }
 
-export async function hardDeleteCalendarsUser(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const numDeleted = await calendarService.hardDeleteCalendarsUser(calendarId);
-
-        if (numDeleted > 0) {
-            return res.status(200).json({
-                message: "Calendars permanently deleted",
-                numDeleted: numDeleted,
-            });
-        } else {
-            return res.status(404).json({ error: "User had no calendars" });
-        }
-    } catch (error) {
-        return res.status(500).json({ error: "Failed to delete calendar" });
-    }
-}
-
-export async function softDeleteCalendarsUser(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const calendar = await calendarService.softDeleteCalendarUser(calendarId);
-
-        if (calendar !== null) {
-            return res.status(200).json({
-                message: "Calendars soft deleted (marked as unavailable)",
-                calendar: calendar,
-            });
-        } else {
-            return res.status(404).json({ error: "User had no calendar" });
-        }
-    } catch (error) {
-        return res.status(500).json({ error: "Failed to soft delete calendars" });
-    }
-}
-
-export async function restoreCalendarsUser(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const calendar = await calendarService.restoreCalendarsUser(calendarId);
-
-        if (calendar !== null) {
-            return res.status(200).json({
-                message: "Calendars restored (marked as available)",
-                calendar: calendar,
-            });
-        } else {
-            return res.status(404).json({ error: "User had no calendars" });
-        }
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Failed to restore calendars" });
-    }
-}
-
-export async function editCalendar(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const changes = req.body;
-
-        const result = await calendarService.editCalendar(calendarId, changes);
-        if (result == null) return res.status(404).json({ error: "Could not find calendar"});
-        return res.json(result);
-    } catch (error) {
-        return res.status(500).json({ error: "Failed to edit calendar" });
-    }
-}
-
-export async function getCommonSlotsForTwoCalendars(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding common slots between two calendars");
-        
-        const { date1, date2, user1Id, user2Id } = req.body;
-        if (!date1 || !date2 || !user1Id || !user2Id) {
-            return res.status(400).json({
-                message: "All parameters are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForTwoCalendars(
-            user1Id, 
-            user2Id, 
-            startDate, 
-            endDate
-        );
-        if (result === 0) {
+export async function getCalendarOfUser(req:Request, res:Response): Promise<Response>{
+        //Retorna null si no te calendari
+        //Retorna el calendari si tot ha anat bé
+    try{
+        console.log("Finding the calendar of a user");
+        const {name} = req.params;
+        const answer = await calendarService.getCalendarOfUser(name);
+        if(answer === null){
+            console.log("The user has no calendar");
             return res.status(404).json({
-                message: "One or both users not found"
-            });
-        } else if (result === 1) {
-            return res.status(404).json({
-                message: "One or both users have no calendars"
-            });
-        } else if (result === 2){
-            return res.status(405).json({
-                message: "Error getting empty slots for user1"
-            });
-        } else if (result === 3) {
-            return res.status(405).json({
-                message: "Error getting empty slots for user2"
-            });
-        } else if (result === 4){
-            return res.status(406).json({
-                message: "User 1 has no empty slots in the given range"
-            });
-        } else if (result === 5) {
-            return res.status(406).json({
-                message: "User 2 has no empty slots in the given range"
-            }); 
-        } else if (result === null) {
-            return res.status(404).json({
-                message: "No common slots found"
-            });
-        } else {
-            return res.status(200).json({
-                message: "Common slots found",
-                commonSlots: result
+                message:"The user has no calendar"
             });
         }
-    } catch (error) {
-        console.log("Server Error", error);
+        else{
+            console.log("Calendar obtained");
+            return res.status(201).json({
+                message:"Calendar obtained",
+                answer
+            });
+        }
+    }
+    catch(error){
+        console.log("Server Error")
         return res.status(500).json({
-            message: "Server Error"
+            message:"Server Error"
         });
     }
 }
 
-export async function getCommonSlotsForNCalendars(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding common slots between multiple calendars");
-        
-        const { userIds } = req.body;
-        const { date1, date2 } = req.body;
-
-        if (!userIds || !Array.isArray(userIds) || userIds.length < 2) {
-            return res.status(400).json({
-                message: "An array of at least 2 user IDs is required"
-            });
-        }
-
-        if (!date1 || !date2) {
-            return res.status(400).json({
-                message: "Both date1 and date2 are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForNCalendars(
-            userIds, 
-            startDate, 
-            endDate
-        );
-
-    
-        if (Array.isArray(result)) {
-            const [errorType, affectedUserIds] = result;
-            
-            if (errorType === 1) {
-                return res.status(404).json({
-                    message: "Some users were not found",
-                    userIdsNotFound: affectedUserIds
-                });
-            } else if (errorType === 2) {
-                return res.status(404).json({
-                    message: "Some users have no calendars",
-                    userIdsWithNoCalendars: affectedUserIds
-                });
-            } else if (errorType === 3) {
-                return res.status(404).json({
-                    message: "Some users have no empty slots in the given range",
-                    userIdsWithNoEmptySlots: affectedUserIds
-                });
-            }
-            else {
-                console.log("Server Error");
-                return res.status(500).json({
-                    message: "Server Error"
-                });
-            }
-        } else if (result === null) {
+export async function addAppointmentToCalendar(req:Request, res:Response): Promise<Response>{
+    //retorna false si no existeix l'usuari, retorna true si no existeix el calendari
+    //retorna el calendari actualitzat si ho ha fet bé.
+    try{
+        console.log("Adding an apointment to the calendar of a user");
+        const {name} = req.params;
+        const appointment:Partial<IAppointment> = req.body;
+        const answer = await calendarService.addAppointmentToCalendar(name, appointment);
+        if(answer){
+            console.log("The user has no calendar");
             return res.status(404).json({
-                message: "No common slots found across all calendars"
-            });
-        } else {
-            return res.status(201).json({
-                message: "Common slots found across all calendars",
-                commonSlots: result
+                message:"The user has no calendar"
             });
         }
-    } catch (error) {
-        console.log("Server Error", error);
+        else if (!answer){
+            console.log("User not found");
+            return res.status(405).json({
+                message:"User not found"
+            });
+        }
+        else{
+            console.log("Appointment updated");
+            return res.status(201).json({
+                message:"Appointment updated",
+                answer
+            });
+        }
+    }
+    catch(error){
+        console.log("Server Error")
         return res.status(500).json({
-            message: "Server Error"
+            message:"Server Error"
         });
     }
 }
