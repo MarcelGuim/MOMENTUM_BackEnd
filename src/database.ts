@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
 
+dotenv.config();
 class ConnectDB {
   private static connection: mongoose.Connection | null = null;
 
@@ -10,7 +12,10 @@ class ConnectDB {
     }
 
     try {
-      const dbURI = 'mongodb://localhost:27017/momentum';
+      const dbURI = process.env.MONGODB_URI as string;
+      if (!dbURI) {
+        throw new Error('❌ MongoDB URI is not defined');
+      }
       mongoose.set('strictQuery', false); 
       
       await mongoose.connect(dbURI, {

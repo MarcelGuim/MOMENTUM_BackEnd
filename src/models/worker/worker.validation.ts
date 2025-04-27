@@ -1,21 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
 const { body, validationResult } = require('express-validator');
 
-export const userValidationRules = () => {
+export const workerValidationRules = () => {
   return [
       body('mail')
-          .optional() // Only validate if mail is present
+          .optional()
           .isEmail()
           .withMessage("Invalid email format"),
           
       body('password')
-          .optional() // Only validate if password is present
+          .optional() 
           .isLength({ min: 6 })
           .withMessage("Password must be at least 6 characters long")
   ];
 }
 
-export async function userValidator (req: Request, res: Response, next: NextFunction) {
+export async function workerValidator (req: Request, res: Response, next: NextFunction) {
     const errors = validationResult(req);
   
     if (errors.isEmpty()) {
