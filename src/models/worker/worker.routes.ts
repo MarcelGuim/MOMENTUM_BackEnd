@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { workerValidationRules, workerValidator } from './worker.validation';
-import { verifyRefresh, authenticate } from '../../middleware/auth.middleware';
+import { verifyRefresh } from '../../middleware/auth.middleware';
 import {
   diguesHola,
   createWorker,
@@ -12,9 +12,6 @@ import {
   restoreWorkerById,
   getWorkersPaginated,
   getWorkersPaginatedByCompany,
-  loginWorker,
-  refresh,
-  logout
 } from './worker.controller';
 
 
@@ -301,59 +298,5 @@ router.patch("/:userId/restore", restoreWorkerById);
  *         description: Paginated list of workers
  */
 router.get("", getWorkersPaginated);
-
-/**
- * @swagger
- * /workers/login:
- *   post:
- *     summary: Log in a worker
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [name_or_mail, password]
- *             properties:
- *               name_or_mail:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Worker logged in
- *       401:
- *         description: Invalid credentials
- */
-router.post("/login", loginWorker);
-
-/**
- * @swagger
- * /workers/refresh:
- *   post:
- *     summary: Refresh worker access token
- *     tags: [Authentication]
- *     responses:
- *       200:
- *         description: Token refreshed
- *       401:
- *         description: Invalid refresh token
- */
-router.post("/refresh", verifyRefresh, refresh);
-
-/**
- * @swagger
- * /workers/logout:
- *   post:
- *     summary: Log out worker
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Worker logged out
- */
-router.post("/logout", authenticate, logout);
 
 export default router;

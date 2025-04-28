@@ -12,47 +12,6 @@ import Location from '../location/location.model';
 dotenv.config();
 
 export class WorkerService {
-    async loginWorker(identifier:string, password:string){
-        const isEmail = identifier.includes('@');
-        const query = isEmail ? { mail: identifier } : { name: identifier };
-        const worker = await Worker.findOne(query).select('+password');
-        if (!worker) {
-          throw new Error('Worker not found');
-        }
-        const isMatch : boolean = await worker.isValidPassword(password);
-        if(!isMatch){
-          throw new Error('Invalid password');
-        }
-        const accessToken = generateAccessToken(worker);
-        const refreshToken = generateRefreshToken(worker);
-        
-        const workerWithoutPassword = worker.toObject() as Partial<IWorker>;
-        delete workerWithoutPassword.password;
-    
-        return {
-          worker: workerWithoutPassword,
-          accessToken,
-          refreshToken
-        };
-    }
-    async refreshTokens(workerId: string) {
-
-        // 1. Fetch user (automatically excludes soft-deleted via hook)
-        const worker = await Worker.findById(workerId)
-          .select('+mail +isDeleted'); // Explicitly check deletion status
-      
-        // 2. Validate user state
-        if (!worker || worker.isDeleted) {
-          throw new Error('Invalid or inactive user');
-        }
-      
-        // 3. Generate tokens
-        return {
-          accessToken: generateAccessToken(worker)
-        };
-    }
-    // CRUD:
-
     async createWorker(worker: Partial<IWorker>): Promise<IWorker | null> {
         const result = await Worker.findOne({$or: [{ mail: worker.mail }, { name: worker.name }]});
         if(result) return null;
