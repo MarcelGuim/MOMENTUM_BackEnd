@@ -29,18 +29,18 @@ const options = {
             schemas: {
                 Chat: {
                     type: 'object',
-                    required: ['from', 'to', 'message', 'recieved'],
+                    required: ['user1', 'user2', 'message', '_id?'],
                     properties: {
-                        from: {
+                        user1: {
                             type: 'string',
                         },
-                        to: {
+                        user2: {
                             type: 'string',
                         },
                         message: {
-                            type: 'string',
+                            type: '[string,string,boolean,date]',
                         },
-                        recieved: {
+                        _id: {
                             type: 'string',
                         },
                     },
