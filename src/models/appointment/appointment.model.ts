@@ -11,6 +11,7 @@ export interface IAppointment {
     location?: mongoose.Types.ObjectId;
     serviceType: appointmentServiceType;
     appointmentState?: appointmentState;
+    colour?: string;
     isDeleted: boolean;
 }
 const AppointmentSchema = new Schema<IAppointment>({
@@ -46,6 +47,10 @@ const AppointmentSchema = new Schema<IAppointment>({
         enum: Object.values(appointmentState), 
         required: false,
         default: appointmentState.REQUESTED,
+    },
+    colour: {
+        type: String,
+        required: false
     },
     isDeleted: {
         type: Boolean,

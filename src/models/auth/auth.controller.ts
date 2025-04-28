@@ -1,0 +1,140 @@
+import { Request, Response } from 'express';
+import { LoginRequestBody } from '../../types';
+import { AuthService } from './auth.services';
+import { UserService } from '..//users/user.services';
+import { ModelType } from '../../types';
+import { AccessTokenPayload, refreshTokenCookieOptions } from '../../utils/jwt.utils';
+
+const authService = new AuthService();
+const userService = new UserService();
+
+export const loginUser = async (req: Request, res: Response) => {
+  try {
+      const { name_or_mail, password } = req.body as LoginRequestBody;
+      const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password);
+  
+      res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+  
+      console.log('Sending refreshToken in cookie:', refreshToken);
+      console.log('Sending accessToken in response:',  accessToken );
+  
+      return res.status(200).json({
+        user,
+        accessToken // Store this in localStorage
+      });
+    } catch (error: any) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
+  };
+  
+export const refresh = async (req: Request, res: Response) => {
+  try {
+    // 1. First check if refreshPayload exists
+    if (!req.refreshPayload) {
+      console.error('No refresh payload found in request');
+      throw new Error('Invalid refresh token');
+    }
+
+    // 2. Destructure with type safety
+    const { userId, modelType } = req.refreshPayload;
+    
+    console.log('Extracted userId:', userId || 'UNDEFINED');
+
+    if (!userId || !modelType) {
+      console.error('Invalid token payload - missing required fields');
+      throw new Error('Invalid token payload');
+    }
+
+    const { accessToken } = await authService.refreshTokens(userId, modelType);
+    
+    console.log('Tokens generated:', {
+      accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : 'UNDEFINED',
+    });
+
+    return res.json({ 
+      accessToken,
+      debug: process.env.NODE_ENV === 'development' ? {
+        userId,
+        tokenExpiresIn: '15m' // Match your JWT expiry
+      } : undefined
+    });
+
+  } catch (error: any) {
+    console.error('Refresh failed:', {
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : 'HIDDEN IN PRODUCTION',
+      timestamp: new Date().toISOString()
+    });
+
+    return res.status(401).json({ 
+      error: error.message || 'Token refresh failed',
+      ...(process.env.NODE_ENV === 'development' && {
+        details: {
+          suggestion: 'Check if user exists and refresh token is valid',
+          timestamp: new Date().toISOString()
+        }
+      })
+    });
+  }
+};
+  
+export const logout = async (req: Request, res: Response) => {
+  try {
+    if (!req.refreshPayload) {
+      return res.status(400).json({ error: 'No refresh token found' });
+    }
+
+    // 2. Add token to blacklist (if using token invalidation)
+    // await tokenService.blacklistToken(refreshToken);
+    
+    // 3. Clear the refresh token cookie
+    const clearCookieOptions = { ...refreshTokenCookieOptions };
+    delete clearCookieOptions.maxAge;
+    res.clearCookie('refreshToken', clearCookieOptions);
+
+    return res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Falta acabar quan hi hagin els dos models
+export const validateToken = async (req: Request, res: Response) => {
+  try {
+    const payload = req.userPayload as AccessTokenPayload;
+    if (!payload?.userId || !payload.modelType) {
+      console.error('Invalid token payload structure', payload);
+      throw new Error('INVALID_TOKEN_PAYLOAD');
+    }
+
+    let userEntity;
+    switch (payload.modelType) {
+      case ModelType.USER:
+        userEntity = await userService.getUserById(payload.userId);
+        break;
+      // case ModelType.TREB:  // Uncomment when implemented
+      //   userEntity = await employeeService.getEmployeeById(payload.userId);
+      //   break;
+      default:
+        console.error('Unknown model type', payload.modelType);
+        throw new Error('UNKNOWN_USER_TYPE');
+    }
+
+    if (!userEntity) {
+      console.error('User not found for ID:', payload.userId);
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    return res.status(200).json({
+      isValid: true,
+      model: payload.modelType
+    });
+
+  } catch (error: any) {
+    return res.status(401).json({
+      isValid: false,
+      error: error.message || 'Invalid token',
+      code: error.message || 'INVALID_TOKEN',
+    });
+  }
+};

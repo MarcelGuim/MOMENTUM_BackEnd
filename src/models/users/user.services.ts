@@ -4,70 +4,23 @@ import Calendar from '../calendari/calendar.model';
 import Appointment from '../appointment/appointment.model';
 import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
-import e from 'express';
 import dotenv from 'dotenv';
-import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
 
 dotenv.config();
 let activations: Partial<IUsuari>[] = [];
 
 export class UserService {
-  // PART AUTH
-  async loginUser(identifier:string, password:string){
-    const isEmail = identifier.includes('@');
-    const query = isEmail ? { mail: identifier } : { name: identifier };
-    const user = await User.findOne(query).select('+password');
-    if (!user) {
-      throw new Error('User not found');
-    }
-    const isMatch : boolean = await user.isValidPassword(password);
-    if(!isMatch){
-      throw new Error('Invalid password');
-    }
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-    
-    const userWithoutPassword = user.toObject() as Partial<IUsuari>;
-    delete userWithoutPassword.password;
-
-    return {
-      user: userWithoutPassword,
-      accessToken,
-      refreshToken
-    };
-  }
-
-  async refreshTokens(userId: string) {
-    // 1. Fetch user (automatically excludes soft-deleted via hook)
-    const user = await User.findById(userId)
-      .select('+mail +isDeleted'); // Explicitly check deletion status
-  
-    // 2. Validate user state
-    if (!user || user.isDeleted) {
-      throw new Error('Invalid or inactive user');
-    }
-  
-    // 3. Generate tokens
-    return {
-      accessToken: generateAccessToken(user)
-    };
-  }
-
-
-  // PART CRUD
   async createUser(user: Partial<IUsuari>): Promise<Number> {
     const result = await User.findOne({$or: [{ mail: user.mail }, { name: user.name }]});
     if (result) {
       return 0;
     } else {
-      console.log("Activations PRE: " + activations.length);
       const id = crypto.randomBytes(20).toString('hex');
       user.activationId = id;
       if(user.mail === undefined){
         return 1;
       }
       mailOptions.to=user.mail;
-      console.log("Creating user at the service:", user);
       activations.push(user);
       const baseURL = process.env.NODE_ENV === 'production' 
         ? process.env.APP_BASE_URL  // Use the URL from the environment for production
@@ -81,7 +34,6 @@ export class UserService {
           return 1;
         } else {
           console.log('Email sent: ' + info.response);
-          console.log("Activations POST: " + activations.length);
         }
       });
       return 2;
@@ -210,18 +162,22 @@ export class UserService {
   }
 
   async activateUser(name: string, id: string): Promise<IUsuari | null> {
-    console.log(activations.length);
-    let user: Partial<IUsuari> | void = activations.find((element) => {
-      if (element.name === name && element.activationId === id) {
-        return element;
-      }
-    });
-    if (user === null || user === undefined) {
+    console.log("Activating user...");
+    const index = activations.findIndex(
+      (element) => element.name === name && element.activationId === id,
+    );
+  
+    if (index === -1) {
       return null;
     }
+  
+    const user = activations[index];
+    activations.splice(index, 1);
+  
     user.activationId = "";
     const userSaved = new User(user);
     return await userSaved.save();
+
   }
 }
 

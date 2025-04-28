@@ -1,16 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken } from '../utils/jwt.utils';
-import Worker from '../models/worker/worker.model';
+import { UserRole } from '../types';
+import { AccessTokenPayload } from '../utils/jwt.utils';
 
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
-  console.log('--- authenticate middleware triggered ---');
-  console.log('Incoming headers:', JSON.stringify(req.headers, null, 2));
-  
+// MIDDLEWARES TO CHECK AUTHENTICATION
+export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1]; // Bearer <token>
-
-  console.log('Extractgited token:', token ? `${token.substring(0, 10)}...` : 'NOT FOUND');
-
   if (!token) {
     console.error('No token provided in authorization header');
     return res.status(401).json({ 
@@ -20,24 +16,11 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
   }
 
   try {
-    console.log('Verifying access token...');
     const decoded = verifyAccessToken(token);
     console.log('Token successfully decoded:', {
       userId: decoded.userId,
-      iat: decoded.iat,
-      exp: decoded.exp
     });
-    
-    req.user = decoded;
-    const worker = await Worker.findById(decoded.userId);
-    if (!worker) {
-      console.error('Worker not found for the provided token');
-      return res.status(404).json({ error: 'Worker not found' });
-    }
-
-    req.worker = worker; 
-    
-    
+    req.userPayload = decoded;
     next();
   } catch (error: any) {
     console.error('Token verification failed:', {
@@ -60,11 +43,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 };
 
 export const verifyRefresh = (req: Request, res: Response, next: NextFunction) => {
-  console.log('--- verifyRefresh middleware triggered ---');
-  console.log('Incoming cookies:', req.cookies);
-  
   const refreshToken = req.cookies.refreshToken;
-  console.log('Refresh token from cookies:', refreshToken ? `${refreshToken.substring(0, 10)}...` : 'NOT FOUND');
 
   if (!refreshToken) {
     console.error('No refresh token found in cookies');
@@ -73,17 +52,12 @@ export const verifyRefresh = (req: Request, res: Response, next: NextFunction) =
       code: 'MISSING_REFRESH_TOKEN'
     });
   }
-
   try {
-    console.log('Verifying refresh token...');
     const decoded = verifyRefreshToken(refreshToken);
     console.log('Refresh token successfully decoded:', {
       userId: decoded.userId,
-      iat: decoded.iat,
-      exp: decoded.exp
     });
-    
-    req.user = decoded;
+    req.refreshPayload = decoded;
     next();
   } catch (error: any) {
     console.error('Refresh token verification failed:', {
@@ -98,3 +72,78 @@ export const verifyRefresh = (req: Request, res: Response, next: NextFunction) =
     });
   }
 };
+
+//MIDDLEWARES TO CHECK PERMISONS
+export const requireRole = (requiredRole: UserRole) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.userPayload as AccessTokenPayload;
+    
+    if (!payload) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        code: 'AUTHENTICATION_REQUIRED'
+      });
+    }
+
+    if (!payload.role || payload.role !== requiredRole) {
+      return res.status(403).json({ 
+        error: `Insufficient permissions. Required role: ${requiredRole}`,
+        code: 'INSUFFICIENT_PERMISSIONS'
+      });
+    }
+
+    next();
+  };
+};
+
+// Specific role middlewares for convenience
+export const requireAdmin = requireRole(UserRole.ADMIN);
+export const requireController = requireRole(UserRole.CONTROLLER);
+export const requireEmployee = requireRole(UserRole.EMPLOYEE);
+
+export const requireAnyRole = (...allowedRoles: UserRole[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.userPayload as AccessTokenPayload;
+
+    if (!payload?.role) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        code: 'AUTHENTICATION_REQUIRED'
+      });
+    }
+
+    if (!allowedRoles.includes(payload.role)) {
+      return res.status(403).json({ 
+        error: `Insufficient permissions. Required one of: ${allowedRoles.join(', ')}`,
+        code: 'INSUFFICIENT_PERMISSIONS'
+      });
+    }
+
+    next();
+  };
+};
+
+
+export const requireOwnership = (userIdParamName = 'id') => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.userPayload as AccessTokenPayload;
+    const requestedUserId = req.params[userIdParamName];
+
+    if (!payload) {
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        code: 'AUTHENTICATION_REQUIRED'
+      });
+    }
+
+    if (payload.userId !== requestedUserId) {
+      return res.status(403).json({ 
+        error: 'You can only access your own data',
+        code: 'ACCESS_TO_OTHER_USER_DENIED'
+      });
+    }
+
+    next();
+  };
+};
+

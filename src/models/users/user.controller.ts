@@ -3,88 +3,8 @@ import { IUsuari } from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
-import { LoginRequestBody } from '../../types';
 
 const userService = new UserService();
-// PART AUTH
-export const loginUser = async (req: Request, res: Response) => {
-  try {
-    const { name_or_mail, password } = req.body as LoginRequestBody;
-    const { user, accessToken, refreshToken } = await userService.loginUser(name_or_mail, password);
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
-
-    console.log('Sending refreshToken in cookie:', refreshToken);
-    console.log('Sending accessToken in response:', { accessToken });
-
-    return res.json({
-      user,
-      accessToken // Store this in localStorage
-    });
-  } catch (error: any) {
-    return res.status(401).json({ error: error.message });
-  }
-};
-
-export const refresh = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.userId;
-    console.log('Extracted userId:', userId || 'UNDEFINED');
-
-    if (!userId) {
-      console.error('Invalid token payload - missing userId');
-      throw new Error('Invalid token payload');
-    }
-
-    const { accessToken } = await userService.refreshTokens(userId);
-    
-    console.log('Tokens generated:', {
-      accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : 'UNDEFINED',
-    });
-
-    console.log('Returning new accessToken to client');
-    return res.json({ 
-      accessToken,
-      debug: process.env.NODE_ENV === 'development' ? {
-        userId,
-        tokenExpiresIn: '15m' // Match your JWT expiry
-      } : undefined
-    });
-
-  } catch (error: any) {
-    console.error('Refresh failed:', {
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : 'HIDDEN IN PRODUCTION',
-      timestamp: new Date().toISOString()
-    });
-
-    return res.status(401).json({ 
-      error: error.message || 'Token refresh failed',
-      ...(process.env.NODE_ENV === 'development' && {
-        details: {
-          suggestion: 'Check if user exists and refresh token is valid',
-          timestamp: new Date().toISOString()
-        }
-      })
-    });
-  }
-};
-
-export const logout = async (req: Request, res: Response) => {
-  try {
-    console.log(`User ${req.user?.userId || 'UNKNOWN'} has logged out.`);
-    res.clearCookie('refreshToken');
-    return res.json({ message: 'Logged out successfully' });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
-  }
-};
-
 
 //PART CRUD
 export async function createUser(req:Request, res:Response): Promise<Response> {
@@ -92,7 +12,6 @@ export async function createUser(req:Request, res:Response): Promise<Response> {
     try{
         const{name,age,mail,password} = req.body as IUsuari
         const newUser: Partial<IUsuari> = {name,age,mail,password,isDeleted:false};
-        console.log("Creating user:", { name, age, mail, password });
         const user = await userService.createUser(newUser);
         if(user===0){
           return res.status(409).json({error: 'User already exists'});
