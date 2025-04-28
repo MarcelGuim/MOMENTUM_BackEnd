@@ -48,7 +48,6 @@ export class UserService {
   async updateUserById(userId: string, data: Partial<IUsuari>): Promise<IUsuari | null> {
     console.log("Updating user at the service:", data, userId);
     return await User.findByIdAndUpdate(userId, data, { new: true });
-
   }
 
   async getUsersPaginated(page = 1, limit = 5, getDeleted = false): Promise<{ users: IUsuari[]; totalPages: number; totalUsers: number, currentPage: number } | null> {
@@ -179,7 +178,25 @@ export class UserService {
     return await userSaved.save();
 
   }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<IUsuari> {
+    //const user = await User.findById(userId);
+    const user = await User.findById(userId).select('+password');
+    if (!user) throw new Error('UserNotFound');
+  
+    const valid = await user.isValidPassword(currentPassword);
+    if (!valid) throw new Error('IncorrectPassword');
+  
+    user.password = newPassword; // el pre('save') se encarga del hash
+    return await user.save();
+  }
 }
+
+
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',

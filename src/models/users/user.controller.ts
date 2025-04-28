@@ -193,3 +193,35 @@ export async function getUsersPaginated(req: Request<{}, {}, {}, PaginatedUsersQ
     return res.status(500).json({ error: 'Failed to fetch users' });
   }
 }
+
+export async function changePassword(
+  
+  req: Request,
+  res: Response
+): Promise<Response> {
+  console.log("Request body:", req.body);
+  console.log("Params:", req.params);
+  const { userId } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await userService.changePassword(
+      userId,
+      currentPassword,
+      newPassword
+    );
+    return res.status(200).json({
+      message: 'Password updated successfully',
+      user,
+    });
+  } catch (err: any) {
+    if (err.message === 'UserNotFound') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (err.message === 'IncorrectPassword') {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to update password' });
+  }
+}
