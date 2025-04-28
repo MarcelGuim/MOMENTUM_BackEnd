@@ -4,7 +4,6 @@ import Appointment from './appointment.model';
 export class AppointmentService {
   async createAppointment(data: Partial<IAppointment>): Promise<IAppointment> {
     const appointment = new Appointment(data);
-    console.log("Creating appointment at the service:", appointment);
     return await appointment.save();
   }
 

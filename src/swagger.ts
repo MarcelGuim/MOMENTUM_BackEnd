@@ -131,6 +131,112 @@ const options = {
                         },
                     },
                 },
+                Business: {
+                    type: 'object',
+                    required: ['name', 'location'],
+                    properties: {
+                      name: {
+                        type: 'string',
+                        example: 'Anytime fitness',
+                      },
+                      location: {
+                        type: 'array',
+                        items: {
+                          type: 'string',
+                          description: 'IDs dels locations associats al negoci',
+                        },
+                        example: ['661f5c0f7d4f1e3f8e8b4567', '661f5c0f7d4f1e3f8e8b4568'],
+                      },
+                      isDeleted: {
+                        type: 'boolean',
+                        default: false,
+                        readOnly: true, // Mark as read-only
+                        description: 'Indica si el negoci está marcat com eliminat',
+                      },
+                    },
+                },
+                Location: {
+                    type: 'object',
+                    required: ['nombre', 'address', 'phone', 'rating', 'ubicacion', 'serviceType', 'schedule'],
+                    properties: {
+                      _id: {
+                        type: 'string',
+                        example: '6620162b9b1c1c6a0d5f739e',
+                      },
+                      nombre: {
+                        type: 'string',
+                        example: 'Saló de Bellesa El Mirall',
+                      },
+                      address: {
+                        type: 'string',
+                        example: 'Carrer dels Pins, 42, Girona',
+                      },
+                      phone: {
+                        type: 'string',
+                        example: '+34 612 345 678',
+                      },
+                      rating: {
+                        type: 'number',
+                        example: 4.7,
+                      },
+                      ubicacion: {
+                        type: 'object',
+                        required: ['type', 'coordinates'],
+                        properties: {
+                          type: {
+                            type: 'string',
+                            enum: ['Point'],
+                            example: 'Point',
+                          },
+                          coordinates: {
+                            type: 'array',
+                            minItems: 2,
+                            maxItems: 2,
+                            items: {
+                              type: 'number',
+                            },
+                            example: [2.1744, 41.4036],
+                          },
+                        },
+                      },
+                      serviceType: {
+                        type: 'array',
+                        items: {
+                          type: 'string',
+                          description: 'Un dels valors definits a locationServiceType (ex: "massage", "tattoo", "gym workout", etc.)',
+                        },
+                        example: ['massage', 'gym workout'],
+                      },
+                      schedule: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          required: ['day', 'open', 'close'],
+                          properties: {
+                            day: {
+                              type: 'string',
+                              description: 'Un dels dies de la setmana: monday, tuesday, etc.',
+                              example: 'monday',
+                            },
+                            open: {
+                              type: 'string',
+                              example: '09:00',
+                            },
+                            close: {
+                              type: 'string',
+                              example: '20:00',
+                            },
+                          },
+                        },
+                      },
+                      isDeleted: {
+                        type: 'boolean',
+                        default: false,
+                        readOnly: true,
+                        description: 'Indica si la ubicació està marcada com eliminada',
+                      },
+                    },
+                },
             },
         },
         security: [{

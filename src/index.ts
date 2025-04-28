@@ -3,6 +3,8 @@ import userRoutes from './models/users/user.routes';
 import chatRoutes from './models/chats/chat.routes';
 import calendarRoutes from './models/calendari/calendar.routes'; // Importa las rutas de Calendar
 import locationRoutes from './models/location/location.routes';
+import workersRoutes from './models/worker/worker.routes'; // Importa las rutas de Workers
+import businessRoutes from './models/business/business.routes';
 import authRoutes from './models/auth/auth.routes';
 import connectDB from './database';
 import { setupSwagger } from './swagger';
@@ -38,6 +40,8 @@ app.use('/auth', authRoutes); // Rutas de autenticación
 app.use('/chat', chatRoutes);  // Rutas de chats
 app.use('/calendars', calendarRoutes); // Rutas de calendarios
 app.use('/location', locationRoutes); // Rutas de ubicaciones
+app.use('/workers', workersRoutes); // Rutas de ubicaciones
+app.use('/business', businessRoutes); // Rutas de ubicaciones
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;

@@ -1,3 +1,4 @@
+
 export interface PlaceQueryResult {
     name: string,
     id: string,
@@ -11,3 +12,4 @@ export interface RouteQuertResult {
     durationSeconds: string // ends with the letter 's'
     durationReadable: string
 }
+
