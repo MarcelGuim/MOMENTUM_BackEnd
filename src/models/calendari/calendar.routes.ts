@@ -11,7 +11,8 @@ import {
     getAppointmentsBetweenDates,
     editCalendar,
     getCommonSlotsForNCalendars,
-    getCommonSlotsForTwoCalendars
+    getCommonSlotsForTwoCalendars,
+    setAppointmentRequestForWorker
 } from './calendar.controller';
 
 const router = Router();
@@ -431,6 +432,46 @@ router.post('/common-slots/two-users', getCommonSlotsForTwoCalendars);
  *         description: Error del servidor
  */
 router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
+
+/**
+ * @swagger
+ * /calendars/appointmentRequest/{calendarId}/{workerId}:
+ *   post:
+ *     summary: Solicita una cita per un treballador en un calendari concret
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: calendarId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del calendari
+ *       - in: path
+ *         name: workerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del worker
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointment
+ *             properties:
+ *               appointment:
+ *                 $ref: '#/components/schemas/AppointmentRequest'
+ *     responses:
+ *       200:
+ *         description: Sol·licitud de cita creada correctament
+ *       404:
+ *         description: Calendari, treballador o slot no disponible
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/appointmentRequest/:calendarId/:workerId', setAppointmentRequestForWorker);
 
 
 export default router;

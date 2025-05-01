@@ -12,9 +12,9 @@ export async function createCalendar(req: Request, res: Response): Promise<Respo
         const answer = await calendarService.createCalendar(calendar);
 
         if (answer === null) {
-            console.log("User not found or invalid calendar name");
+            console.log("Owner not found or invalid calendar name");
             return res.status(404).json({
-                message: "User not found or invalid calendar name"
+                message: "Owner not found or invalid calendar name"
             });
         } else {
             console.log("Calendar created");
@@ -221,7 +221,7 @@ export async function getCommonSlotsForTwoCalendars(req: Request, res: Response)
         }
         const startDate = new Date(date1);
         const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForTwoCalendars(
+        const result = await calendarService.getSlotsCommonForTwoUserCalendars(
             user1Id, 
             user2Id, 
             startDate, 
@@ -289,7 +289,7 @@ export async function getCommonSlotsForNCalendars(req: Request, res: Response): 
         }
         const startDate = new Date(date1);
         const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForNCalendars(
+        const result = await calendarService.getSlotsCommonForCalendarsOfNUsers(
             userIds, 
             startDate, 
             endDate
@@ -336,5 +336,34 @@ export async function getCommonSlotsForNCalendars(req: Request, res: Response): 
         return res.status(500).json({
             message: "Server Error"
         });
+    }
+}
+
+export async function setAppointmentRequestForWorker(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("Setting appointment request for worker");
+        const { calendarId, workerId } = req.params;
+        const { appointment } = req.body;
+
+        const result = await calendarService.setAppointmentRequestForWorker(calendarId, workerId, appointment);
+        return res.status(200).json({
+            message: "Appointment request set for worker",
+        });
+    } catch (error) {
+        if (error instanceof Error && error.message === "Calendar not found") {
+            return res.status(404).json({ message: "Calendar not found" });
+        }
+        else if (error instanceof Error && error.message === "Worker not found") {
+            return res.status(404).json({ message: "Worker not found" });
+        }
+        else if (error instanceof Error && error.message === "Slot already taken") {
+            return res.status(404).json({ message: "Slot already taken" });
+        }
+        else{
+            console.log("Server Error", error);
+            return res.status(500).json({
+                message: "Server Error"
+            });
+        }
     }
 }

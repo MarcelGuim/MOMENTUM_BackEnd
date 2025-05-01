@@ -3,10 +3,7 @@
 import Worker, {IWorker} from './worker.model';
 import Calendar from '../calendari/calendar.model';
 import Appointment from '../appointment/appointment.model';
-import * as crypto from "node:crypto";
-import e from 'express';
 import dotenv from 'dotenv';
-import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
 import Location from '../location/location.model';
 
 dotenv.config();
@@ -60,7 +57,6 @@ export class WorkerService {
           totalPages: Math.ceil(await Worker.countDocuments() / limit),
         };
     }
-
     async hardDeleteWorkerById(workerId: string): Promise<IWorker | null> {
         return await Worker.findByIdAndDelete(workerId);
     }
@@ -150,9 +146,7 @@ export class WorkerService {
       
         return workerResult.modifiedCount;
     }
-
     async restoreWorkerById(userId: string): Promise<IWorker | null> {
         return await Worker.findByIdAndUpdate(userId, { isDeleted: false }, { new: true });
     }
-
 }
