@@ -5,8 +5,12 @@ import Appointment, { IAppointment } from '../appointment/appointment.model';
 import { start } from 'repl';
 import Worker, { IWorker } from '../worker/worker.model';
 import { appointmentState } from '../../enums/appointmentState.enum';
+import Location, { ILocation } from '../location/location.model';
+import { LocationService } from '../location/location.services';
 
 export class CalendarService {
+    private locationService = new LocationService();
+
     async createCalendar(data: Partial<ICalendar>): Promise<ICalendar | null> {
         // Verificar si el usuario existe
         const user = await User.findById(data.owner);
@@ -59,14 +63,12 @@ export class CalendarService {
 
     async addAppointmentToCalendar(calendarId: string, appointment: Partial<IAppointment>): Promise<ICalendar | null> {
         // Verificar si existeix el calendari
-        const calendar = await Calendar.findOne({ _id: calendarId });
+        const calendar = await Calendar.findById(calendarId);
         if (!calendar) {
             return null; // El calendari no existeix
         }
-    
         // Guardar la cita
         const appointmentSaved = await new Appointment(appointment).save();
-    
         // Actualizar el calendario con la nueva cita
         return await calendar.updateOne(
             { $push: { appointments: appointmentSaved._id } },
@@ -131,10 +133,44 @@ export class CalendarService {
         return result;
     }
 
-    async getEmptySlotForAUser(userId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
+    async getEmptySlotForAUser(userId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null> {
         const user = await User.findById(userId);
         if (user?._id) {
             const calendar = await Calendar.find({owner: user._id});
+            if (calendar.length === 0) return null;
+            let appointments: IAppointment[] = [];
+            const populatedCalendars = await Promise.all(
+                calendar.map(cal => cal.populate('appointments'))
+            );
+            populatedCalendars.forEach(populatedCalendar => {
+                const calendarAppointments = populatedCalendar.appointments as unknown as IAppointment[];
+                appointments.push(...calendarAppointments);
+            });
+            appointments.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
+            const appointmentsInRange: IAppointment[] = appointments.filter(appointment =>
+                appointment.inTime >= date1 && appointment.outTime <= date2
+            );
+            if(appointmentsInRange.length === 0) return [[date1, date2]];
+            appointmentsInRange.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
+            let slots:[Date,Date][] = [];
+            const startOfPeriod = new Date(date1);
+            const endOfPeriod = new Date(date2);
+            slots.push([startOfPeriod, appointmentsInRange[0].inTime]);
+            appointmentsInRange.forEach((appointmentsInRange1, i) => {
+                if (i < appointmentsInRange.length - 1) {
+                    slots.push([appointmentsInRange1.outTime, appointmentsInRange[i + 1].inTime]);
+                }
+            });
+            slots.push([appointmentsInRange[appointmentsInRange.length -1 ].outTime, endOfPeriod]);
+            return slots;
+        }
+        else return null;
+    }
+
+    async getEmptySlotForAWorker(workerId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null> {
+        const worker = await Worker.findById(workerId);
+        if (worker?._id) {
+            const calendar = await Calendar.find({owner: worker._id});
             if (calendar.length === 0) return null;
             let appointments: IAppointment[] = [];
             const populatedCalendars = await Promise.all(
@@ -195,15 +231,13 @@ export class CalendarService {
         const user1: IUsuari | null = await User.findById(user1Id);
         const user2: IUsuari | null = await User.findById(user2Id);
         if (!user1 || !user2) return 0;
-        let emptySlotsUser1: [Date, Date][] | null | number = null;
-        let emptySlotsUser2: [Date, Date][] | null | number = null;
+        let emptySlotsUser1: [Date, Date][] | null = null;
+        let emptySlotsUser2: [Date, Date][] | null = null;
 
         if (user1._id && user2._id) {
             emptySlotsUser1 = await this.getEmptySlotForAUser(user1._id.toString(), date1, date2);
             emptySlotsUser2 = await this.getEmptySlotForAUser(user2._id.toString(), date1, date2);
-            if ( emptySlotsUser1 == null ||emptySlotsUser2 == null) return 1;
-            else if (typeof emptySlotsUser1 === 'number') return 2;
-            else if (typeof emptySlotsUser2 === 'number') return 3;     
+            if ( emptySlotsUser1 == null ||emptySlotsUser2 == null) return 1; 
             else if (emptySlotsUser1.length === 0) return 4;
             else if (emptySlotsUser2.length === 0) return 5;
             return await this.getMatchingDatesForTwoEmptySlotsArrays(emptySlotsUser1, emptySlotsUser2);
@@ -269,5 +303,69 @@ export class CalendarService {
         this.addAppointmentToCalendar(userCalendarId, appointmentSaved);
         this.addAppointmentToCalendar(calendarsWorker[0]._id.toString(), appointmentSaved);
         return true;   
+    }
+
+    async getSlotsCommonForCalendarsOfOneUserAndOneWorker(userId: string, workerId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
+        const user: IUsuari | null = await User.findById(userId);
+        const worker: IWorker | null = await Worker.findById(workerId);
+        if (!user || !worker) return 0;
+        let emptySlotsUser: [Date, Date][] | null = null;
+        let emptySlotsWorker: [Date, Date][] | null = null;
+
+        if (user._id && worker._id) {
+            emptySlotsUser = await this.getEmptySlotForAUser(user._id.toString(), date1, date2);
+            emptySlotsWorker = await this.getEmptySlotForAWorker(worker._id.toString(), date1, date2);
+            if ( emptySlotsUser == null ||emptySlotsWorker == null) return 1; 
+            else if (emptySlotsUser.length === 0) return 4;
+            else if (emptySlotsWorker.length === 0) return 5;
+            return await this.getMatchingDatesForTwoEmptySlotsArrays(emptySlotsUser, emptySlotsWorker);
+        } 
+        return null;
+    }
+
+    async getSlotsCommonForCalendarsOfOneUserAndOneLocation(userId: string, locationId: string, date1: Date, date2: Date): Promise<[String,[Date,Date][]][] | null | number> {
+        const user: IUsuari | null = await User.findById(userId);
+        const location: ILocation | null = await Location.findById(locationId);
+        if (!user || !location) return 0;
+        const workers: IWorker[] | null = await this.locationService.getWorkersOfLocation(locationId);
+        if (!workers) return 1;
+        if (workers.length === 0) return 2;
+        let finalResult: [String, [Date, Date][]][] = [];
+
+/*         if (user._id && location._id) {
+            console.log("6");
+            await workers.forEach(async (worker) => {
+                if(worker._id) {
+                    console.log("UOUO");
+                    let result = await this.getSlotsCommonForCalendarsOfOneUserAndOneWorker(userId, worker._id.toString(), date1, date2);
+                    if(result !== null && typeof result !== 'number') {
+                        finalResult.push([worker._id.toString(), result as [Date, Date][]]);
+                    }
+                    console.log(finalResult.length);
+                }    
+            });
+        } */
+            if (user._id && location._id) {
+                console.log("Start");
+                for (const worker of workers) {
+                    if (worker._id) {
+                        console.log("Done Once");
+                        const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
+                            userId,
+                            worker._id.toString(),
+                            date1,
+                            date2
+                        );
+                        if (result !== null && typeof result !== 'number') {
+                            finalResult.push([worker._id.toString(), result as [Date, Date][]]);
+                        }
+                        console.log(finalResult.length);
+                    }
+                }
+            }   
+        console.log("7");
+        console.log(finalResult);
+        if(finalResult.length === 0) return null;
+        return finalResult;
     }
 }

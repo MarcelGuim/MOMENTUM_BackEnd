@@ -116,7 +116,8 @@ export async function addAppointmentToCalendar(req: Request, res: Response): Pro
         console.log("Adding an appointment to the calendar of a user");
         const { calendarId } = req.params;
         const appointment: Partial<IAppointment> = req.body;
-
+        console.log(appointment);
+        console.log(calendarId);
         // Llamar al servicio
         const answer = await calendarService.addAppointmentToCalendar(calendarId, appointment);
 
@@ -234,14 +235,6 @@ export async function getCommonSlotsForTwoCalendars(req: Request, res: Response)
         } else if (result === 1) {
             return res.status(404).json({
                 message: "One or both users have no calendars"
-            });
-        } else if (result === 2){
-            return res.status(405).json({
-                message: "Error getting empty slots for user1"
-            });
-        } else if (result === 3) {
-            return res.status(405).json({
-                message: "Error getting empty slots for user2"
             });
         } else if (result === 4){
             return res.status(406).json({
@@ -367,3 +360,106 @@ export async function setAppointmentRequestForWorker(req: Request, res: Response
         }
     }
 }
+
+export async function getCommonSlotsForOneUserAndOneWorker(req:Request, res:Response): Promise<Response>{
+    try{
+        console.log("Finding common slots between a user and a worker");
+        const { date1, date2, userId, workerId } = req.body;
+
+        if (!date1 || !date2) {
+            return res.status(400).json({
+                message: "Both date1 and date2 are required in the request body"
+            });
+        }
+        const startDate = new Date(date1);
+        const endDate = new Date(date2);
+        const result = await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
+            userId,
+            workerId,
+            startDate,
+            endDate
+        );
+        if (result === 0) {
+            return res.status(404).json({
+                message: "User or worker not found"
+            });
+        } else if (result === 1) {
+            return res.status(404).json({
+                message: "User or Worker have no calendars"
+            });
+        } else if (result === 4) {
+            return res.status(406).json({
+                message: "User has no empty slots in the given range"
+            });
+        }else if (result === 5) {
+            return res.status(406).json({
+                message: "Worker has no empty slots in the given range"
+            }); 
+        }else if (result === null) {
+            return res.status(404).json({
+                message: "No common slots found"
+            });
+        } else {
+            return res.status(200).json({
+                message: "Common slots found",
+                commonSlots: result
+            });
+        }
+    } catch(error){
+        console.log("Server Error", error);
+        return res.status(500).json({
+            message: "Server Error"
+        });
+    }
+}
+
+export async function getCommonSlotsForOneUserAndOneLocation(req:Request, res:Response): Promise<Response>{
+    try{
+        console.log("Finding common slots between a user and a location");
+        const { date1, date2, userId, locationId } = req.body;
+
+        if (!date1 || !date2) {
+            return res.status(400).json({
+                message: "Both date1 and date2 are required in the request body"
+            });
+        }
+        const startDate = new Date(date1);
+        const endDate = new Date(date2);
+        const result = await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
+            userId,
+            locationId,
+            startDate,
+            endDate
+        );
+        console.log("FINAL");
+        console.log(result);
+        if (result === 0) {
+            return res.status(404).json({
+                message: "User or Location not found"
+            });
+        } else if (result === 1) {
+            return res.status(404).json({
+                message: "Locations workers not found"
+            });
+        } else if (result === 2) {
+            return res.status(404).json({
+                message: "Location has no workers"
+            });
+        }else if (result === null) {
+            return res.status(404).json({
+                message: "No common slots found"
+            });
+        } else {
+            return res.status(200).json({
+                message: "Common slots found",
+                commonSlots: result
+            });
+        }
+    } catch(error){
+        console.log("Server Error", error);
+        return res.status(500).json({
+            message: "Server Error"
+        });
+    }
+}
+
