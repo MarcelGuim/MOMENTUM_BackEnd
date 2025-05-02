@@ -431,8 +431,6 @@ export async function getCommonSlotsForOneUserAndOneLocation(req:Request, res:Re
             startDate,
             endDate
         );
-        console.log("FINAL");
-        console.log(result);
         if (result === 0) {
             return res.status(404).json({
                 message: "User or Location not found"
@@ -463,3 +461,39 @@ export async function getCommonSlotsForOneUserAndOneLocation(req:Request, res:Re
     }
 }
 
+export async function getCommonSlotsForOneUserAndOneBussiness(req:Request, res:Response): Promise<Response>{
+    try{
+        console.log("Finding common slots between a user and a bussiness");
+        const { date1, date2, userId, bussinessId, serviceType } = req.body;
+
+        if (!date1 || !date2) {
+            return res.status(400).json({
+                message: "Both date1 and date2 are required in the request body"
+            });
+        }
+        const startDate = new Date(date1);
+        const endDate = new Date(date2);
+        const result = await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneBussiness(
+            serviceType,
+            userId,
+            bussinessId,
+            startDate,
+            endDate
+        );
+        return res.status(200).json({
+            message: "Common slots found",
+            commonSlots: result
+        });
+    } catch(error){
+        if (error instanceof Error && error.message) {
+            return res.status(404).json({
+                message: error.message
+            });
+        }
+        else{
+        return res.status(500).json({
+            message: "Server Error"
+            });
+        }
+    }
+}
