@@ -3,14 +3,23 @@ import Calendar, {ICalendar} from './calendar.model';
 import User, {IUsuari} from '../users/user.model';
 import Appointment, { IAppointment } from '../appointment/appointment.model';
 import { start } from 'repl';
-
+import Worker, { IWorker } from '../worker/worker.model';
+import { appointmentState } from '../../enums/appointmentState.enum';
+import Location, { ILocation } from '../location/location.model';
+import { LocationService } from '../location/location.services';
+import Bussiness, { IBusiness } from '../business/business.model';
+import { BusinessService } from '../business/business.services';
 
 export class CalendarService {
+    private locationService = new LocationService();
+    private bussinessService = new BusinessService();
+
     async createCalendar(data: Partial<ICalendar>): Promise<ICalendar | null> {
         // Verificar si el usuario existe
         const user = await User.findById(data.owner);
-        if (!user) {
-            return null; // Usuario no encontrado
+        const worker = await Worker.findById(data.owner);
+        if (!user && !worker) {
+            return null; // Owner no encontrado
         }
 
         // Verificar que el nom del calendari sigui vàlid:
@@ -57,14 +66,12 @@ export class CalendarService {
 
     async addAppointmentToCalendar(calendarId: string, appointment: Partial<IAppointment>): Promise<ICalendar | null> {
         // Verificar si existeix el calendari
-        const calendar = await Calendar.findOne({ _id: calendarId });
+        const calendar = await Calendar.findById(calendarId);
         if (!calendar) {
             return null; // El calendari no existeix
         }
-    
         // Guardar la cita
         const appointmentSaved = await new Appointment(appointment).save();
-    
         // Actualizar el calendario con la nueva cita
         return await calendar.updateOne(
             { $push: { appointments: appointmentSaved._id } },
@@ -129,7 +136,7 @@ export class CalendarService {
         return result;
     }
 
-    async getEmptySlotForAUser(userId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
+    async getEmptySlotForAUser(userId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null> {
         const user = await User.findById(userId);
         if (user?._id) {
             const calendar = await Calendar.find({owner: user._id});
@@ -163,37 +170,41 @@ export class CalendarService {
         else return null;
     }
 
-  /*   async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date,Date][], array2: [Date,Date][]): Promise<[Date,Date][] | null> {
-        let result: [Date,Date][] = [];
-        array1.forEach(item1 => {
-            let found = false;
-            array2.forEach(item2 => {
-                if (!found){
-                    if (item1[0].toISOString() >= item2[0].toISOString() && item1[1].toISOString() <= item2[1].toISOString()) {
-                        result.push(item1); 
-                        found = true;
-                    }
-                    else if (item2[0].toISOString() >= item1[0].toISOString() && item2[1].toISOString() <= item1[1].toISOString()) {
-                        result.push(item2);
-                        found = true;
-                    }
-                    else if (item1[0].toISOString() >= item2[0].toISOString() && item1[1].toISOString() >= item2[1].toISOString() && item1[0].toISOString() !== item2[1].toISOString() && item1[0].toISOString() < item2[1].toISOString()) {
-                        result.push([item1[0], item2[1]]);
-                        found = true;
-                    }
-                    else if (item2[0].toISOString() >= item1[0].toISOString() && item2[1].toISOString() >= item1[1].toISOString() && item2[0].toISOString() != item1[1].toISOString() && item2[0].toISOString() < item1[1].toISOString()){
-                        result.push([item2[0], item1[1]]);
-                        found = true;
-                    }
-                } else {}
+    async getEmptySlotForAWorker(workerId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null> {
+        const worker = await Worker.findById(workerId);
+        if (worker?._id) {
+            const calendar = await Calendar.find({owner: worker._id});
+            if (calendar.length === 0) return null;
+            let appointments: IAppointment[] = [];
+            const populatedCalendars = await Promise.all(
+                calendar.map(cal => cal.populate('appointments'))
+            );
+            populatedCalendars.forEach(populatedCalendar => {
+                const calendarAppointments = populatedCalendar.appointments as unknown as IAppointment[];
+                appointments.push(...calendarAppointments);
             });
-        });
+            appointments.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
+            const appointmentsInRange: IAppointment[] = appointments.filter(appointment =>
+                appointment.inTime >= date1 && appointment.outTime <= date2
+            );
+            if(appointmentsInRange.length === 0) return [[date1, date2]];
+            appointmentsInRange.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
+            let slots:[Date,Date][] = [];
+            const startOfPeriod = new Date(date1);
+            const endOfPeriod = new Date(date2);
+            slots.push([startOfPeriod, appointmentsInRange[0].inTime]);
+            appointmentsInRange.forEach((appointmentsInRange1, i) => {
+                if (i < appointmentsInRange.length - 1) {
+                    slots.push([appointmentsInRange1.outTime, appointmentsInRange[i + 1].inTime]);
+                }
+            });
+            slots.push([appointmentsInRange[appointmentsInRange.length -1 ].outTime, endOfPeriod]);
+            return slots;
+        }
+        else return null;
+    }
 
-        if (result.length > 0) return result;
-        return null;
-    } */ 
-
-    async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date, Date][],array2: [Date, Date][]): Promise<[Date, Date][] | null> {
+    async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date, Date][],array2: [Date, Date][]): Promise<[Date, Date][]> {
         const result: [Date, Date][] = [];
         
         for (const item1 of array1) {
@@ -206,32 +217,29 @@ export class CalendarService {
                 }
             }
         }
-        this.logDatesInISOFormat(result,"");
-        return result.length > 0 ? result : null;
+        if (result.length === 0) throw new Error("No matching dates found");
+        return result;
     }
   
     async getMachingDatesForNEmptySoltsArrays(arrays: [Date, Date][][]): Promise<[Date, Date][] | null> {
         let result: [Date, Date][] | null = arrays[0];
             for (let array of arrays) {
                 result = await this.getMatchingDatesForTwoEmptySlotsArrays(result as [Date, Date][], array);
-                this.logDatesInISOFormat(result as [Date,Date][],"")
             }
         return result;
     }
 
-    async getSlotsCommonForTwoCalendars(user1Id: string, user2Id: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
+    async getSlotsCommonForTwoUserCalendars(user1Id: string, user2Id: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
         const user1: IUsuari | null = await User.findById(user1Id);
         const user2: IUsuari | null = await User.findById(user2Id);
         if (!user1 || !user2) return 0;
-        let emptySlotsUser1: [Date, Date][] | null | number = null;
-        let emptySlotsUser2: [Date, Date][] | null | number = null;
+        let emptySlotsUser1: [Date, Date][] | null = null;
+        let emptySlotsUser2: [Date, Date][] | null = null;
 
         if (user1._id && user2._id) {
             emptySlotsUser1 = await this.getEmptySlotForAUser(user1._id.toString(), date1, date2);
             emptySlotsUser2 = await this.getEmptySlotForAUser(user2._id.toString(), date1, date2);
-            if ( emptySlotsUser1 == null ||emptySlotsUser2 == null) return 1;
-            else if (typeof emptySlotsUser1 === 'number') return 2;
-            else if (typeof emptySlotsUser2 === 'number') return 3;     
+            if ( emptySlotsUser1 == null ||emptySlotsUser2 == null) return 1; 
             else if (emptySlotsUser1.length === 0) return 4;
             else if (emptySlotsUser2.length === 0) return 5;
             return await this.getMatchingDatesForTwoEmptySlotsArrays(emptySlotsUser1, emptySlotsUser2);
@@ -239,7 +247,7 @@ export class CalendarService {
         return null;
     }
 
-    async getSlotsCommonForNCalendars(userIDs: string[], date1: Date, date2: Date): Promise<[Date,Date][] | null | number | [number,string[]]> {
+    async getSlotsCommonForCalendarsOfNUsers(userIDs: string[], date1: Date, date2: Date): Promise<[Date,Date][] | null | number | [number,string[]]> {
         let userIDsNotFound: [number, string[]] = [1, []];
     
         await Promise.all(userIDs.map(async (userId) => { 
@@ -278,5 +286,106 @@ export class CalendarService {
     async logDatesInISOFormat(dates: [Date, Date][], message: string): Promise<void> {
         let datesInISO: [string, string][] = dates.map(date => [date[0].toISOString(), date[1].toISOString()]);
         console.log(message,datesInISO);
+    }
+
+    async setAppointmentRequestForWorker(userCalendarId:string, workerId: string, appointment: IAppointment): Promise<Boolean> {      
+        const calendarsWorker = await Calendar.find({ owner: workerId });
+        const calendarUser = await Calendar.findById(userCalendarId);
+        await Promise.all(
+            calendarsWorker.map(async (calendar) => {
+                let result = await this.getAppointmentsBetweenDates(appointment.inTime, appointment.outTime, calendar._id.toString());
+                if (result.length !== 0) throw new Error("Slot already taken");
+            })
+        );
+        let result = await this.getAppointmentsBetweenDates(appointment.inTime, appointment.outTime, calendarUser?.id.toString());
+        if(result.length !== 0) throw new Error("Slot already taken");
+        if (appointment.appointmentState !== appointmentState.REQUESTED) appointment.appointmentState = appointmentState.REQUESTED;
+        const appointmentSaved = await new Appointment(appointment).save();
+        this.addAppointmentToCalendar(userCalendarId, appointmentSaved);
+        this.addAppointmentToCalendar(calendarsWorker[0]._id.toString(), appointmentSaved);
+        return true;   
+    }
+
+    async getSlotsCommonForCalendarsOfOneUserAndOneWorker(userId: string, workerId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null> {
+        const user: IUsuari | null = await User.findById(userId);
+        const worker: IWorker | null = await Worker.findById(workerId);
+        if (!user || !worker) throw new Error("Error finding the user or the bussiness");
+        let emptySlotsUser: [Date, Date][] | null = null;
+        let emptySlotsWorker: [Date, Date][] | null = null;
+
+        if (user._id && worker._id) {
+            emptySlotsUser = await this.getEmptySlotForAUser(user._id.toString(), date1, date2);
+            emptySlotsWorker = await this.getEmptySlotForAWorker(worker._id.toString(), date1, date2);
+            if ( emptySlotsUser === null ||emptySlotsWorker === null) throw new Error("Error finding the empty slots, one of the people involved might not have a calendar"); 
+            else if (emptySlotsUser.length === 0) throw new Error("Error, there are no empty slots for the user");
+            else if (emptySlotsWorker.length === 0) throw new Error("Error, there are no empty slots for the worker");
+            return await this.getMatchingDatesForTwoEmptySlotsArrays(emptySlotsUser, emptySlotsWorker);
+        } 
+        return null;
+    }
+
+    async getSlotsCommonForCalendarsOfOneUserAndOneLocation(userId: string, locationId: string, date1: Date, date2: Date): Promise<[String,[Date,Date][]][]> {
+        const user: IUsuari | null = await User.findById(userId);
+        const location: ILocation | null = await Location.findById(locationId);
+        if (!user || !location) throw new Error("Error finding the user or the bussiness");
+        const workers: IWorker[] | null = await this.locationService.getWorkersOfLocation(locationId);
+        if (!workers) throw new Error("Error finding the workers of the location");
+        if (workers.length === 0) throw new Error("Error, there are no workers at that location");
+        let finalResult: [String, [Date, Date][]][] = [];
+            if (user._id && location._id) {
+                for (const worker of workers) {
+                    if (worker._id) {
+                        try{
+                            const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
+                                userId,
+                                worker._id.toString(),
+                                date1,
+                                date2
+                            );
+                            if (result !== null) {
+                                finalResult.push([worker._id.toString(), result as [Date, Date][]]);
+                            }
+                        } catch (error) {}
+                    }
+                }
+            }  
+        if (finalResult.length === 0) throw new Error("No slots found"); 
+        return finalResult;
+    }
+
+    async getSlotsCommonForCalendarsOfOneUserAndOneBussiness(serviceType: string, userId: string, bussinessId: string, date1: Date, date2: Date): Promise<[String, [String,[Date,Date][]][]][]> {
+        const user: IUsuari | null = await User.findById(userId);
+        const bussiness: IBusiness | null = await Bussiness.findById(bussinessId);
+        let finalResult: [String,[String, [Date, Date][]][]][] = [];
+        if (!user || !bussiness) throw new Error("Error finding the user or the bussiness");
+        const locations: ILocation[] | null | number= await this.bussinessService.getAllLocationsFromBusinessbyServiceType(bussinessId,serviceType);
+        if (!locations) throw new Error("Error finding the locations");
+        else if (typeof locations === 'number'){
+            if (locations === -1) throw new Error("Error in the bussiness Id");
+            else if (locations === -2) throw new Error("Error in the service type");
+            else if (locations === -3) throw new Error("There are no locations for this service type in the bussiness");
+        }
+        else{
+            if (user._id && bussiness._id) {
+                for (const location of locations) {
+                    if (location._id) {
+                        try{
+                            const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
+                                userId,
+                                location._id.toString(),
+                                date1,
+                                date2
+                            );
+                            if (result !== null) {
+                                finalResult.push([location._id.toString(), result as [String,[Date, Date][]][]]);
+                            }
+                        }
+                        catch (error) {}
+                    }
+                }
+            }   
+        }
+        if(finalResult.length === 0) throw new Error("No slots found");
+        return finalResult;
     }
 }
