@@ -1,117 +1,199 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Application } from 'express';
+import { appointmentServiceType } from './enums/appointmentServiceType.enum';
+import { appointmentState } from './enums/appointmentState.enum';
+
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const options = {
-  definition: {
-      openapi: '3.0.0',
-      info: {
-          title: 'CRUD API',
-          version: '1.0.0',
-          description: 'API documentation for the CRUD application',
-      },
-      servers: [
-          {
-              url: process.env.APP_BASE_URL || 'http://localhost:8080',
-          },
-      ],
-      components: {
-          securitySchemes: {
-              bearerAuth: {
-                  type: 'http',
-                  scheme: 'bearer',
-                  bearerFormat: 'JWT',
-              }
-          },
-          schemas: {
-              Chat: {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'CRUD API',
+            version: '1.0.0',
+            description: 'API documentation for the CRUD application',
+        },
+        servers: [
+            {
+                url: process.env.APP_BASE_URL || 'http://localhost:8080',
+            },
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                }
+            },
+            schemas: {
+                Chat: {
+                    type: 'object',
+                    required: ['user1', 'user2', 'message', '_id?'],
+                    properties: {
+                        user1: {
+                            type: 'string',
+                        },
+                        user2: {
+                            type: 'string',
+                        },
+                        message: {
+                            type: '[string,string,boolean,date]',
+                        },
+                        _id: {
+                            type: 'string',
+                        },
+                    },
+                },
+                User: {
+                    type: 'object',
+                    required: ['name', 'age', 'mail', 'password'],
+                    properties: {
+                        name: {
+                            type: 'string',
+                        },
+                        age: {
+                            type: 'number',
+                        },
+                        mail: {
+                            type: 'string',
+                        },
+                        password: {
+                            type: 'string',
+                        },
+                        isDeleted: {
+                            type: 'boolean',
+                            default: false,
+                            readOnly: true, // Mark as read-only
+                        },
+                    },
+                },
+                Calendar: {
+                    type: 'object',
+                    required: ['owner', 'name', 'appointments', 'invitees'], // Removed `isDeleted` from required
+                    properties: {
+                        owner: {
+                            type: 'string',
+                            description: 'ID del usuario asociado',
+                        },
+                        name: {
+                            type: 'string',
+                            description: 'Displayed name of the calendar',
+                        },
+                        appointments: {
+                            type: 'array',
+                            items: {
+                                type: 'string',
+                            },
+                            description: 'IDs de las citas',
+                        },
+                        invitees: {
+                            type: 'array',
+                            items: {
+                                type: 'string',
+                                description: 'IDs dels usuaris amb accés al calendari'
+                            }
+                        },
+                        isDeleted: {
+                            type: 'boolean',
+                            default: false,
+                            readOnly: true, // Mark as read-only
+                        },
+                    },
+                },
+                Appointment: {
                   type: 'object',
-                  required: ['user1', 'user2', 'message', '_id?'],
+                  required: ['inTime', 'outTime', 'title', 'serviceType', 'isDeleted'],
                   properties: {
-                      user1: { type: 'string' },
-                      user2: { type: 'string' },
-                      message: { type: '[string,string,boolean,date]' },
-                      _id: { type: 'string' },
-                  },
-              },
-              User: {
-                  type: 'object',
-                  required: ['name', 'age', 'mail', 'password'],
-                  properties: {
-                      name: { type: 'string' },
-                      age: { type: 'number' },
-                      mail: { type: 'string' },
-                      password: { type: 'string' },
-                      isDeleted: {
-                          type: 'boolean',
-                          default: false,
-                          readOnly: true,
+                      inTime: {
+                          type: 'string',
+                          format: 'date-time',
+                          description: 'Start time of the appointment',
+                          example: '2025-05-01T10:00:00Z'
                       },
-                  },
-              },
-              Calendar: {
-                  type: 'object',
-                  required: ['owner', 'name', 'appointments', 'invitees'],
-                  properties: {
-                      owner: { type: 'string', description: 'ID del usuario asociado' },
-                      name: { type: 'string', description: 'Displayed name of the calendar' },
-                      appointments: {
-                          type: 'array',
-                          items: { type: 'string' },
-                          description: 'IDs de las citas',
+                      outTime: {
+                          type: 'string',
+                          format: 'date-time',
+                          description: 'End time of the appointment',
+                          example: '2025-05-01T11:00:00Z'
                       },
-                      invitees: {
-                          type: 'array',
-                          items: {
-                              type: 'string',
-                              description: 'IDs dels usuaris amb accés al calendari'
+                      title: {
+                          type: 'string',
+                          description: 'Title of the appointment',
+                          example: 'Physical Therapy Session'
+                      },
+                      description: {
+                          type: 'string',
+                          description: 'Detailed description of the appointment',
+                          example: 'Initial consultation with Dr. Smith'
+                      },
+                      location: {
+                          type: 'string',
+                          description: 'Reference to Location document',
+                          example: '6620162b9b1c1c6a0d5f739e'
+                      },
+                      serviceType: {
+                          type: 'string',
+                          enum: Object.values(appointmentServiceType),
+                          description: 'Type of service being provided',
+                          example: appointmentServiceType.PERSONAL
+                      },
+                      appointmentState: {
+                          type: 'string',
+                          enum: Object.values(appointmentState),
+                          description: 'Current state of the appointment',
+                          example: appointmentState.REQUESTED
+                      },
+                      colour: {
+                          type: 'string',
+                          description: 'Color code for calendar display',
+                          example: '#228be6'
+                      },
+                      customAddress: {
+                          type: 'string',
+                          description: 'Human-readable address when not using a Location reference',
+                          example: '123 Main St, Apt 4B, New York'
+                      },
+                      customUbicacion: {
+                          type: 'object',
+                          description: 'GeoJSON Point coordinates when not using a Location reference',
+                          properties: {
+                              type: {
+                                  type: 'string',
+                                  enum: ['Point'],
+                                  example: 'Point'
+                              },
+                              coordinates: {
+                                  type: 'array',
+                                  items: {
+                                      type: 'number',
+                                      format: 'float'
+                                  },
+                                  minItems: 2,
+                                  maxItems: 2,
+                                  example: [2.1744, 41.4036]
+                              }
                           }
                       },
                       isDeleted: {
                           type: 'boolean',
                           default: false,
                           readOnly: true,
+                          description: 'Soft delete flag'
+                      }
+                  }
+                },
+                Business: {
+                    type: 'object',
+                    required: ['name', 'location'],
+                    properties: {
+                      name: {
+                        type: 'string',
+                        example: 'Anytime fitness',
                       },
-                  },
-              },
-              Appointment: {
-                  type: 'object',
-                  required: ['inTime', 'outTime', 'place', 'title'],
-                  properties: {
-                      inTime: {
-                          type: 'string',
-                          format: 'date-time',
-                          description: 'Fecha y hora de inicio',
-                      },
-                      outTime: {
-                          type: 'string',
-                          format: 'date-time',
-                          description: 'Fecha y hora de fin',
-                      },
-                      place: {
-                          type: 'string',
-                          description: 'Lugar de la cita',
-                      },
-                      title: {
-                          type: 'string',
-                          description: 'Título de la cita',
-                      },
-                      isDeleted: {
-                          type: 'boolean',
-                          default: false,
-                          readOnly: true,
-                          description: 'Indica si la cita está marcada como eliminada',
-                      },
-                  },
-              },
-              Business: {
-                  type: 'object',
-                  required: ['name', 'location'],
-                  properties: {
-                      name: { type: 'string', example: 'Anytime fitness' },
                       location: {
                           type: 'array',
                           items: {

@@ -113,7 +113,9 @@ export async function getCalendarsOfUser(req:Request, res:Response): Promise<Res
 
 export async function addAppointmentToCalendar(req: Request, res: Response): Promise<Response> {
     try {
-        console.log("Adding an appointment to the calendar of a user");
+        console.log("Adding an appointment to the calendar of a user. Calendar ID:", req.params.calendarId);
+        console.log("Appointment data:", req.body);
+
         const { calendarId } = req.params;
         const appointment: Partial<IAppointment> = req.body;
         console.log(appointment);
@@ -121,23 +123,24 @@ export async function addAppointmentToCalendar(req: Request, res: Response): Pro
         // Llamar al servicio
         const answer = await calendarService.addAppointmentToCalendar(calendarId, appointment);
 
-        // Manejar la respuesta del servicio
+        // Handle the service response
         if (answer === null) {
-            console.log("Calendar not found");
+            console.warn("Calendar not found for ID:", calendarId);
             return res.status(404).json({
                 message: "Calendar not found"
             });
         } else {
-            console.log("Appointment added to calendar");
+            console.log("Appointment successfully added to calendar. Updated calendar:", answer);
             return res.status(201).json({
                 message: "Appointment added to calendar",
                 calendar: answer
             });
         }
     } catch (error) {
-        console.log("Server Error");
+        console.error("Error adding appointment to calendar:", error);
         return res.status(500).json({
-            message: "Server Error"
+            message: "Server Error",
+            error: error instanceof Error ? error.message : "Unknown error"
         });
     }
 }

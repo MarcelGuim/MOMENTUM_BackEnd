@@ -4,7 +4,7 @@
   "description": "Your project description",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "node dist/index.js",
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "tsc && node dist/index.js"
