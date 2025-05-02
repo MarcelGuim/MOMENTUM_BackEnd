@@ -379,37 +379,21 @@ export async function getCommonSlotsForOneUserAndOneWorker(req:Request, res:Resp
             startDate,
             endDate
         );
-        if (result === 0) {
+        return res.status(200).json({
+            message: "Common slots found",
+            commonSlots: result
+        });
+    } catch(error){
+        if (error instanceof Error && error.message) {
             return res.status(404).json({
-                message: "User or worker not found"
-            });
-        } else if (result === 1) {
-            return res.status(404).json({
-                message: "User or Worker have no calendars"
-            });
-        } else if (result === 4) {
-            return res.status(406).json({
-                message: "User has no empty slots in the given range"
-            });
-        }else if (result === 5) {
-            return res.status(406).json({
-                message: "Worker has no empty slots in the given range"
-            }); 
-        }else if (result === null) {
-            return res.status(404).json({
-                message: "No common slots found"
-            });
-        } else {
-            return res.status(200).json({
-                message: "Common slots found",
-                commonSlots: result
+                message: error.message
             });
         }
-    } catch(error){
-        console.log("Server Error", error);
-        return res.status(500).json({
-            message: "Server Error"
-        });
+        else{
+            return res.status(500).json({
+                message: "Server Error"
+            });
+        }
     }
 }
 
@@ -431,33 +415,22 @@ export async function getCommonSlotsForOneUserAndOneLocation(req:Request, res:Re
             startDate,
             endDate
         );
-        if (result === 0) {
+        return res.status(200).json({
+            message: "Common slots found",
+            commonSlots: result
+        });
+    }
+    catch(error){
+        if (error instanceof Error && error.message) {
             return res.status(404).json({
-                message: "User or Location not found"
-            });
-        } else if (result === 1) {
-            return res.status(404).json({
-                message: "Locations workers not found"
-            });
-        } else if (result === 2) {
-            return res.status(404).json({
-                message: "Location has no workers"
-            });
-        }else if (result === null) {
-            return res.status(404).json({
-                message: "No common slots found"
-            });
-        } else {
-            return res.status(200).json({
-                message: "Common slots found",
-                commonSlots: result
+                message: error.message
             });
         }
-    } catch(error){
-        console.log("Server Error", error);
-        return res.status(500).json({
-            message: "Server Error"
-        });
+        else{
+            return res.status(500).json({
+                message: "Server Error"
+            });
+        }
     }
 }
 
@@ -491,8 +464,8 @@ export async function getCommonSlotsForOneUserAndOneBussiness(req:Request, res:R
             });
         }
         else{
-        return res.status(500).json({
-            message: "Server Error"
+            return res.status(500).json({
+                message: "Server Error"
             });
         }
     }

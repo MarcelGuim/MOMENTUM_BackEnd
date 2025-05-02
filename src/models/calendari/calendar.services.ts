@@ -204,7 +204,7 @@ export class CalendarService {
         else return null;
     }
 
-    async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date, Date][],array2: [Date, Date][]): Promise<[Date, Date][] | null> {
+    async getMatchingDatesForTwoEmptySlotsArrays(array1: [Date, Date][],array2: [Date, Date][]): Promise<[Date, Date][]> {
         const result: [Date, Date][] = [];
         
         for (const item1 of array1) {
@@ -217,7 +217,8 @@ export class CalendarService {
                 }
             }
         }
-        return result.length > 0 ? result : null;
+        if (result.length === 0) throw new Error("No matching dates found");
+        return result;
     }
   
     async getMachingDatesForNEmptySoltsArrays(arrays: [Date, Date][][]): Promise<[Date, Date][] | null> {
@@ -305,51 +306,54 @@ export class CalendarService {
         return true;   
     }
 
-    async getSlotsCommonForCalendarsOfOneUserAndOneWorker(userId: string, workerId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null | number> {
+    async getSlotsCommonForCalendarsOfOneUserAndOneWorker(userId: string, workerId: string, date1: Date, date2: Date): Promise<[Date,Date][] | null> {
         const user: IUsuari | null = await User.findById(userId);
         const worker: IWorker | null = await Worker.findById(workerId);
-        if (!user || !worker) return 0;
+        if (!user || !worker) throw new Error("Error finding the user or the bussiness");
         let emptySlotsUser: [Date, Date][] | null = null;
         let emptySlotsWorker: [Date, Date][] | null = null;
 
         if (user._id && worker._id) {
             emptySlotsUser = await this.getEmptySlotForAUser(user._id.toString(), date1, date2);
             emptySlotsWorker = await this.getEmptySlotForAWorker(worker._id.toString(), date1, date2);
-            if ( emptySlotsUser == null ||emptySlotsWorker == null) return 1; 
-            else if (emptySlotsUser.length === 0) return 4;
-            else if (emptySlotsWorker.length === 0) return 5;
+            if ( emptySlotsUser === null ||emptySlotsWorker === null) throw new Error("Error finding the empty slots, one of the people involved might not have a calendar"); 
+            else if (emptySlotsUser.length === 0) throw new Error("Error, there are no empty slots for the user");
+            else if (emptySlotsWorker.length === 0) throw new Error("Error, there are no empty slots for the worker");
             return await this.getMatchingDatesForTwoEmptySlotsArrays(emptySlotsUser, emptySlotsWorker);
         } 
         return null;
     }
 
-    async getSlotsCommonForCalendarsOfOneUserAndOneLocation(userId: string, locationId: string, date1: Date, date2: Date): Promise<[String,[Date,Date][]][] | null | number> {
+    async getSlotsCommonForCalendarsOfOneUserAndOneLocation(userId: string, locationId: string, date1: Date, date2: Date): Promise<[String,[Date,Date][]][]> {
         const user: IUsuari | null = await User.findById(userId);
         const location: ILocation | null = await Location.findById(locationId);
-        if (!user || !location) return 0;
+        if (!user || !location) throw new Error("Error finding the user or the bussiness");
         const workers: IWorker[] | null = await this.locationService.getWorkersOfLocation(locationId);
-        if (!workers) return 1;
-        if (workers.length === 0) return 2;
+        if (!workers) throw new Error("Error finding the workers of the location");
+        if (workers.length === 0) throw new Error("Error, there are no workers at that location");
         let finalResult: [String, [Date, Date][]][] = [];
             if (user._id && location._id) {
                 for (const worker of workers) {
                     if (worker._id) {
-                        const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
-                            userId,
-                            worker._id.toString(),
-                            date1,
-                            date2
-                        );
-                        if (result !== null && typeof result !== 'number') {
-                            finalResult.push([worker._id.toString(), result as [Date, Date][]]);
-                        }
+                        try{
+                            const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
+                                userId,
+                                worker._id.toString(),
+                                date1,
+                                date2
+                            );
+                            if (result !== null) {
+                                finalResult.push([worker._id.toString(), result as [Date, Date][]]);
+                            }
+                        } catch (error) {}
                     }
                 }
-            }   
+            }  
+        if (finalResult.length === 0) throw new Error("No slots found"); 
         return finalResult;
     }
 
-    async getSlotsCommonForCalendarsOfOneUserAndOneBussiness(serviceType: string, userId: string, bussinessId: string, date1: Date, date2: Date): Promise<[String, [String,[Date,Date][]][]][] | null> {
+    async getSlotsCommonForCalendarsOfOneUserAndOneBussiness(serviceType: string, userId: string, bussinessId: string, date1: Date, date2: Date): Promise<[String, [String,[Date,Date][]][]][]> {
         const user: IUsuari | null = await User.findById(userId);
         const bussiness: IBusiness | null = await Bussiness.findById(bussinessId);
         let finalResult: [String,[String, [Date, Date][]][]][] = [];
@@ -365,15 +369,18 @@ export class CalendarService {
             if (user._id && bussiness._id) {
                 for (const location of locations) {
                     if (location._id) {
-                        const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
-                            userId,
-                            location._id.toString(),
-                            date1,
-                            date2
-                        );
-                        if (result !== null && typeof result !== 'number' && result.length > 0) {
-                            finalResult.push([location._id.toString(), result as [String,[Date, Date][]][]]);
+                        try{
+                            const result = await this.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
+                                userId,
+                                location._id.toString(),
+                                date1,
+                                date2
+                            );
+                            if (result !== null) {
+                                finalResult.push([location._id.toString(), result as [String,[Date, Date][]][]]);
+                            }
                         }
+                        catch (error) {}
                     }
                 }
             }   
