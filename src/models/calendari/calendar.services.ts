@@ -104,9 +104,9 @@ export class CalendarService {
         if (!calendar) return null;
     
         // Perform updates in parallel
-        await Promise.all([
-            Calendar.updateOne(
-                { _id: calendarId },
+        const res = await Promise.all([
+            Calendar.findByIdAndUpdate(
+                calendarId,
                 { $set: { isDeleted: true } }
             ),
             // Only update appointments if they exist
@@ -119,7 +119,7 @@ export class CalendarService {
         ]);
     
         // Return the updated calendar
-        return await Calendar.findById(calendarId);
+        return res[0];
     }
 
     async restoreCalendarsUser(calendarId: string): Promise<ICalendar | null> {
