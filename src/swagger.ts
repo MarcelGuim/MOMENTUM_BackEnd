@@ -322,7 +322,7 @@ const options = {
       },
       security: [{ bearerAuth: [] }]
   },
-  apis: ['./src/**/*.ts'],
+  apis: process.env.NODE_ENV == "production" ? ['./dist/**/*.js'] : ['./src/**/*.ts'],
 };
 
 

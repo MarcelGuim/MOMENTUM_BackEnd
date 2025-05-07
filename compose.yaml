@@ -4,8 +4,10 @@ services:
     container_name: momentum-mongodb
     ports:
       - "27017:27017"
+    volumes:
+      - momentum_mongodb_data:/data/db
     networks:
-      - "momentum-network"
+      - "db_network"
   
   backend:
     image: momentum-backend:latest
@@ -13,9 +15,13 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - "momentum-network"
+      - "db_network"
     environment:
+      NODE_ENV: "production"
       MONGODB_URI: "mongodb://momentum-mongodb:27017/momentum"
 
 networks:
-  momentum-network:
+  db_network:
+
+volumes:
+  momentum_mongodb_data:
