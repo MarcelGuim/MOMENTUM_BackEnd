@@ -1,5 +1,7 @@
-import { Request, Response, Router } from 'express';
-import { userValidationRules, userValidator } from './user.validation';
+import { Router } from 'express';
+import { userValidationRules, userValidator } from '../../middleware/user.validation';
+import { changePasswordValidator } from '../../middleware/changePasswordValidation';
+import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -8,13 +10,13 @@ import {
   getUserById, 
   hardDeleteUserById, 
   updateUserById, 
-  loginUser, 
   diguesHola, 
   restoreUserById, 
   softDeleteUserById,
   softDeleteUsersByIds,
   getUsersPaginated, 
-  activateUser 
+  activateUser,
+  changePassword
 } from './user.controller';
 
 /**
@@ -89,33 +91,6 @@ router.get("/activate/:name/:id", activateUser);
 
 /**
  * @swagger
- * /users/login:
- *   post:
- *     summary: Log in a user
- *     tags: [users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name_or_mail:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: User logged in
- *       401:
- *         description: Invalid username/password or password
- *       500:
- *         description: Failed to log in user
- */
-router.post("/login", loginUser);
-
-/**
- * @swagger
  * /users/{userId}:
  *   get:
  *     summary: Get user by ID
@@ -135,7 +110,64 @@ router.post("/login", loginUser);
  *       500:
  *         description: Failed to get user
  */
-router.get("/:userId", getUserById);
+router.get("/:userId",getUserById);
+
+/**
+ * @swagger
+ * /users/{userId}/password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user whose password is being changed
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 description: The user’s current password
+ *               newPassword:
+ *                 type: string
+ *                 description: The new password (min. 6 characters)
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *           example:
+ *             currentPassword: oldPass123
+ *             newPassword: newPass456
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Current password is incorrect
+ *       404:
+ *         description: User not found
+ *       422:
+ *         description: Validation error (e.g., missing fields or too short newPassword)
+ *       500:
+ *         description: Server error
+ */
+router.put("/:userId/password", verifyToken, requireOwnership('userId'), changePasswordValidator, changePassword );
 
 /**
  * @swagger
@@ -173,7 +205,7 @@ router.get("/:userId", getUserById);
  *       500:
  *         description: Failed to update user
  */
-router.put("/:userId", userValidationRules(), userValidator, updateUserById);
+router.put("/:userId", verifyToken, requireOwnership('userId'),userValidationRules(), userValidator, updateUserById);
 
 /**
  * @swagger
@@ -298,6 +330,8 @@ router.patch("/:userId/restore", restoreUserById);
  *       500:
  *         description: Server error
  */
-router.get("", getUsersPaginated);
+router.get("",getUsersPaginated);
+
+
 
 export default router;

@@ -2,15 +2,16 @@ import { Request, Response } from 'express';
 import { IUsuari } from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
+import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
 
 const userService = new UserService();
 
+//PART CRUD
 export async function createUser(req:Request, res:Response): Promise<Response> {
     console.log("Creating user");
     try{
         const{name,age,mail,password} = req.body as IUsuari
         const newUser: Partial<IUsuari> = {name,age,mail,password,isDeleted:false};
-        console.log("Creating user:", { name, age, mail, password });
         const user = await userService.createUser(newUser);
         if(user===0){
           return res.status(409).json({error: 'User already exists'});
@@ -73,25 +74,6 @@ export async function updateUserById(req: Request, res: Response): Promise<Respo
       details: error instanceof Error ? error.message : String(error)
     });
   }
-}
-
-export async function loginUser(req: Request, res: Response): Promise<Response> {
-    console.log("Logging in user");
-    try {
-        const { name_or_mail, password } = req.body;
-        console.log("User trying to get logged in:", name_or_mail);
-        const user = await userService.loginUser(name_or_mail, password);
-        if (user === true) {
-            return res.status(200).json({
-                message: "User logged in",
-            });
-        } else {
-            // Return a generic error message for both incorrect password and non-existent user
-            return res.status(401).json({ error: 'Invalid username/mail or password' });
-        }
-    } catch (error) {
-        return res.status(500).json({ error: 'Failed to login user' });
-    }
 }
 
 export async function diguesHola(req: Request, res: Response): Promise<Response> {
@@ -209,5 +191,37 @@ export async function getUsersPaginated(req: Request<{}, {}, {}, PaginatedUsersQ
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Failed to fetch users' });
+  }
+}
+
+export async function changePassword(
+  
+  req: Request,
+  res: Response
+): Promise<Response> {
+  console.log("Request body:", req.body);
+  console.log("Params:", req.params);
+  const { userId } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await userService.changePassword(
+      userId,
+      currentPassword,
+      newPassword
+    );
+    return res.status(200).json({
+      message: 'Password updated successfully',
+      user,
+    });
+  } catch (err: any) {
+    if (err.message === 'UserNotFound') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (err.message === 'IncorrectPassword') {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to update password' });
   }
 }

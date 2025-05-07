@@ -9,6 +9,7 @@ npm install --save-dev @types/nodemailer
 npm install cors
 npm install --save-dev @types/cors
 
+npm install --save-dev @types/cookie-parser
 
 per executar:
 npx ts-node src/index.ts

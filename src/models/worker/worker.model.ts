@@ -1,17 +1,23 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-export interface IUsuari {
+import { WorkerRole } from '../../enums/workerRoles.enum';
+
+export interface IWorker {
+    toObject(): { [x: string]: any; password: any; activationId: any; };
     _id?: mongoose.ObjectId;
     name: string;
     age: number;
     mail: string;
+    role: WorkerRole;
+    location: mongoose.Types.ObjectId[];
     password: string;
     isDeleted: boolean;
     activationId?: string;
+
     isValidPassword: (password: string) => Promise<boolean>;
 }
 
-const UserSchema = new mongoose.Schema<IUsuari>({
+const WorkerSchema = new mongoose.Schema<IWorker>({
     name: { 
         type: String, 
         required: true,
@@ -38,6 +44,15 @@ const UserSchema = new mongoose.Schema<IUsuari>({
         required: true, 
         default: false
     },
+    role: {
+        type: String,
+        enum: Object.values(WorkerRole), 
+        default: WorkerRole.USER,
+      },
+      location: [{ 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Location',
+        }],
     activationId: {
         type: String,
         sparse: true ,
@@ -49,22 +64,21 @@ const UserSchema = new mongoose.Schema<IUsuari>({
 //   this.where({ isDeleted: false });
 // });
 
-UserSchema.pre('findOne', function() {
+WorkerSchema.pre('findOne', function() {
   this.where({ isDeleted: false });
 });
 
-UserSchema.pre('save',async function(next) {
+WorkerSchema.pre('save',async function(next) {
     const hashedPassword= await bcrypt.hash(this.password, bcrypt.genSaltSync(8));
     this.password = hashedPassword;
     next();
 });
 
-UserSchema.method('isValidPassword',async function(password: string): Promise<boolean> {
+WorkerSchema.method('isValidPassword',async function(password: string): Promise<boolean> {
     const isValid =  await bcrypt.compare(password, this.password);
     return isValid;
 });
 
+const Worker = mongoose.model<IWorker>('Worker', WorkerSchema);
 
-const User = mongoose.model<IUsuari>('User', UserSchema);
-
-export default User;
+export default Worker;

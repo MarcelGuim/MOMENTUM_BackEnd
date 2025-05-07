@@ -11,7 +11,11 @@ import {
     getAppointmentsBetweenDates,
     editCalendar,
     getCommonSlotsForNCalendars,
-    getCommonSlotsForTwoCalendars
+    getCommonSlotsForTwoCalendars,
+    setAppointmentRequestForWorker,
+    getCommonSlotsForOneUserAndOneWorker,
+    getCommonSlotsForOneUserAndOneLocation,
+    getCommonSlotsForOneUserAndOneBussiness
 } from './calendar.controller';
 
 const router = Router();
@@ -347,6 +351,192 @@ router.post('/common-slots/two-users', getCommonSlotsForTwoCalendars);
 
 /**
  * @swagger
+ * /calendars/common-slots/user-worker:
+ *   post:
+ *     summary: Obtiene los slots comunes entre un usuario y un trabajador
+ *     tags: [Calendars]
+ *     description: Encuentra los intervalos de tiempo disponibles comunes entre un usuaro y un trabajador en un rango de fechas dado
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - workerId
+ *               - date1
+ *               - date2
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID del usuario
+ *               workerId:
+ *                 type: string
+ *                 description: ID del trabajador
+ *               date1:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de inicio del rango (ISO 8601)
+ *               date2:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha de fin del rango (ISO 8601)
+ *     responses:
+ *       200:
+ *         description: Slots comunes encontrados exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 commonSlots:
+ *                   type: array
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                       format: date-time
+ *                     description: Par de fechas [inicio, fin] que representan un slot común
+ *       400:
+ *         description: Faltan parámetros requeridos en el cuerpo de la petición
+ *       404:
+ *         description: Usuario(s) no encontrado(s) o sin calendarios
+ *       406:
+ *         description: Uno de los usuarios no tiene slots vacíos en el rango dado
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/common-slots/user-worker', getCommonSlotsForOneUserAndOneWorker);
+
+/**
+ * @swagger
+ * /calendars/common-slots/user-location:
+ *   post:
+ *     summary: Obté els slots comuns entre un usuari i una localització
+ *     tags: [Calendars]
+ *     description: Retorna els intervals de temps disponibles comuns entre un usuari i els treballadors d'una localització dins d’un rang de dates
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - locationId
+ *               - date1
+ *               - date2
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID del usuari
+ *               locationId:
+ *                 type: string
+ *                 description: ID de la localització
+ *               date1:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Data d'inici del rang (ISO 8601)
+ *               date2:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Data de fi del rang (ISO 8601)
+ *     responses:
+ *       200:
+ *         description: Slots comuns trobats correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 commonSlots:
+ *                   type: array of arrays
+ *                   items:
+ *                     type: array of arrays
+ *                     items:
+ *                       type: string
+ *                       format: date-time
+ *                     description: Parell de dates, amb el string del worker. [workerId[vector amb els slots]] que representen un slot comú
+ *       400:
+ *         description: Falten paràmetres requerits (date1 o date2)
+ *       404:
+ *         description: Usuari o localització no trobats, o sense treballadors o sense slots comuns
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/common-slots/user-location', getCommonSlotsForOneUserAndOneLocation);
+
+/**
+ * @swagger
+ * /calendars/common-slots/user-bussiness:
+ *   post:
+ *     summary: Obté els slots comuns entre un usuari i un negoci
+ *     tags: [Calendars]
+ *     description: Retorna els intervals de temps disponibles comuns entre un usuari i els treballadors d’un negoci per a un servei concret dins d’un rang de dates
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - bussinessId
+ *               - serviceType
+ *               - date1
+ *               - date2
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID de l'usuari
+ *               bussinessId:
+ *                 type: string
+ *                 description: ID del negoci
+ *               serviceType:
+ *                 type: string
+ *                 description: Tipus de servei requerit
+ *               date1:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Data d'inici del rang (ISO 8601)
+ *               date2:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Data de fi del rang (ISO 8601)
+ *     responses:
+ *       200:
+ *         description: Slots comuns trobats correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 commonSlots:
+ *                   type: array
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                       format: date-time
+ *                     description: Slot comú [start, end]
+ *       400:
+ *         description: Falten paràmetres requerits (date1 o date2)
+ *       404:
+ *         description: Usuari o negoci no trobat, o sense slots comuns
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/common-slots/user-bussiness', getCommonSlotsForOneUserAndOneBussiness);
+
+/**
+ * @swagger
  * /calendars/common-slots/multiple-users:
  *   post:
  *     summary: Obtiene los slots comunes entre múltiples calendarios de usuarios
@@ -431,6 +621,46 @@ router.post('/common-slots/two-users', getCommonSlotsForTwoCalendars);
  *         description: Error del servidor
  */
 router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
+
+/**
+ * @swagger
+ * /calendars/appointmentRequest/{calendarId}/{workerId}:
+ *   post:
+ *     summary: Solicita una cita per un treballador en un calendari concret
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: calendarId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del calendari
+ *       - in: path
+ *         name: workerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del worker
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointment
+ *             properties:
+ *               appointment:
+ *                 $ref: '#/components/schemas/AppointmentRequest'
+ *     responses:
+ *       200:
+ *         description: Sol·licitud de cita creada correctament
+ *       404:
+ *         description: Calendari, treballador o slot no disponible
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/appointmentRequest/:calendarId/:workerId', setAppointmentRequestForWorker);
 
 
 export default router;
