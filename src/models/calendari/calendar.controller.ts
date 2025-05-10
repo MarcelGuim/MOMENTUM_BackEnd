@@ -340,8 +340,7 @@ export async function getCommonSlotsForNCalendars(req: Request, res: Response): 
 export async function setAppointmentRequestForWorker(req: Request, res: Response): Promise<Response> {
     try {
         console.log("Setting appointment request for worker");
-        const { calendarId, workerId } = req.params;
-        const { appointment } = req.body;
+        const { appointment, calendarId, workerId } = req.body;
 
         const result = await calendarService.setAppointmentRequestForWorker(calendarId, workerId, appointment);
         return res.status(200).json({
