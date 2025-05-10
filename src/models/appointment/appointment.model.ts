@@ -5,6 +5,7 @@ import { GeoJSONPoint } from '../../types';
 
 export interface IAppointment {
     _id?: ObjectId;
+    calendarId?: ObjectId;
     inTime: Date;
     outTime: Date;
     title: string;

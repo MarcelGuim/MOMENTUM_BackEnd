@@ -145,6 +145,36 @@ export async function addAppointmentToCalendar(req: Request, res: Response): Pro
     }
 }
 
+export async function hardDeleteAppointment(req: Request, res: Response) {
+    try {
+
+        const { appointmentId } = req.params;
+        if (!appointmentId) return res.status(400).json({message: "Bad Request"});
+
+        const result = await calendarService.hardDeleteAppointment(appointmentId);
+        if( result == null || result == 0 ) return res.status(404).json({message: "Appointment not found"});
+
+        return res.status(200).json({message: "OK"});
+    } catch (error) {
+        return res.status(500).json({message: "Internal Error"});
+    }
+}
+
+export async function softDeleteAppointment(req: Request, res: Response) {
+    try {
+
+        const { appointmentId } = req.params;
+        if (!appointmentId) return res.status(400).json({message: "Bad Request"});
+
+        const result = await calendarService.softDeleteAppointment(appointmentId);
+        if( result == null || result == 0 ) return res.status(404).json({message: "Appointment not found"});
+
+        return res.status(200).json({message: "OK"});
+    } catch (error) {
+        return res.status(500).json({message: "Internal Error"});
+    }
+}
+
 export async function hardDeleteCalendarsUser(req: Request, res: Response) {
     try {
         const { calendarId } = req.params;
