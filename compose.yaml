@@ -1,0 +1,48 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: momentum-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - momentum_mongodb_data:/data/db
+    networks:
+      - "db_network"
+  
+  backend:
+    image: janvinas/momentum-backend:latest
+    container_name: momentum-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - "db_network"
+      - "api_network"
+    environment:
+      NODE_ENV: "production"
+      MONGODB_URI: "mongodb://momentum-mongodb:27017/momentum"
+
+  webapp:
+    image: janvinas/momentum-webapp:latest
+    container_name: momentum-webapp
+    ports:
+      - "3000:3000"
+    networks:
+      - "api_network"
+    environment:
+      NODE_ENV: "production"
+      NEXT_PUBLIC_API_URL: "http://localhost:8080"
+
+  backoffice:
+    image: janvinas/momentum-backoffice:latest
+    container_name: momentum-backoffice
+    ports:
+      - "8081:80"
+    environment:
+      PUBLIC_API_URL: "http://localhost:8080"
+
+networks:
+  db_network:
+  api_network:
+
+volumes:
+  momentum_mongodb_data:
