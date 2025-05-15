@@ -5,6 +5,7 @@ import Appointment from '../appointment/appointment.model';
 import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
 dotenv.config();
 let activations: Partial<IUsuari>[] = [];
@@ -193,6 +194,24 @@ export class UserService {
   
     user.password = newPassword; // el pre('save') se encarga del hash
     return await user.save();
+  }
+
+  async toggleFavoriteLocation(userId: string, locationId: string): Promise<IUsuari | null> {
+    const user = await User.findById(userId);
+    if (!user) return null;
+  
+    const locationObjectId = new mongoose.Types.ObjectId(locationId);
+    const alreadyFavorite = user.favoriteLocations?.some(loc => loc.equals(locationObjectId));
+  
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      alreadyFavorite
+        ? { $pull: { favoriteLocations: locationObjectId } }
+        : { $addToSet: { favoriteLocations: locationObjectId } },
+      { new: true }
+    );
+  
+    return updatedUser;
   }
 }
 

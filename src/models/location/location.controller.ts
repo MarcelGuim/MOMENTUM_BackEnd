@@ -218,3 +218,26 @@ export async function getBussinessIdFromLocationId(req: Request, res: Response):
         return res.status(500).json({ error: 'Failed to fetch business ID' });
     }
 }
+
+export async function getCities(req: Request, res: Response): Promise<Response> {
+    try {
+      const cities = await locationService.getCitiesFromAddresses();
+  
+      if (cities === -1) {
+        console.error('Error intern: no s\'han pogut extreure les ciutats');
+        return res.status(500).json({
+          message: 'Internal server error while extracting cities. Check address formats.'
+        });
+      }
+  
+      if (!Array.isArray(cities) || cities.length === 0) {
+        return res.status(404).json({ message: 'No cities found in the database.' });
+      }
+  
+      return res.status(200).json({ cities });
+    } catch (error) {
+      console.error('Unexpected error retrieving cities:', error);
+      return res.status(500).json({ message: 'Unexpected server error' });
+    }
+  }
+  

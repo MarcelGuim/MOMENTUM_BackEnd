@@ -1,8 +1,10 @@
 import Business, { IBusiness } from "./business.model";
 import Location, { ILocation } from "../location/location.model";
+import User from '../users/user.model';
 import mongoose from "mongoose";
 import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { LocationService } from "../location/location.services";
+import { FilterOptions, LocationFilter } from '../../interfaces/filter.interface';
 
 const locationService = new LocationService();
 export class BusinessService{
@@ -242,5 +244,284 @@ export class BusinessService{
         return deletedBusiness; 
     }
     
+    async getFilteredBusinesses(filters: FilterOptions): Promise<IBusiness[] | number | null> {
+      // Primer filtrem les ubicacions que compleixen els criteris
+      const locationFilter: any = { isDeleted: false };
+
+      if (filters.serviceTypes) {
+        const invalid = filters.serviceTypes.some(
+          type => !Object.values(locationServiceType).includes(type as locationServiceType)
+        );
+        if (invalid) return -1;
+        locationFilter.serviceType = { $in: filters.serviceTypes };
+      }
+
+      if (filters.cities && filters.cities.length > 0) {
+        locationFilter.$or = filters.cities.map(city => ({
+          address: {
+            $regex: `\\d{5}\\s+${city}(,|$)`,
+            $options: 'i',
+          },
+        }));
+      }
+
+      if (filters.ratingMin !== undefined && !isNaN(filters.ratingMin)) {
+        locationFilter.rating = { $gte: filters.ratingMin };
+      }
+
+      if (filters.day && filters.time) {
+        locationFilter.schedule = {
+          $elemMatch: {
+            day: filters.day,
+            open: { $lte: filters.time },
+            close: { $gt: filters.time },
+          },
+        };
+      }
+
+      if (
+        filters.lat !== undefined && !isNaN(filters.lat) &&
+        filters.lon !== undefined && !isNaN(filters.lon) &&
+        filters.maxDistance !== undefined && !isNaN(filters.maxDistance)
+      ) {
+        locationFilter.ubicacion = {
+          $nearSphere: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [filters.lon, filters.lat],
+            },
+            $maxDistance: filters.maxDistance * 1000, // metres
+          },
+        };
+      }
+
+      const validLocations = await Location.find(locationFilter, { _id: 1 });
+
+      if (validLocations.length === 0) return null;
+
+      const locationIds = validLocations.map(loc => loc._id);
+      //recuperem només els negocis amb ubicacions filtrades
+      const businesses = await Business.aggregate([
+        { $match: { isDeleted: false } },
+        {
+          $lookup: {
+            from: 'locations',
+            localField: 'location',
+            foreignField: '_id',
+            as: 'location',
+          },
+        },
+        {
+          $addFields: {
+            location: {
+              $filter: {
+                input: "$location",
+                as: "loc",
+                cond: { $in: ["$$loc._id", locationIds] },
+              },
+            },
+          },
+        },
+        {
+          $match: {
+            "location.0": { $exists: true }, // Només negocis amb ubicació vàlida
+          },
+        },
+      ]);
+
+      if (!businesses || businesses.length === 0) return null;
+
+      return businesses;
+    }
+
+    async findBusinessOrByLocationName(name: string): Promise<IBusiness[] | null> {
+      
+      const nameRegex = new RegExp(name, 'i');
+
+      const result = await Business.aggregate([
+        {
+          $match: {
+            isDeleted: false,
+            name: { $regex: nameRegex } // primer intentem match per nom de business
+          }
+        },
+        {
+          $lookup: {
+            from: 'locations',
+            localField: 'location',
+            foreignField: '_id',
+            as: 'location',
+            pipeline: [
+              { $match: { isDeleted: false } }
+            ]
+          }
+        }
+      ]);
+    
+      // Si hi ha resultats pel nom del business, retornem aquests
+      if (result.length > 0) return result;
+    
+      // Si no, provem match per nom de location i només popularem la location concreta
+      const businessesByLocation = await Business.aggregate([
+        {
+          $match: {
+            isDeleted: false
+          }
+        },
+        {
+          $lookup: {
+            from: 'locations',
+            localField: 'location',
+            foreignField: '_id',
+            as: 'location',
+            pipeline: [
+              {
+                $match: {
+                  isDeleted: false,
+                  nombre: { $regex: nameRegex }
+                }
+              }
+            ]
+          }
+        },
+        {
+          $match: {
+            location: { $ne: [] } // només els que han populat la location amb èxit
+          }
+        }
+      ]);
+    
+      return businessesByLocation.length > 0 ? businessesByLocation : null;  
+    }
+
+    async getBusinessesWithFavoriteLocations(userId: string): Promise<IBusiness[] | null> {
+      const user = await User.findById(userId).select('favoriteLocations');
+    
+      if (!user || user.favoriteLocations.length === 0) return [];
+    
+      const pipeline = [
+        { $match: { isDeleted: false } },
+        {
+          $lookup: {
+            from: 'locations',
+            localField: 'location',
+            foreignField: '_id',
+            as: 'location',
+            pipeline: [
+              {
+                $match: {
+                  _id: { $in: user.favoriteLocations },
+                  isDeleted: false,
+                },
+              },
+            ],
+          },
+        },
+        {
+          $match: {
+            location: { $ne: [] }, // només negocis amb alguna location populada (que coincideixi amb favorites)
+          },
+        },
+      ];
+    
+      const result = await Business.aggregate(pipeline);
+      return result.length > 0 ? result : null;
+    }
+
+    async getFilteredFavoriteBusinesses(userId: string, filters: FilterOptions): Promise<IBusiness[] | number | null> {
+    const locationFilter: any = { isDeleted: false };
+
+    //Obtenim l’usuari
+    const user = await User.findById(userId).select('favoriteLocations');
+    if (!user || !user.favoriteLocations || user.favoriteLocations.length === 0) return null;
+
+    //Preparem els filtres
+    if (filters.serviceTypes) {
+      const invalid = filters.serviceTypes.some(
+        type => !Object.values(locationServiceType).includes(type as locationServiceType)
+      );
+      if (invalid) return -1;
+      locationFilter.serviceType = { $in: filters.serviceTypes };
+    }
+
+    if (filters.cities && filters.cities.length > 0) {
+      locationFilter.$or = filters.cities.map(city => ({
+        address: {
+          $regex: `\\d{5}\\s+${city}(,|$)`,
+          $options: 'i',
+        },
+      }));
+    }
+
+    if (filters.ratingMin !== undefined && !isNaN(filters.ratingMin)) {
+      locationFilter.rating = { $gte: filters.ratingMin };
+    }
+
+    if (filters.day && filters.time) {
+      locationFilter.schedule = {
+        $elemMatch: {
+          day: filters.day,
+          open: { $lte: filters.time },
+          close: { $gt: filters.time },
+        },
+      };
+    }
+
+    //Filtratge amb distància
+    if (
+      filters.lat !== undefined && !isNaN(filters.lat) &&
+      filters.lon !== undefined && !isNaN(filters.lon) &&
+      filters.maxDistance !== undefined && !isNaN(filters.maxDistance)
+    ) {
+      locationFilter.ubicacion = {
+        $nearSphere: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [filters.lon, filters.lat],
+          },
+          $maxDistance: filters.maxDistance * 1000, // metres
+        },
+      };
+    }
+
+    //Obtenim només les localitzacions favorites que compleixen els filtres
+    const validLocations = await Location.find({
+      _id: { $in: user.favoriteLocations },
+      ...locationFilter,
+    }, { _id: 1 });
+
+    if (validLocations.length === 0) return null;
+
+    const locationIds = validLocations.map(loc => loc._id);
+
+    //Ara busquem els negocis que tenen aquestes ubicacions
+    const businesses = await Business.aggregate([
+      { $match: { isDeleted: false } },
+      {
+        $lookup: {
+          from: 'locations',
+          localField: 'location',
+          foreignField: '_id',
+          as: 'location',
+        },
+      },
+      {
+        $addFields: {
+          location: {
+            $filter: {
+              input: "$location",
+              as: "loc",
+              cond: { $in: ["$$loc._id", locationIds] },
+            },
+          },
+        },
+      },
+      {
+        $match: { "location.0": { $exists: true } }, // només negocis amb ubicació vàlida
+      },
+    ]);
+
+    return businesses.length > 0 ? businesses : null;
+  }
 
 }

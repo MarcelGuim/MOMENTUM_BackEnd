@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { IBusiness } from './business.model';
 import { BusinessService } from './business.services';
 import {IAppointment} from '../appointment/appointment.model'
-
+import { locationSchedule } from '../../enums/locationSchedule.enum';
 const businessService = new BusinessService();
 export async function createBusiness(req: Request, res: Response): Promise<Response> {
     try {
@@ -294,3 +294,131 @@ export async function hardDeleteBusiness(req: Request, res: Response): Promise<R
     }
 }
 
+export async function getFilteredBusinesses(req: Request, res: Response): Promise<Response> {
+    try {
+      //console.log('[Esta entrant aixo a getFilteredBusiness:] req.body:', req.body);
+      const { serviceTypes, cities, ratingMin, day, time, lat, lon, maxDistance } = req.body;
+  
+      // Neteja i preparació dels filtres
+      const filters = {
+        serviceTypes: Array.isArray(serviceTypes) && serviceTypes.length > 0 ? serviceTypes : undefined,
+        cities: Array.isArray(cities) ? cities.map((c: string) => c.trim()) : cities ? [cities.trim()] : undefined,
+        ratingMin: ratingMin !== null && ratingMin !== '' && !isNaN(ratingMin) ? parseFloat(ratingMin) : undefined,
+        day: day || undefined,
+        time: time || undefined,
+        lat: lat !== null && lat !== '' ? parseFloat(lat) : undefined,
+        lon: lon !== null && lon !== '' ? parseFloat(lon) : undefined,
+        maxDistance: maxDistance !== null && maxDistance !== '' && !isNaN(maxDistance) ? parseInt(maxDistance) : undefined
+      };
+  
+      const result = await businessService.getFilteredBusinesses(filters);
+  
+      if (result === -1) {
+        return res.status(400).json({ message: 'Invalid service type' });
+      }
+  
+      if (result === null) {
+        return res.status(404).json({ message: 'No businesses found matching the filters' });
+      }
+  
+      return res.status(200).json({
+        message: 'Businesses retrieved successfully',
+        businesses: result
+      });
+    } catch (error) {
+      console.error('Error retrieving filtered businesses:', error);
+      return res.status(500).json({ message: 'Failed to retrieve businesses' });
+    }
+  }
+
+  export async function searchBusinessByName(req: Request, res: Response): Promise<Response> {
+    try {
+      const { name } = req.params;
+  
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({ message: 'Missing or invalid name parameter' });
+      }
+  
+      const result = await businessService.findBusinessOrByLocationName(name);
+  
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: 'No business or location found with that name' });
+      }
+  
+      return res.status(200).json({
+        message: 'Businesses retrieved successfully',
+        businesses: result
+      });
+    } catch (error) {
+      console.error('Error searching business or location:', error);
+      return res.status(500).json({ message: 'Failed to search business' });
+    }
+  }
+
+  export async function getFavoriteBusinesses(req: Request, res: Response): Promise<Response> {
+    try {
+      const { userId } = req.params;
+  
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ message: 'Missing or invalid user ID' });
+      }
+  
+      const result = await businessService.getBusinessesWithFavoriteLocations(userId);
+  
+      if (!result || result.length === 0) {
+        return res.status(404).json({ message: 'No favorite businesses found for this user' });
+      }
+  
+      return res.status(200).json({
+        message: 'Favorite businesses retrieved successfully',
+        businesses: result,
+      });
+  
+    } catch (error) {
+      console.error('Error retrieving favorite businesses:', error);
+      return res.status(500).json({ message: 'Failed to retrieve favorite businesses' });
+    }
+  }
+
+  export async function getFilteredFavoriteBusinesses(req: Request, res: Response): Promise<Response> {
+    try {
+      //console.log('[Esta entrant aixo a getFilteredFavoriteBusiness:] req.body:', req.body);
+      const { userId } = req.params;
+  
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ message: 'Missing or invalid userId parameter' });
+      }
+  
+      const { serviceTypes, cities, ratingMin, day, time, lat, lon, maxDistance } = req.body;
+  
+      // Neteja i preparació dels filtres
+      const filters = {
+        serviceTypes: Array.isArray(serviceTypes) && serviceTypes.length > 0 ? serviceTypes : undefined,
+        cities: Array.isArray(cities) ? cities.map((c: string) => c.trim()) : cities ? [cities.trim()] : undefined,
+        ratingMin: ratingMin !== null && ratingMin !== '' && !isNaN(ratingMin) ? parseFloat(ratingMin) : undefined,
+        day: day || undefined,
+        time: time || undefined,
+        lat: lat !== null && lat !== '' ? parseFloat(lat) : undefined,
+        lon: lon !== null && lon !== '' ? parseFloat(lon) : undefined,
+        maxDistance: maxDistance !== null && maxDistance !== '' && !isNaN(maxDistance) ? parseInt(maxDistance) : undefined
+      };
+  
+      const result = await businessService.getFilteredFavoriteBusinesses(userId, filters);
+  
+      if (result === -1) {
+        return res.status(400).json({ message: 'Invalid service type' });
+      }
+  
+      if (!result || result === null) {
+        return res.status(404).json({ message: 'No favorite businesses found matching the filters' });
+      }
+  
+      return res.status(200).json({
+        message: 'Favorite businesses retrieved successfully',
+        businesses: result
+      });
+    } catch (error) {
+      console.error('Error retrieving filtered favorite businesses:', error);
+      return res.status(500).json({ message: 'Failed to retrieve favorite businesses' });
+    }
+  }
