@@ -8,6 +8,7 @@ import {
   getLast20Messages,
   getChatId,
 } from './chat.controller';
+import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -79,7 +80,7 @@ router.post("/send", sendMessage);
  *       500:
  *         description: Error inesperat
  */
-router.get("/people/:userId", getPeopleWithWhomUserChatted);
+router.get("/people/:userId",  verifyToken, requireOwnership('userId'), getPeopleWithWhomUserChatted);
 
 /**
  * @swagger
