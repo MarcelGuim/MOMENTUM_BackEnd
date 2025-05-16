@@ -195,7 +195,6 @@ router.get('/:userId', getCalendarsOfUser);
  */
 router.post('/:calendarId/appointments', addAppointmentToCalendar);
 
-
 /**
  * @swagger
  * /calendars/{calendarId}/appointments/{appointmentId/delete}:
@@ -253,8 +252,6 @@ router.delete('/appointments/:appointmentId/delete', hardDeleteAppointment);
  *         description: Error del servidor
  */
 router.delete('/appointments/:appointmentId/soft-delete', softDeleteAppointment);
-
-
 
 /**
  * @swagger
@@ -687,23 +684,10 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
 
 /**
  * @swagger
- * /calendars/appointmentRequest/{calendarId}/{workerId}:
+ * /calendars/appointmentRequest:
  *   post:
  *     summary: Solicita una cita per un treballador en un calendari concret
  *     tags: [Calendars]
- *     parameters:
- *       - in: path
- *         name: calendarId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID del calendari
- *       - in: path
- *         name: workerId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID del worker
  *     requestBody:
  *       required: true
  *       content:
@@ -711,8 +695,16 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
  *           schema:
  *             type: object
  *             required:
+ *               - calendarId
+ *               - workerId
  *               - appointment
  *             properties:
+ *               calendarId:
+ *                 type: string
+ *                 description: ID del calendari
+ *               workerId:
+ *                 type: string
+ *                 description: ID del treballador
  *               appointment:
  *                 $ref: '#/components/schemas/AppointmentRequest'
  *     responses:
@@ -723,7 +715,8 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
  *       500:
  *         description: Error del servidor
  */
-router.post('/appointmentRequest/:calendarId/:workerId', setAppointmentRequestForWorker);
+router.post('/appointmentRequest', setAppointmentRequestForWorker);
+
 
 
 export default router;

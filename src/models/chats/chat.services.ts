@@ -1,7 +1,7 @@
 import { promises } from 'dns';
 import {IChat, IMessage} from './chat.model';
 import Chat from './chat.model';
-import User from '../users/user.model';
+import User, { IUsuari } from '../users/user.model';
 
 
 export class ChatService {
@@ -74,6 +74,25 @@ export class ChatService {
         const chat = await Chat.findById(chatId);
         if (chat === null) throw new Error("Chat not found");
         return await chat.messages.slice(-20).reverse();
+    }
+
+    async getChatFromId(chatId: string): Promise <IChat | null>{
+        return await Chat.findById(chatId);
+    }
+
+    async getNameFromOtherPersonInChat(chatId: string, name:string): Promise<string | null>{
+        const chat:IChat | null = await this.getChatFromId(chatId);
+        if (chat){
+            const user1:IUsuari | null = await User.findById(chat.user1);
+            if(user1 && user1.name !== name)
+                return user1.name;
+            else{
+                const user2:IUsuari | null = await User.findById(chat.user2);
+                if(user2) return user2?.name;
+                return null;
+            }
+        }
+        return null;
     }
 
 }

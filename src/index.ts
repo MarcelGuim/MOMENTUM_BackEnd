@@ -10,8 +10,12 @@ import connectDB from './database';
 import { setupSwagger } from './swagger';
 import cors from "cors";
 import cookieParser from 'cookie-parser';
-
 import dotenv from 'dotenv';
+import http from 'http';
+import { startSocketServer } from './sockets/socket_server';
+import { Server } from 'socket.io';
+import { verifyAccessToken } from './utils/jwt.utils';
+
 dotenv.config();
 
 // Configuración de Express
@@ -45,6 +49,10 @@ app.use('/business', businessRoutes); // Rutas de ubicaciones
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
+const socketPort = process.env.SOCKET_PORT || 3001;
+const httpServer = http.createServer(app);
+
+startSocketServer(app, socketPort.toString());
 
 app.listen(PORT, () => {
     console.log(`Servidor en marxa a ${BASE_URL}`);
