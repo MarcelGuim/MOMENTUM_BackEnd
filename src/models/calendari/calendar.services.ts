@@ -269,7 +269,6 @@ export class CalendarService {
 
     async getSlotsCommonForCalendarsOfNUsers(userIDs: string[], date1: Date, date2: Date): Promise<[Date,Date][] | null | number | [number,string[]]> {
         let userIDsNotFound: [number, string[]] = [1, []];
-    
         await Promise.all(userIDs.map(async (userId) => { 
             const user: IUsuari | null = await User.findById(userId); 
             if (!user) userIDsNotFound[1].push(userId);
@@ -278,7 +277,6 @@ export class CalendarService {
         if (userIDsNotFound[1].length > 0) {
             return userIDsNotFound;
         }
-        
         let emptySlots: [Date, Date][][] = [];
         let userIDsWithNoCalendars: [number, string[]] = [2, []];
         let userIDsWithNoEmptySlots: [number, string[]] = [3, []];

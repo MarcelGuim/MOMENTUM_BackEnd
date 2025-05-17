@@ -315,16 +315,21 @@ export async function getCommonSlotsForNCalendars(req: Request, res: Response): 
         }
         const startDate = new Date(date1);
         const endDate = new Date(date2);
+        console.log(userIds)
+        console.log(startDate)
+        console.log(endDate)
         const result = await calendarService.getSlotsCommonForCalendarsOfNUsers(
             userIds, 
             startDate, 
             endDate
         );
 
-    
-        if (Array.isArray(result)) {
+        console.log("RESULTS FINALS")
+        console.log(result)
+        if (Array.isArray(result) && Array.isArray(result[0]) && typeof result[0] === 'number') {
             const [errorType, affectedUserIds] = result;
-            
+            console.log("ENTRA")
+            console.log(errorType, affectedUserIds)
             if (errorType === 1) {
                 return res.status(404).json({
                     message: "Some users were not found",
