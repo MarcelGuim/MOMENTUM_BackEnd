@@ -6,23 +6,24 @@ const appointmentService = new AppointmentService();
 
 // Crear una nueva cita
 export async function createAppointment(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Creating appointment");
-        const appointment: Partial<IAppointment> = req.body;
-        const answer = await appointmentService.createAppointment(appointment);
-        
-        return res.status(200).json({
-          message: "Appointment created",
-          appointment: answer
-        });
-    } catch (error) {
-        console.log("Failed to create appointment");
-        return res.status(500).json({
-            message: "Failed to create appointment"
-        });
-    }
+  try {
+      console.log("Creating appointment with data:", req.body);
+      const appointment: Partial<IAppointment> = req.body;
+      const answer = await appointmentService.createAppointment(appointment);
+      
+      console.log("Appointment successfully created:", answer);
+      return res.status(200).json({
+        message: "Appointment created",
+        appointment: answer
+      });
+  } catch (error) {
+      console.error("Error creating appointment:", error);
+      return res.status(500).json({
+          message: "Failed to create appointment",
+          error: error instanceof Error ? error.message : "Unknown error"
+      });
+  }
 }
-
 
 // Obtener cita por ID
 export async function getAppointmentById(req: Request, res: Response): Promise<Response> {

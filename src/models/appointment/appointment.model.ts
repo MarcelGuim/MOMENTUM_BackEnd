@@ -1,9 +1,11 @@
 import mongoose, { Schema, model, Document, ObjectId, Mongoose } from 'mongoose';
 import { appointmentServiceType } from '../../enums/appointmentServiceType.enum';
 import { appointmentState } from '../../enums/appointmentState.enum';
+import { GeoJSONPoint } from '../../types';
 
 export interface IAppointment {
     _id?: ObjectId;
+    calendarId?: ObjectId;
     inTime: Date;
     outTime: Date;
     title: string;
@@ -12,6 +14,8 @@ export interface IAppointment {
     serviceType: appointmentServiceType;
     appointmentState?: appointmentState;
     colour?: string;
+    customAddress?: string; // e.g. "123 Main St, Apt 4B, New York"
+    customUbicacion?: GeoJSONPoint
     isDeleted: boolean;
 }
 const AppointmentSchema = new Schema<IAppointment>({
@@ -56,7 +60,25 @@ const AppointmentSchema = new Schema<IAppointment>({
         type: Boolean,
         required: true,
         default: false 
-    }
+    },
+    customAddress: {
+        type: String,
+        required: false
+    },
+    customUbicacion: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: false,
+            default: undefined
+        },
+        coordinates: {
+            type: [Number],
+            required: false,
+            default: undefined
+        },
+        
+    },
 });
 
 AppointmentSchema.pre('find', function() {

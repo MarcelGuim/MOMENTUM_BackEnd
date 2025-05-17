@@ -14,7 +14,6 @@ const CalendarSchema = new mongoose.Schema<ICalendar>({
     owner: { 
         type: mongoose.Schema.Types.ObjectId, // Usar Schema.Types.ObjectId
         required: true,
-        ref: 'User'
     },
     calendarName: {
         type: String,

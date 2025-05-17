@@ -1,11 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { locationSchedule } from '../../enums/locationSchedule.enum';
-
-interface GeoJSONPoint {
-  type: 'Point';
-  coordinates: [number, number]; // [longitude, latitude]
-}
+import { GeoJSONPoint } from '../../types';
 
 export interface ILocation extends Document {
   _id: mongoose.Types.ObjectId;

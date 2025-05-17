@@ -10,8 +10,12 @@ import connectDB from './database';
 import { setupSwagger } from './swagger';
 import cors from "cors";
 import cookieParser from 'cookie-parser';
-
 import dotenv from 'dotenv';
+import http from 'http';
+import { startSocketServer } from './sockets/socket_server';
+import { Server } from 'socket.io';
+import { verifyAccessToken } from './utils/jwt.utils';
+
 dotenv.config();
 
 // Configuración de Express
@@ -22,8 +26,7 @@ app.use(cookieParser());
 // Configuración global de CORS
 app.use(
   cors({
-    origin: ["http://localhost:4200", "http://localhost:3000"],
-    //origin: [process.env.FRONTEND_URL || "http://localhost:4200", "http://localhost:3000"],
+    origin: [process.env.FRONTEND_URL || "http://localhost:3000", process.env.BACKOFFICE_URL|| "http://localhost:4200"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     credentials: true
@@ -46,6 +49,10 @@ app.use('/business', businessRoutes); // Rutas de ubicaciones
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
+const socketPort = process.env.SOCKET_PORT || 3001;
+const httpServer = http.createServer(app);
+
+startSocketServer(app, socketPort.toString());
 
 app.listen(PORT, () => {
     console.log(`Servidor en marxa a ${BASE_URL}`);
