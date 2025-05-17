@@ -15,7 +15,9 @@ import {
     setAppointmentRequestForWorker,
     getCommonSlotsForOneUserAndOneWorker,
     getCommonSlotsForOneUserAndOneLocation,
-    getCommonSlotsForOneUserAndOneBussiness
+    getCommonSlotsForOneUserAndOneBussiness,
+    hardDeleteAppointment,
+    softDeleteAppointment
 } from './calendar.controller';
 
 const router = Router();
@@ -192,6 +194,64 @@ router.get('/:userId', getCalendarsOfUser);
  *         description: Error del servidor
  */
 router.post('/:calendarId/appointments', addAppointmentToCalendar);
+
+/**
+ * @swagger
+ * /calendars/{calendarId}/appointments/{appointmentId/delete}:
+ *   post:
+ *     summary: Elimina permanentemente un appointment de un calendario
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: calendarId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del calendario
+ *       - in: path
+ *         name: appointmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del appointment
+ *     responses:
+ *       200:
+ *         description: Cita eliminada exitosamente
+ *       404:
+ *         description: Cita o calendario no encontrado
+ *       500:
+ *         description: Error del servidor
+ */
+router.delete('/appointments/:appointmentId/delete', hardDeleteAppointment);
+
+/**
+ * @swagger
+ * /calendars/{calendarId}/appointments/{appointmentId/soft-delete}:
+ *   post:
+ *     summary: Marca un appointment de un calendario como eliminado
+ *     tags: [Calendars]
+ *     parameters:
+ *       - in: path
+ *         name: calendarId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del calendario
+ *       - in: path
+ *         name: appointmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del appointment
+ *     responses:
+ *       200:
+ *         description: Cita eliminada exitosamente
+ *       404:
+ *         description: Cita o calendario no encontrado
+ *       500:
+ *         description: Error del servidor
+ */
+router.delete('/appointments/:appointmentId/soft-delete', softDeleteAppointment);
 
 /**
  * @swagger
@@ -656,6 +716,7 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
  *         description: Error del servidor
  */
 router.post('/appointmentRequest', setAppointmentRequestForWorker);
+
 
 
 export default router;

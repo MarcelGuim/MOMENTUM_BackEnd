@@ -9,6 +9,7 @@ import Location, { ILocation } from '../location/location.model';
 import { LocationService } from '../location/location.services';
 import Bussiness, { IBusiness } from '../business/business.model';
 import { BusinessService } from '../business/business.services';
+import mongoose from 'mongoose';
 
 export class CalendarService {
     private locationService = new LocationService();
@@ -31,25 +32,32 @@ export class CalendarService {
     }
 
     async getAllAppointments(calendarId: string): Promise<IAppointment[]> {
-        const calendars = await Calendar.find({_id: calendarId}).populate<{appointments: IAppointment[]}>({
-            path: 'appointments'
+        const calendar = await Calendar.findById(calendarId).populate<{appointments: IAppointment[]}>({
+            path: 'appointments',
+            match: { isDeleted: false},
         });
         
-        const result: IAppointment[] = [];
-        calendars.forEach(calendar => result.push(...calendar.appointments));
-        return result;
+        if (!calendar) return []
+
+        return calendar.appointments.map(appointment => ({
+            ...(appointment as any)._doc,
+            calendarId: calendar._id
+        }));
     }
     
     async getAppointmentsBetweenDates(startDate: Date, endDate: Date, calendarId: string): Promise<IAppointment[]> {
         // Cerca calendaris de l'usuari
-        const calendars = await Calendar.find({ _id: calendarId }).populate<{appointments: IAppointment[]}>({
+        const calendar = await Calendar.findById(calendarId).populate<{appointments: IAppointment[]}>({
             path: 'appointments',
-            match: { inTime: { $gte: startDate, $lte: endDate } }
+            match: { inTime: { $gte: startDate, $lte: endDate }, isDeleted: false }
         });
+
+        if (!calendar) return [];
         
-        const result: IAppointment[] = [];
-        calendars.forEach(calendar => result.push(...calendar.appointments));
-        return result;
+        return calendar.appointments.map(appointment => ({
+            ...(appointment as any)._doc,
+            calendarId: calendar._id
+        }));
     }
 
     async getAppointmentsForADay(date: Date, calendarId: string): Promise<IAppointment[]> {
@@ -79,6 +87,18 @@ export class CalendarService {
         );
     }
 
+    async hardDeleteAppointment(appointmentId: string): Promise<number | null> {
+        const res = await Appointment.deleteMany({_id: new mongoose.Types.ObjectId(appointmentId)});
+        if (!res) return null;
+        return res.deletedCount;
+    }
+
+    async softDeleteAppointment(appointmentId: string): Promise<number | null> {
+        const res = await Appointment.updateMany({_id: new mongoose.Types.ObjectId(appointmentId)}, { $set: {isDeleted: true}});
+        if (!res) return null;
+        return res.modifiedCount;
+    }
+
     async hardDeleteCalendarsUser(calendarId: string): Promise<number> {
         // First get the calendar to find its appointments
         const calendar = await Calendar.findById(calendarId);
@@ -104,9 +124,9 @@ export class CalendarService {
         if (!calendar) return null;
     
         // Perform updates in parallel
-        await Promise.all([
-            Calendar.updateOne(
-                { _id: calendarId },
+        const res = await Promise.all([
+            Calendar.findByIdAndUpdate(
+                calendarId,
                 { $set: { isDeleted: true } }
             ),
             // Only update appointments if they exist
@@ -119,7 +139,7 @@ export class CalendarService {
         ]);
     
         // Return the updated calendar
-        return await Calendar.findById(calendarId);
+        return res[0];
     }
 
     async restoreCalendarsUser(calendarId: string): Promise<ICalendar | null> {

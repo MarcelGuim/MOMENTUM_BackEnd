@@ -7,14 +7,14 @@ class ConnectDB {
 
   public static async connect(): Promise<void> {
     if (this.connection && this.connection.readyState === 1) {
-      console.log('🟢 Already connected to MongoDB');
+      console.log(' Already connected to MongoDB');
       return;
     }
 
     try {
       const dbURI = process.env.MONGODB_URI as string;
       if (!dbURI) {
-        throw new Error('❌ MongoDB URI is not defined');
+        throw new Error(' MongoDB URI is not defined');
       }
       mongoose.set('strictQuery', false); 
       
@@ -24,15 +24,15 @@ class ConnectDB {
       this.connection = mongoose.connection;
 
       this.connection.once('open', () => {
-        console.log('🟢 MongoDB connected successfully');
+        console.log(' MongoDB connected successfully');
       });
 
       this.connection.on('error', (error) => {
-        console.error('🔴 MongoDB connection error:', error);
+        console.error(' MongoDB connection error:', error);
       });
 
     } catch (error) {
-      console.error('❌ Error connecting to MongoDB:', error);
+      console.error(' Error connecting to MongoDB:', error);
       throw error;
     }
   }

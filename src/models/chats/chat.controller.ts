@@ -42,7 +42,7 @@ export async function getPeopleWithWhomUserChatted(req: Request, res: Response):
         if (people.length === 0) {
             return res.status(404).json({ error: "No people found" });
         }
-        return res.status(200).json(people);
+        return res.status(200).json({people: people});
     } catch (error: any) {
         console.error("Error getting people:", error.message);
 

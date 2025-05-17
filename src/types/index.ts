@@ -13,6 +13,11 @@ export enum ModelType {
   TREB = 'Treballador',
 }
 
+export interface GeoJSONPoint {
+  type: 'Point';
+  coordinates: [number, number]; // [longitude, latitude]
+}
+
 export enum UserRole {
   ADMIN = 'Admin',
   CONTROLLER = 'Controller',
