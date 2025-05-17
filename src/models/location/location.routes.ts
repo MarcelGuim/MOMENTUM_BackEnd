@@ -10,7 +10,8 @@ import { createLocationHandler,
     getRouteHandler,
     getBussinessIdFromLocationId,
     getLocationByNameHandler,
-    getWorkersOfLocation } from "./location.controller";
+    getWorkersOfLocation,
+    getCities } from "./location.controller";
 
 const router = Router();
 
@@ -183,6 +184,35 @@ const router = Router();
  *                   example: Failed to create location
  */
 router.post('/', createLocationHandler);
+
+/**
+ * @swagger
+ * /location/cities:
+ *   get:
+ *     summary: Obté la llista de ciutats a partir de les adreces de les ubicacions
+ *     tags:
+ *       - location
+ *     responses:
+ *       200:
+ *         description: Llista de ciutats obtinguda correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 cities:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example:
+ *                     - Barcelona
+ *                     - L'Hospitalet de Llobregat
+ *       404:
+ *         description: No s'han trobat ciutats
+ *       500:
+ *         description: Error intern del servidor
+ */
+router.get('/cities', getCities);
 
 /**
  * @swagger
@@ -701,5 +731,7 @@ router.get('/name/:name', getLocationByNameHandler);
  *         description: Server error
  */
 router.get('/:id/business', getBussinessIdFromLocationId);
+
+
 
 export default router;

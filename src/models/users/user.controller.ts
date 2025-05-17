@@ -225,3 +225,27 @@ export async function changePassword(
     return res.status(500).json({ error: 'Failed to update password' });
   }
 }
+
+export async function toggleFavoriteLocationController(req: Request, res: Response): Promise<Response> {
+  try {
+    const { userId, locationId } = req.params;
+
+    if (!userId || !locationId) {
+      return res.status(400).json({ message: 'Missing userId or locationId in request parameters' });
+    }
+
+    const updatedUser = await userService.toggleFavoriteLocation(userId, locationId);
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found or failed to update favorites' });
+    }
+
+    return res.status(200).json({
+      message: 'Favorite location updated successfully',
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('Error updating favorite location:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}

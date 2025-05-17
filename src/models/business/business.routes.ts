@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
 import {
     createBusiness,
     getAllBusiness,
@@ -9,7 +10,10 @@ import {
     deleteLocationForBusiness,
     softDeleteBusiness,
     hardDeleteBusiness,
-
+    getFilteredBusinesses,
+    searchBusinessByName,
+    getFavoriteBusinesses,
+    getFilteredFavoriteBusinesses,
 } from './business.controller';
 
 const router = Router();
@@ -707,5 +711,309 @@ router.patch('/:businessId/softdelete', softDeleteBusiness);
  *                   example: Failed to perform hard delete for business
  */
 router.delete('/:businessId/harddelete', hardDeleteBusiness);
+
+/**
+ * @swagger
+ * /business/filter:
+ *   post:
+ *     summary: Obtenir negocis amb ubicacions que compleixin diversos filtres
+ *     tags: [business]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serviceTypes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Llista de tipus de servei (enums)
+ *                 example: ["restaurant", "gimnas"]
+ *               city:
+ *                 type: string
+ *                 description: Nom de la ciutat a cercar
+ *                 example: L'Hospitalet de Llobregat
+ *               ratingMin:
+ *                 type: number
+ *                 description: Valoració mínima (0-5)
+ *                 example: 4
+ *               day:
+ *                 type: string
+ *                 description: Dia de la setmana (enum)
+ *                 example: monday
+ *               time:
+ *                 type: string
+ *                 description: Hora de disponibilitat en format HH:mm
+ *                 example: "18:00"
+ *               lat:
+ *                 type: number
+ *                 description: Latitud per a filtre geoespacial
+ *                 example: 41.3851
+ *               lon:
+ *                 type: number
+ *                 description: Longitud per a filtre geoespacial
+ *                 example: 2.1734
+ *               maxDistance:
+ *                 type: number
+ *                 description: Distància màxima en metres
+ *                 example: 5000
+ *     responses:
+ *       200:
+ *         description: Negocis trobats correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Businesses retrieved successfully
+ *                 businesses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Business'
+ *       400:
+ *         description: Valor invàlid per a algun filtre
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum:
+ *                     - Invalid service type
+ *       404:
+ *         description: No s'han trobat negocis amb els filtres proporcionats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No businesses found matching the filters
+ *       500:
+ *         description: Error intern del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to retrieve businesses
+ */
+router.post('/filter', getFilteredBusinesses);
+
+/**
+ * @swagger
+ * /business/search/{name}:
+ *   get:
+ *     summary: Buscar empreses pel seu nom o pel nom d'una de les seves ubicacions
+ *     tags: [business]
+ *     parameters:
+ *       - in: path
+ *         name: name
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Nom del business o d'una location
+ *         example: La Botiga de Barcelona
+ *     responses:
+ *       200:
+ *         description: Empreses trobades amb les seves ubicacions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Businesses retrieved successfully
+ *                 businesses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Business'
+ *       404:
+ *         description: No s’ha trobat cap business ni location amb aquest nom
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No business or location found with that name
+ *       500:
+ *         description: Error intern del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to search business
+ */
+router.get('/search/:name', searchBusinessByName);
+
+/**
+ * @swagger
+ * /business/favorites/{userId}:
+ *   get:
+ *     summary: Obtenir negocis amb ubicacions marcades com a favorites per un usuari
+ *     tags: [business]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l'usuari per consultar els seus favorits
+ *         example: 663abc1234567890abcd1234
+ *     responses:
+ *       200:
+ *         description: Negocis trobats amb ubicacions favorites de l’usuari
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Favorite businesses retrieved successfully
+ *                 businesses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Business'
+ *       404:
+ *         description: No s’han trobat negocis amb ubicacions favorites per aquest usuari
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No favorite businesses found for this user
+ *       500:
+ *         description: Error intern del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to retrieve favorite businesses
+ */
+router.get('/favorites/:userId',getFavoriteBusinesses);
+
+/**
+ * @swagger
+ * /business/favorites/filter/{userId}:
+ *   post:
+ *     summary: Obtenir negocis favorits d’un usuari amb filtres aplicats
+ *     tags: [business]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l’usuari
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serviceTypes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Tipus de serveis (enums)
+ *                 example: ["restaurant", "gimnas"]
+ *               cities:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Ciutats on buscar
+ *                 example: ["Barcelona", "L'Hospitalet"]
+ *               ratingMin:
+ *                 type: number
+ *                 description: Valoració mínima (0-5)
+ *                 example: 4
+ *               day:
+ *                 type: string
+ *                 description: Dia de la setmana (enum)
+ *                 example: monday
+ *               time:
+ *                 type: string
+ *                 description: Hora de disponibilitat (format HH:mm)
+ *                 example: "18:00"
+ *               lat:
+ *                 type: number
+ *                 description: Latitud per a filtre geoespacial
+ *                 example: 41.3851
+ *               lon:
+ *                 type: number
+ *                 description: Longitud per a filtre geoespacial
+ *                 example: 2.1734
+ *               maxDistance:
+ *                 type: number
+ *                 description: Distància màxima en metres
+ *                 example: 5000
+ *     responses:
+ *       200:
+ *         description: Negocis favorits trobats correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Favorite businesses retrieved successfully
+ *                 businesses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Business'
+ *       400:
+ *         description: Paràmetres incorrectes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid service type
+ *       404:
+ *         description: No s'han trobat negocis favorits amb els filtres
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No favorite businesses found matching the filters
+ *       500:
+ *         description: Error intern del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to retrieve favorite businesses
+ */
+router.post('/favorites/filter/:userId', getFilteredFavoriteBusinesses);
 
 export default router;

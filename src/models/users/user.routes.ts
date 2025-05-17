@@ -16,7 +16,8 @@ import {
   softDeleteUsersByIds,
   getUsersPaginated, 
   activateUser,
-  changePassword
+  changePassword,
+  toggleFavoriteLocationController
 } from './user.controller';
 
 /**
@@ -332,6 +333,44 @@ router.patch("/:userId/restore", restoreUserById);
  */
 router.get("",getUsersPaginated);
 
+/**
+ * @swagger
+ * /users/{userId}/favorites/{locationId}:
+ *   patch:
+ *     summary: Add or remove a favorite location for the user
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user
+ *       - in: path
+ *         name: locationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the location to add or remove from favorites
+ *     responses:
+ *       200:
+ *         description: Favorite location toggled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Favorite updated
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Internal server error
+ */
+router.patch('/:userId/favorites/:locationId', toggleFavoriteLocationController);
 
 
 export default router;

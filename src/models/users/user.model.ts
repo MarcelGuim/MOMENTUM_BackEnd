@@ -8,6 +8,7 @@ export interface IUsuari {
     password: string;
     isDeleted: boolean;
     activationId?: string;
+    favoriteLocations: mongoose.Types.ObjectId[];
     isValidPassword: (password: string) => Promise<boolean>;
 }
 
@@ -42,7 +43,14 @@ const UserSchema = new mongoose.Schema<IUsuari>({
         type: String,
         sparse: true ,
         select: false
-    }
+    },
+    favoriteLocations: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Location',
+          default: [],
+        },
+    ],
 });
 
 // UserSchema.pre('find', function() {

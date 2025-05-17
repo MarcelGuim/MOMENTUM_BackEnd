@@ -204,4 +204,27 @@ export class LocationService {
         const business: IBusiness = location.business as unknown as IBusiness;
         return business._id?.toString() as string;
     }
+
+    async getCitiesFromAddresses(): Promise<string[] | number> {
+        try {
+          const locations = await Location.find({ isDeleted: false }, 'address');
+      
+          const citySet = new Set<string>();
+      
+          for (const loc of locations) {
+            if (!loc.address || typeof loc.address !== 'string') continue;
+      
+            const match = loc.address.match(/\d{5}\s([^,]+)/);
+            if (match && match[1]) {
+              citySet.add(match[1].trim());
+            }
+          }
+      
+          return Array.from(citySet).sort();
+        } catch (error) {
+          console.error("Error extracting cities from locations:", error);
+          return -1;
+        }
+      }
+
 }
