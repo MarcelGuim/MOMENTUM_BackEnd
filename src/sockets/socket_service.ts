@@ -18,7 +18,7 @@ export function configureSocketEvents(socketIo: Server) {
     if (!token) return next(new Error('unauthorized'));
       try {
         verifyAccessToken(token);
-        console.log("nuser authorized");
+        console.log("user authorized");
         return next();
       } catch (err) {
         console.log("error, user was not authorised");
@@ -38,31 +38,25 @@ export function configureSocketEvents(socketIo: Server) {
     te sentit per la app.
     */
     socket.on('user_login', (userName) => {
-        console.log(`User ${userName} logged in with socket ${socket.id}`);
-        connectedUsers.set(socket.id, userName);
+      connectedUsers.set(socket.id, userName);
     });
 
     socket.on('test', (message: String) => {
-        console.log("socket emited test mesage: " + message);
         socket.emit('test', 'response to test');
     });
 
     socket.on('new_message', async (data) => {
-      console.log('Missatge rebut:', data);
       const otherUser = await chatService.getNameFromOtherPersonInChat(data.chatId, data.sender)
       const socketId = await getSocketFromUserName(otherUser as string);
       if (socketId) {
         const socket2 =await socketIo.sockets.sockets.get(socketId);
         if (socket2) {
-          console.log("sending message to: " + otherUser);
           socket2.emit('new_message', data);
         }
       }
-      console.log(otherUser);
     });
 
     socket.on('typing', async (data) => {
-      console.log('Escrivint:', data);
       const otherUser = await chatService.getNameFromOtherPersonInChat(data.chatId, data.sender);
       const socketId = await getSocketFromUserName(otherUser as string);
       if (socketId) {
@@ -76,7 +70,6 @@ export function configureSocketEvents(socketIo: Server) {
     socket.on('disconnect', () => {
         const userName = connectedUsers.get(socket.id);
         connectedUsers.delete(socket.id);
-        console.log(`Usuario desconectado del chat: ${socket.id} (${userName})`);
     });
   });
 }

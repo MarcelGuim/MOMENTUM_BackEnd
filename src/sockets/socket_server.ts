@@ -3,11 +3,9 @@ import { Server, Socket } from 'socket.io';
 import { configureSocketEvents } from './socket_service';
 
 
-export async function startSocketServer(app: any, port: String) {
+export async function startSocketServer(httpServer: any) {
 
-    const socketServer = http.createServer(app);
-
-    const socketIO = new Server(socketServer, {
+    const socketIO = new Server(httpServer, {
         cors: {
             origin: '*', // Permitir cualquier origen (ajustar en producción)
             methods: ['GET', 'POST'],
@@ -17,7 +15,4 @@ export async function startSocketServer(app: any, port: String) {
 
     configureSocketEvents(socketIO); // <- Aquí es connecta la lògica
 
-    socketServer.listen(port, () => {
-    console.log(`Servidor de sockets escoltant per: http://localhost:${port}`);
-    });
 }

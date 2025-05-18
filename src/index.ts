@@ -26,7 +26,10 @@ app.use(cookieParser());
 // Configuración global de CORS
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL || "http://localhost:3000", process.env.BACKOFFICE_URL|| "http://localhost:4200"],
+    //origin: [process.env.FRONTEND_URL || "http://localhost:3000", process.env.BACKOFFICE_URL|| "http://localhost:4200"],
+    origin: function (origin, callback) {
+      callback(null, true); // Permet qualsevol origen
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     credentials: true
@@ -49,12 +52,13 @@ app.use('/business', businessRoutes); // Rutas de ubicaciones
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
-const socketPort = process.env.SOCKET_PORT || 3001;
 const httpServer = http.createServer(app);
 
-startSocketServer(app, socketPort.toString());
+startSocketServer(httpServer);
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Servidor en marxa a ${BASE_URL}`);
     console.log(`Documentació Swagger a ${BASE_URL}/Swagger`);
+    console.log(`Servidor de sockets escoltant per: ${BASE_URL}`);
+
 });
