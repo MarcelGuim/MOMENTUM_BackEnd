@@ -77,8 +77,8 @@ export async function updateUserById(req: Request, res: Response): Promise<Respo
 }
 
 export async function diguesHola(req: Request, res: Response): Promise<Response> {
-  console.log("Hola");
-  return res.status(200).json({ message: "Hola" });
+  console.log("Hola, que tal?");
+  return res.status(200).json({ message: "Hola, que tal?" });
 }
 
 export async function hardDeleteUserById(req: Request, res: Response): Promise<Response> {
