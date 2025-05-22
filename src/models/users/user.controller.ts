@@ -76,9 +76,14 @@ export async function updateUserById(req: Request, res: Response): Promise<Respo
   }
 }
 
-export async function diguesHola(req: Request, res: Response): Promise<Response> {
-  console.log("Hola, que tal?");
-  return res.status(200).json({ message: "Hola, que tal?" });
+export async function refreshUser(req: Request, res: Response): Promise<Response> {
+  const id = req.userPayload?.userId;
+  if (!id)  return res.status(400);
+  else{
+    const user: IUsuari | null = await userService.getUserById(id);
+    return res.status(200).json(user);
+  }
+
 }
 
 export async function hardDeleteUserById(req: Request, res: Response): Promise<Response> {

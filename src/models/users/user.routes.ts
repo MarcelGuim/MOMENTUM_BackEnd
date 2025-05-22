@@ -10,7 +10,7 @@ import {
   getUserById, 
   hardDeleteUserById, 
   updateUserById, 
-  diguesHola, 
+  refreshUser, 
   restoreUserById, 
   softDeleteUserById,
   softDeleteUsersByIds,
@@ -30,7 +30,7 @@ import {
  *       200:
  *         description: Hola
  */
-router.get("/Hola", diguesHola);
+router.get("/refreshUser", verifyToken, refreshUser);
 
 /**
  * @swagger
@@ -111,7 +111,7 @@ router.get("/activate/:name/:id", activateUser);
  *       500:
  *         description: Failed to get user
  */
-router.get("/:userId",getUserById);
+router.get("/:userId",verifyToken, requireOwnership('userId'), getUserById);
 
 /**
  * @swagger
