@@ -1,12 +1,19 @@
 import { Request, Response } from 'express';
-import { LoginRequestBody } from '../../types';
+import { LoginRequestBody, BusinessRegisterRequestBody } from '../../types';
 import { AuthService } from './auth.services';
 import { UserService } from '..//users/user.services';
 import { ModelType } from '../../types';
 import { AccessTokenPayload, refreshTokenCookieOptions } from '../../utils/jwt.utils';
+import { IBusiness } from '../../models/business/business.model';
+import { IWorker } from '../../models/worker/worker.model';
+import { WorkerRole } from '../../enums/workerRoles.enum';
+import { BusinessService } from '../../models/business/business.services';
+import { WorkerService } from '../../models/worker/worker.services';
 
 const authService = new AuthService();
 const userService = new UserService();
+const businessService = new BusinessService();
+const workerService = new WorkerService();
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
@@ -25,7 +32,7 @@ export const loginUser = async (req: Request, res: Response) => {
     } catch (error: any) {
       return res.status(401).json({ error: "Invalid Credentials" });
     }
-  };
+};
   
 export const refresh = async (req: Request, res: Response) => {
   try {
@@ -138,3 +145,53 @@ export const validateToken = async (req: Request, res: Response) => {
     });
   }
 };
+
+////////////////////////////////////////////////////////
+// Business Part
+
+export const registerBusiness = async (req: Request, res: Response) => {
+  try {
+    const { name, mail, age, password, businessName } = req.body as BusinessRegisterRequestBody;
+    const buss: IBusiness = {
+      name: businessName,
+      location: [],
+      isDeleted: false
+    };
+    const worker: Partial<IWorker> = {
+      name: name,
+      age: age,
+      mail: mail,
+      role: WorkerRole.ADMIN,
+      location: [],
+      password: password,
+      isDeleted: false
+    };
+    const businessResult= await businessService.createBusiness(buss);
+    
+    if (typeof businessResult === 'number' && businessResult > 0) {
+      return res.status(400).json({ message: `There are ${businessResult} invalid locations when creating business` });
+    }
+    if (typeof businessResult === 'number' && businessResult === -1) {
+      return res.status(409).json({ message: "The business already exists" });
+    }
+    if (typeof businessResult === 'number' && businessResult === -2) {
+      return res.status(400).json({ message: "The IDs format of locations is not valid" });
+    }
+    const workerResult= await workerService.createWorker(worker);
+    if (!workerResult) {
+      return res.status(409).json({ message: "Worker already exists" });
+    }
+
+    // If both business and worker are created successfully
+    return res.status(201).json({
+      message: "Business and admin created successfully",
+      business: businessResult,
+      admin: workerResult
+    });
+  } catch (error: any) {
+      return res.status(500).json({ error: 'Failed to create business' });
+  }
+};
+
+export const loginWorker = async (req: Request, res: Response) => {
+}

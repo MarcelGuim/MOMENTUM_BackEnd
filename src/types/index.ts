@@ -6,7 +6,15 @@ import { Request } from 'express';
 export interface LoginRequestBody {
     name_or_mail: string;
     password: string;
-  }
+}
+
+export interface BusinessRegisterRequestBody {
+    name: string;
+    age: number;
+    mail: string;
+    password: string;
+    businessName: string;
+}
 
 export enum ModelType {
   USER = 'User',

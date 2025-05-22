@@ -47,7 +47,7 @@ const WorkerSchema = new mongoose.Schema<IWorker>({
     role: {
         type: String,
         enum: Object.values(WorkerRole), 
-        default: WorkerRole.USER,
+        default: WorkerRole.WORKER,
       },
       location: [{ 
         type: mongoose.Schema.Types.ObjectId,

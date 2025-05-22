@@ -1,5 +1,4 @@
 export enum WorkerRole {
+    WORKER = 'worker',
     ADMIN = 'admin',
-    USER = 'user',
-    CONTROLLER = 'controller',
-  }
+}

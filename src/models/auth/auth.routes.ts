@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { loginUser, refresh, logout, validateToken } from './auth.controller';
 import { verifyRefresh, verifyToken } from '../../middleware/auth.middleware';
+import { registerBusiness } from './auth.controller';
 
 
 const router = Router();
@@ -134,5 +135,97 @@ router.post('/logout', verifyRefresh,logout);
  *                   type: string
  */
 router.get('/validate', verifyToken, validateToken);
+
+
+
+/////////////////////////////////
+// Business Part
+
+/**
+ * @swagger
+ * /auth/registerBusiness:
+ *   post:
+ *     summary: Register a new business and its admin worker
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - mail
+ *               - age
+ *               - password
+ *               - businessName
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the admin worker
+ *                 example: John Doe
+ *               mail:
+ *                 type: string
+ *                 description: Email of the admin worker
+ *                 example: admin@example.com
+ *               age:
+ *                 type: number
+ *                 description: Age of the admin worker
+ *                 example: 35
+ *               password:
+ *                 type: string
+ *                 description: Password for the admin worker
+ *                 example: strongpassword123
+ *               businessName:
+ *                 type: string
+ *                 description: Name of the business
+ *                 example: Momentum Hair Salon
+ *     responses:
+ *       201:
+ *         description: Business and admin created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Business and admin created successfully
+ *                 business:
+ *                   $ref: '#/components/schemas/Business'
+ *                 admin:
+ *                   $ref: '#/components/schemas/Worker'
+ *       400:
+ *         description: Invalid input or invalid locations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: There are 2 invalid locations when creating business
+ *       409:
+ *         description: Conflict (e.g., business or worker already exists)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: The business already exists
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to create business
+ */
+router.post('/registerBusiness', registerBusiness);
 
 export default router;
