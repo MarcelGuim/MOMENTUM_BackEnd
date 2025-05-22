@@ -5,7 +5,9 @@ import { configureSocketEvents } from './socket_service';
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:4200',
-  'http://ea5-api.upc.edu'
+  'http://ea5-api.upc.edu',
+  'http://ea5.upc.edu',
+  'http://ea5-back.upc.edu'
 ];
 
 export async function startSocketServer(httpServer: http.Server) {
