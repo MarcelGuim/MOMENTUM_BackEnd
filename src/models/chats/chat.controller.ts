@@ -37,7 +37,6 @@ export async function getPeopleWithWhomUserChatted(req: Request, res: Response):
     console.log("getting users with whom user chatted, user is: ");
     try {
         const userId = req.params.userId;
-        console.log(userId)
         const people = await chatService.getPeopleWithWhomUserChatted(userId);
         if (people.length === 0) {
             return res.status(404).json({ error: "No people found" });
@@ -95,10 +94,11 @@ export async function getChatId(req: Request, res: Response): Promise<Response> 
 }
 
 export async function createChat(req: Request, res: Response): Promise<Response> {
+    console.log("1");
     try {
-        const { user1ID, user2ID } = req.body;
-
-        const newChat = await chatService.createChat(user1ID, user2ID);
+        const { user1ID, user2ID, typeOfUser1, typeOfUser2 } = req.body;
+        console.log("2");
+        const newChat = await chatService.createChat(user1ID,typeOfUser1, user2ID, typeOfUser2);
         return res.status(201).json({
             message: "Chat created",
             chat: newChat
@@ -129,5 +129,23 @@ export async function getLast20Messages(req: Request, res: Response): Promise<Re
         }
 
         return res.status(500).json({ error: 'Unexpected error getting messages' });
+    }
+}
+
+export async function getPeopleWithWhomWorkerChatted(req: Request, res: Response): Promise<Response> {
+    try {
+        const workerId = req.params.workerId;
+        console.log("getting people with whom worker chatted, worker ID is: ", workerId);
+        const people = await chatService.getPeopleWithWhomWorkerChatted(workerId);
+        if (people.length === 0) {
+            return res.status(404).json({ error: "No people found" });
+        }
+        return res.status(200).json({people: people});
+    } catch (error: any) {
+        if (error.message) {
+            return res.status(404).json({ error: error.message });
+        }
+
+        return res.status(500).json({ error: 'Unexpected error getting people' });
     }
 }
