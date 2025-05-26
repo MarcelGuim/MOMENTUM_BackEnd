@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken } from '../utils/jwt.utils';
-import { UserRole } from '../types';
 import { AccessTokenPayload } from '../utils/jwt.utils';
+import { WorkerRole } from '../enums/workerRoles.enum';
 
 // MIDDLEWARES TO CHECK AUTHENTICATION
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
@@ -74,7 +74,7 @@ export const verifyRefresh = (req: Request, res: Response, next: NextFunction) =
 };
 
 //MIDDLEWARES TO CHECK PERMISONS
-export const requireRole = (requiredRole: UserRole) => {
+export const requireRole = (requiredRole: WorkerRole) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const payload = req.userPayload as AccessTokenPayload;
     
@@ -97,11 +97,10 @@ export const requireRole = (requiredRole: UserRole) => {
 };
 
 // Specific role middlewares for convenience
-export const requireAdmin = requireRole(UserRole.ADMIN);
-export const requireController = requireRole(UserRole.CONTROLLER);
-export const requireEmployee = requireRole(UserRole.EMPLOYEE);
+export const requireAdmin = requireRole(WorkerRole.ADMIN);
+export const requireEmployee = requireRole(WorkerRole.WORKER);
 
-export const requireAnyRole = (...allowedRoles: UserRole[]) => {
+export const requireAnyRole = (...allowedRoles: WorkerRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const payload = req.userPayload as AccessTokenPayload;
 

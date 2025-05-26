@@ -1,7 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { loginUser, refresh, logout, validateToken } from './auth.controller';
 import { verifyRefresh, verifyToken } from '../../middleware/auth.middleware';
-import { registerBusiness } from './auth.controller';
+import { registerBusiness, loginWorker } from './auth.controller';
 
 
 const router = Router();
@@ -227,5 +227,73 @@ router.get('/validate', verifyToken, validateToken);
  *                   example: Failed to create business
  */
 router.post('/registerBusiness', registerBusiness);
+
+
+/**
+ * @swagger
+ * /auth/loginWorker:
+ *   post:
+ *     summary: Authenticate a worker
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mail
+ *               - password
+ *             properties:
+ *               mail:
+ *                 type: string
+ *                 description: Email of the worker
+ *                 example: worker@example.com
+ *               password:
+ *                 type: string
+ *                 description: Password of the worker
+ *                 example: strongpassword123
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 worker:
+ *                   $ref: '#/components/schemas/Worker'
+ *                 accessToken:
+ *                   type: string
+ *                   description: JWT access token
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *             description: HTTP-only refresh token cookie
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid credentials
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to authenticate worker
+ */
+router.post('/loginWorker', loginWorker);
+
 
 export default router;

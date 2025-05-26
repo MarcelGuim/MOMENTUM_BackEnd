@@ -194,4 +194,17 @@ export const registerBusiness = async (req: Request, res: Response) => {
 };
 
 export const loginWorker = async (req: Request, res: Response) => {
+  try{
+    const { name_or_mail, password } = req.body as LoginRequestBody;
+    const { worker, accessToken, refreshToken } = await authService.loginWorker(name_or_mail, password);
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    console.log('Sending refreshToken in cookie:', refreshToken);
+    console.log('Sending accessToken in response:',  accessToken );
+    return res.status(200).json({
+        worker,
+        accessToken // Store this in localStorage
+      });
+  } catch (error: any) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
 }
