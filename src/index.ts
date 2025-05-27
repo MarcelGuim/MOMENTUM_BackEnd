@@ -26,10 +26,13 @@ app.use(cookieParser());
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:4200',
+  'http://localhost:8080',
   'http://ea5-api.upc.edu',
   'http://ea5.upc.edu',
-  'http://ea5-back.upc.edu'
-
+  'http://ea5-back.upc.edu',
+  'https://ea5-api.upc.edu',
+  'https://ea5.upc.edu',
+  'https://ea5-back.upc.edu'
 ];
 
 app.use(
