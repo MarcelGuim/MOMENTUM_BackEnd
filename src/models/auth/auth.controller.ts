@@ -157,15 +157,6 @@ export const registerBusiness = async (req: Request, res: Response) => {
       location: [],
       isDeleted: false
     };
-    const worker: Partial<IWorker> = {
-      name: name,
-      age: age,
-      mail: mail,
-      role: WorkerRole.ADMIN,
-      location: [],
-      password: password,
-      isDeleted: false
-    };
     const businessResult= await businessService.createBusiness(buss);
     
     if (typeof businessResult === 'number' && businessResult > 0) {
@@ -177,6 +168,20 @@ export const registerBusiness = async (req: Request, res: Response) => {
     if (typeof businessResult === 'number' && businessResult === -2) {
       return res.status(400).json({ message: "The IDs format of locations is not valid" });
     }
+    if (typeof businessResult !== 'object' || businessResult === null) {
+      return res.status(500).json({ message: "Unexpected error when creating business" });
+    }
+
+    const worker: Partial<IWorker> = {
+      name: name,
+      age: age,
+      mail: mail,
+      role: WorkerRole.ADMIN,
+      location: [],
+      businessAdministrated: businessResult._id,
+      password: password,
+      isDeleted: false
+    };
     const workerResult= await workerService.createWorker(worker);
     if (!workerResult) {
       return res.status(409).json({ message: "Worker already exists" });
