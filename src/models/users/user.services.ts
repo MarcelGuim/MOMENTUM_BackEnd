@@ -1,7 +1,7 @@
 import {IUsuari} from './user.model';
 import User from './user.model';
 import Calendar from '../calendari/calendar.model';
-import Appointment from '../appointment/appointment.model';
+import Appointment, { IAppointment } from '../appointment/appointment.model';
 import nodemailer from 'nodemailer';
 import * as crypto from "node:crypto";
 import dotenv from 'dotenv';
@@ -86,7 +86,7 @@ export class UserService {
     );
   
     // 3. Extract all appointment IDs from these calendars
-    const appointmentIds = calendars.flatMap(c => c.appointments);
+    const appointmentIds = calendars.flatMap(c => c.appointments as IAppointment[]);
   
     // 4. Execute all cascade operations
     await Promise.all([
@@ -129,7 +129,7 @@ export class UserService {
       );
   
       // Extract all appointment IDs from these calendars
-      const appointmentIds = calendars.flatMap(c => c.appointments);
+      const appointmentIds = calendars.flatMap(c => c.appointments as IAppointment[]);
   
       // 3. Execute all cascade operations in parallel
       await Promise.all([

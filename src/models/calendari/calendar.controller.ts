@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ICalendar } from './calendar.model';
 import { CalendarService } from './calendar.services';
 import {IAppointment} from '../appointment/appointment.model'
+import { ResponseStream } from 'openai/lib/responses/ResponseStream.mjs';
 
 const calendarService = new CalendarService();
 
@@ -505,5 +506,21 @@ export async function getCommonSlotsForOneUserAndOneBussiness(req:Request, res:R
                 message: "Server Error"
             });
         }
+    }
+}
+
+export async function planAppointmentsUsingAi(req: Request, res: Response): Promise<Response> {
+    const {
+        userId,
+        prompt,
+    } = req.body;
+    try {
+        // busca fins a una setmana endavant
+        const response = await calendarService.planAppointmentUsingAI(userId, prompt, 604800000);
+        return res.json(response);
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server error",
+        });
     }
 }

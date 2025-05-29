@@ -1,9 +1,10 @@
+import { IAppointment } from "models/appointment/appointment.model";
 import mongoose from "mongoose";
 
 export interface ICalendar {
     owner: mongoose.Types.ObjectId;
     calendarName: string;
-    appointments: mongoose.Types.ObjectId[];
+    appointments: mongoose.Types.ObjectId[] | IAppointment[];
     invitees: mongoose.Types.ObjectId[];
     isDeleted: boolean;
     defaultColour?: string;
