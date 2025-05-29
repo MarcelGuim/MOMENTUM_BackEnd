@@ -6,7 +6,7 @@ import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils
 import { ModelType } from '../../types'; 
 
 export class AuthService {
-  async loginUser(identifier:string, password:string){
+  async loginUser(identifier:string, password:string, fcmToken?: string){
     const isEmail = identifier.includes('@');
     const query = isEmail ? { mail: identifier } : { name: identifier };
     const user = await User.findOne(query).select('+password');
@@ -16,6 +16,12 @@ export class AuthService {
     const isMatch : boolean = await user.isValidPassword(password);
     if(!isMatch){
       throw new Error('Invalid password');
+    }
+
+    //s'actualitza el fcmToken 
+    if (fcmToken) { 
+      user.fcmToken = fcmToken; 
+      await user.save(); 
     }
     const accessToken = generateAccessToken(user.id, ModelType.USER);
     const refreshToken = generateRefreshToken(user.id, ModelType.USER);

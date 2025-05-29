@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
 import { IUsuari } from './user.model';
+import User from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
+import admin from 'firebase-admin';
+import { getMessaging } from 'firebase-admin/messaging';
 
 const userService = new UserService();
 
@@ -253,4 +256,85 @@ export async function toggleFavoriteLocationController(req: Request, res: Respon
     console.error('Error updating favorite location:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
+}
+export async function sendFriendRequest(req: Request, res: Response) {
+  const fromId = req.userPayload?.userId;
+  const { toId } = req.body;
+
+  if (!fromId || !toId) {
+    return res.status(400).json({ error: 'Falten dades: fromId o toId' });
+  }
+
+  try {
+    const result = await userService.sendFriendRequest(fromId, toId);
+
+    if (!result) {
+      return res.status(404).json({ error: 'Usuari no trobat o ja afegit' });
+    }
+
+    if (result.fcmToken) {
+      await getMessaging().send({
+        token: result.fcmToken,
+        notification: {
+          title: 'Nova sol·licitud d\'amistat',
+          body: 'Tens una nova sol·licitud d\'amistat!',
+        },
+        data: {
+          type: 'friend_request',
+          fromId
+        }
+      });
+    }
+
+    return res.json({ message: 'Sol·licitud enviada' });
+  } catch (error) {
+    console.error('Error enviant la sol·licitud:', error);
+    return res.status(500).json({ error: 'Error en enviar la sol·licitud' });
+  }
+}
+
+
+export async function acceptFriendRequest(req: Request, res: Response) {
+  const toId = req.userPayload?.userId;
+  const { fromId } = req.body;
+
+  if (!toId || !fromId) {
+    return res.status(400).json({ error: 'Falten dades: toId o fromId' });
+  }
+
+  try {
+    const result = await userService.acceptFriendRequest(toId, fromId);
+    if (!result) return res.status(404).json({ error: 'Usuari no trobat' });
+
+    const fromUser = await User.findById(fromId);
+    if (fromUser?.fcmToken) {
+      await getMessaging().send({
+        token: fromUser.fcmToken,
+        notification: {
+          title: 'Amistat acceptada',
+          body: `${result.name} ha acceptat la teva sol·licitud d'amistat`,
+        },
+        data: {
+          type: 'friend_accept',
+          toId
+        }
+      });
+    }
+
+    return res.json({ message: 'Amistat acceptada' });
+  } catch (error) {
+    console.error('Error acceptant amistat:', error);
+    return res.status(500).json({ error: 'Error intern acceptant la sol·licitud' });
+  }
+}
+
+
+export async function getFriendRequests(req: Request, res: Response) {
+  const userId = req.userPayload?.userId;
+  if (!userId) return res.status(400).json({ error: 'Falta userId a token' });
+
+  const user = await userService.getFriendRequests(userId);
+  if (!user) return res.status(404).json({ error: 'Usuari no trobat' });
+
+  return res.json({ requests: user.friendRequests });
 }

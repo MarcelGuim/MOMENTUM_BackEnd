@@ -17,8 +17,8 @@ const workerService = new WorkerService();
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-      const { name_or_mail, password } = req.body as LoginRequestBody;
-      const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password);
+      const { name_or_mail, password, fcmToken } = req.body as LoginRequestBody & { fcmToken?: string };
+      const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password, fcmToken);
   
       res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
   

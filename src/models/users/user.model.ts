@@ -9,6 +9,9 @@ export interface IUsuari {
     isDeleted: boolean;
     activationId?: string;
     favoriteLocations: mongoose.Types.ObjectId[];
+    friends: mongoose.Types.ObjectId[];
+    friendRequests: mongoose.Types.ObjectId[];
+    fcmToken: string;
     isValidPassword: (password: string) => Promise<boolean>;
 }
 
@@ -51,6 +54,20 @@ const UserSchema = new mongoose.Schema<IUsuari>({
           default: [],
         },
     ],
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+    }],
+    friendRequests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+    }],
+    fcmToken: {
+        type: String,
+        default: null
+    }
 });
 
 // UserSchema.pre('find', function() {

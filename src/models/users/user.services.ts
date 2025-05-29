@@ -213,6 +213,39 @@ export class UserService {
   
     return updatedUser;
   }
+
+  async sendFriendRequest(fromId: string, toId: string): Promise<IUsuari | null> {
+    const fromUser = await User.findById(fromId);
+    const toUser = await User.findById(toId);
+
+    if (!fromUser || !toUser) return null;
+
+    if (!toUser.friendRequests.includes(fromUser.id!)) {
+      toUser.friendRequests.push(fromUser.id!);
+      await toUser.save();
+      return toUser;
+    }
+    return null;
+  }
+
+  async acceptFriendRequest(toId: string, fromId: string): Promise<IUsuari | null> {
+    const toUser = await User.findById(toId);
+    const fromUser = await User.findById(fromId);
+
+    if (!toUser || !fromUser) return null;
+
+    toUser.friendRequests = toUser.friendRequests.filter(id => !id.equals(fromUser.id!));
+    toUser.friends.push(fromUser.id!);
+    fromUser.friends.push(toUser.id!);
+
+    await toUser.save();
+    await fromUser.save();
+    return toUser;
+  }
+  async getFriendRequests(userId: string): Promise<IUsuari | null> {
+    return await User.findById(userId).populate('friendRequests', 'name mail _id');
+  }
+
 }
 
 

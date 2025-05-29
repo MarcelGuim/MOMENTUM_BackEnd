@@ -15,8 +15,14 @@ import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import { Server } from 'socket.io';
 import { verifyAccessToken } from './utils/jwt.utils';
+import admin from 'firebase-admin';
+import serviceAccount from './firebase/firebase-adminsdk.json';
 
 dotenv.config();
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+});
 
 // Configuración de Express
 const app = express();
