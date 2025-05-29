@@ -9,6 +9,8 @@ export interface IUsuari {
     isDeleted: boolean;
     activationId?: string;
     favoriteLocations: mongoose.Types.ObjectId[];
+    followers: mongoose.Types.ObjectId[];
+    following: mongoose.Types.ObjectId[];
     isValidPassword: (password: string) => Promise<boolean>;
 }
 
@@ -51,6 +53,20 @@ const UserSchema = new mongoose.Schema<IUsuari>({
           default: [],
         },
     ],
+    followers: [
+        {   
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: [],
+        },
+    ],
+    following: [
+        {   
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: [],
+        },
+    ],
 });
 
 // UserSchema.pre('find', function() {
@@ -61,10 +77,15 @@ UserSchema.pre('findOne', function() {
   this.where({ isDeleted: false });
 });
 
-UserSchema.pre('save',async function(next) {
-    const hashedPassword= await bcrypt.hash(this.password, bcrypt.genSaltSync(8));
-    this.password = hashedPassword;
-    next();
+
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(8);
+  const hashedPassword = await bcrypt.hash(this.password, salt);
+  this.password = hashedPassword;
+  next();
 });
 
 UserSchema.method('isValidPassword',async function(password: string): Promise<boolean> {

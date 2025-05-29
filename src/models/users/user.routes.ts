@@ -17,7 +17,11 @@ import {
   getUsersPaginated, 
   activateUser,
   changePassword,
-  toggleFavoriteLocationController
+  toggleFavoriteLocationController,
+  findUsersByName,
+  followUser,
+  unfollowUser,
+
 } from './user.controller';
 
 /**
@@ -335,6 +339,36 @@ router.get("",getUsersPaginated);
 
 /**
  * @swagger
+ * /users/search:
+ *   get:
+ *     summary: Buscar usuarios por nombre
+ *     description: Devuelve una lista de usuarios cuyo nombre coincide parcial o totalmente con el parámetro dado.
+ *     tags: [users]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Nombre o parte del nombre del usuario a buscar
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios encontrados
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Parámetro de búsqueda inválido
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get("/search", findUsersByName);
+
+/**
+ * @swagger
  * /users/{userId}/favorites/{locationId}:
  *   patch:
  *     summary: Add or remove a favorite location for the user
@@ -371,6 +405,122 @@ router.get("",getUsersPaginated);
  *         description: Internal server error
  */
 router.patch('/:userId/favorites/:locationId', toggleFavoriteLocationController);
+
+/**
+ * @swagger
+ * /users/follow/{followerId}/{followeeId}:
+ *   post:
+ *     summary: Seguir a un usuario
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: followerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario que sigue
+ *       - in: path
+ *         name: followeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario a seguir
+ *     responses:
+ *       200:
+ *         description: Usuario seguido correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario seguido correctamente
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Error en la solicitud (por ejemplo, seguirse a uno mismo)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No puedes seguirte a ti mismo
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/follow/:followerId/:followeeId', followUser);
+
+/**
+ * @swagger
+ * /users/unfollow/{followerId}/{followeeId}:
+ *   post:
+ *     summary: Dejar de seguir a un usuario
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: followerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario que deja de seguir
+ *       - in: path
+ *         name: followeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario al que se deja de seguir
+ *     responses:
+ *       200:
+ *         description: Usuario dejado de seguir correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario dejado de seguir correctamente
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Error en la solicitud (por ejemplo, dejar de seguirse a uno mismo)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No puedes dejar de seguirte a ti mismo
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/unfollow/:followerId/:followeeId', unfollowUser);
+
+
 
 
 export default router;
