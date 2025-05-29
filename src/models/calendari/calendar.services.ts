@@ -61,9 +61,9 @@ export class CalendarService {
     }
 
     async getAppointmentsForADay(date: Date, calendarId: string): Promise<IAppointment[]> {
-        // Obtener las citas para el día especificado
-        const startOfDay = new Date(date.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+        const date1 = new Date(date);
+        const startOfDay = new Date(date1.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(date1.setHours(23, 59, 59, 999));
 
         return await this.getAppointmentsBetweenDates(startOfDay, endOfDay, calendarId);
     }
