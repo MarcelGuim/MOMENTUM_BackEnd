@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
   TestConnection,
-  testGettingAllAppointmentsOfUserByDataFromIA
+  optimizeAppointments
 } from './IA.controller';
 
 import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
@@ -42,7 +42,7 @@ router.post('/test', TestConnection);
 
 /**
  * @swagger
- * /ia/appointments/test:
+ * /ia/optimizeAppointments:
  *   post:
  *     summary: Retorna totes les cites de l'usuari basant-se en les dades interpretades per IA
  *     tags: [IA]
@@ -87,6 +87,6 @@ router.post('/test', TestConnection);
  *       500:
  *         description: Error inesperat
  */
-router.post('/appointments/test', testGettingAllAppointmentsOfUserByDataFromIA);
+router.post('/optimizeAppointments', optimizeAppointments);
 
 export default router;

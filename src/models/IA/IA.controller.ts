@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { IAService } from './IA.services';
+import { IAppointment } from 'models/appointment/appointment.model';
 
 const IaService = new IAService();
 
@@ -17,18 +18,16 @@ export async function TestConnection(req: Request, res: Response): Promise<Respo
     }
 }
 
-export async function testGettingAllAppointmentsOfUserByDataFromIA(req: Request, res: Response): Promise<Response> {
+export async function optimizeAppointments(req: Request, res: Response): Promise<Response> {
     const userId = req.body.userId;
-    const requests: [Date, string[]][] = req.body.requests;
-    console.log("Testing getting all appointments of user by date from IA for user ID:", userId);
+    const textToOptimize = req.body.textToOptimize;
+    console.log("Getting all appointments of user by date from IA for user ID:", userId);
     try {
-        const answer = await IaService.getOptimizedSchedule(requests,userId);
-        if (!answer) {
-            return res.status(404).json({ error: 'No appointments found' });
-        }
+        const formatedRequests: [Date, string[]][] = await IaService.getDayAndrequestsFromUserPetition(textToOptimize, userId)
+        const answer:IAppointment[] = await IaService.getOptimizedSchedule(formatedRequests,userId);
         return res.status(200).json(answer);
     } catch (error: any) {
-        console.error("Error getting appointments:", error.message);
+        if(error.message) return res.status(400).json({error: error.message});
         return res.status(500).json({ error: 'Unexpected error getting appointments' });
     }
 }
