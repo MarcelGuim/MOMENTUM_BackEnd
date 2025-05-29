@@ -33,3 +33,4 @@ node_modules/
 
 # IntelliJ IDEA files
 .idea/
+#src/firebase/firebase-adminsdk.json
