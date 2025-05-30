@@ -157,15 +157,6 @@ export const registerBusiness = async (req: Request, res: Response) => {
       location: [],
       isDeleted: false
     };
-    const worker: Partial<IWorker> = {
-      name: name,
-      age: age,
-      mail: mail,
-      role: WorkerRole.ADMIN,
-      location: [],
-      password: password,
-      isDeleted: false
-    };
     const businessResult= await businessService.createBusiness(buss);
     
     if (typeof businessResult === 'number' && businessResult > 0) {
@@ -177,6 +168,20 @@ export const registerBusiness = async (req: Request, res: Response) => {
     if (typeof businessResult === 'number' && businessResult === -2) {
       return res.status(400).json({ message: "The IDs format of locations is not valid" });
     }
+    if (typeof businessResult !== 'object' || businessResult === null) {
+      return res.status(500).json({ message: "Unexpected error when creating business" });
+    }
+
+    const worker: Partial<IWorker> = {
+      name: name,
+      age: age,
+      mail: mail,
+      role: WorkerRole.ADMIN,
+      location: [],
+      businessAdministrated: businessResult._id,
+      password: password,
+      isDeleted: false
+    };
     const workerResult= await workerService.createWorker(worker);
     if (!workerResult) {
       return res.status(409).json({ message: "Worker already exists" });
@@ -194,4 +199,17 @@ export const registerBusiness = async (req: Request, res: Response) => {
 };
 
 export const loginWorker = async (req: Request, res: Response) => {
+  try{
+    const { name_or_mail, password } = req.body as LoginRequestBody;
+    const { worker, accessToken, refreshToken } = await authService.loginWorker(name_or_mail, password);
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    console.log('Sending refreshToken in cookie:', refreshToken);
+    console.log('Sending accessToken in response:',  accessToken );
+    return res.status(200).json({
+        worker,
+        accessToken // Store this in localStorage
+      });
+  } catch (error: any) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
 }

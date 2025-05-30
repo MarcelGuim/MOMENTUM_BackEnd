@@ -1,7 +1,8 @@
 import User from '../users/user.model';
+import Worker from '../worker/worker.model';
 import { IUsuari } from '../users/user.model';
+import { IWorker } from '../worker/worker.model';
 import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
-import { UserRole } from '../../types';
 import { ModelType } from '../../types'; 
 
 export class AuthService {
@@ -53,6 +54,31 @@ export class AuthService {
     // 3. Generate tokens
     return {
       accessToken,
+    };
+  }
+  ////////////////////////////////////////////////////////
+  // Business Part
+    async loginWorker(identifier:string, password:string){
+    const isEmail = identifier.includes('@');
+    const query = isEmail ? { mail: identifier } : { name: identifier };
+    const worker = await Worker.findOne(query).select('+password');
+    if (!worker) {
+      throw new Error('User not found');
+    }
+    const isMatch : boolean = await worker.isValidPassword(password);
+    if(!isMatch){
+      throw new Error('Invalid password');
+    }
+    const accessToken = generateAccessToken(worker.id, ModelType.TREB, worker.role);
+    const refreshToken = generateRefreshToken(worker.id, ModelType.TREB);
+    
+    const workerWithoutPassword = worker.toObject() as Partial<IWorker>;
+    delete workerWithoutPassword.password;
+
+    return {
+      worker: workerWithoutPassword,
+      accessToken,
+      refreshToken
     };
   }
 }

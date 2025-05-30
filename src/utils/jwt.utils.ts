@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { UserRole } from '../types';
+import { WorkerRole } from '../enums/workerRoles.enum';
 import { ModelType } from '../types';
 import type { CookieOptions } from 'express';
 
@@ -20,7 +20,7 @@ export const refreshTokenCookieOptions: CookieOptions = {
 export interface AccessTokenPayload {
     userId: string; // MongoId de User o Treballador (depenent del cas)
     modelType: ModelType; // 'User' o 'Treb'
-    role?: UserRole; // Rol de l'usuari (Admin, Controller, Treballador)
+    role?: WorkerRole; // Rol de l'usuari (Admin, Controller, Treballador)
     locId?: string; // MongoId del Local on treballa (si escau)
     //isMomentumAdmin?: boolean; // Si és un admin de Momentum
   }
@@ -30,7 +30,7 @@ export interface RefreshTokenPayload {
   modelType: ModelType;
 }
 
-export const generateAccessToken = (_userId: string, _type: ModelType, _role?: UserRole, _locId?: string): string => {
+export const generateAccessToken = (_userId: string, _type: ModelType, _role?: WorkerRole, _locId?: string): string => {
   const payload: AccessTokenPayload = {
     userId: _userId,
     modelType: _type,

@@ -26,12 +26,6 @@ export interface GeoJSONPoint {
   coordinates: [number, number]; // [longitude, latitude]
 }
 
-export enum UserRole {
-  ADMIN = 'Admin',
-  CONTROLLER = 'Controller',
-  EMPLOYEE = 'Employee'
-}
-
 //Redeclarem Request per tal que accepti Decoded Payoloads
 declare global {
   namespace Express {

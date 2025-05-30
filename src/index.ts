@@ -15,6 +15,7 @@ import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import { Server } from 'socket.io';
 import { verifyAccessToken } from './utils/jwt.utils';
+import iaRoutes from './models/IA/IA.routes';
 
 dotenv.config();
 
@@ -29,8 +30,10 @@ const allowedOrigins = [
   'http://localhost:8080',
   'http://ea5-api.upc.edu',
   'http://ea5.upc.edu',
-  'http://ea5-back.upc.edu'
-
+  'http://ea5-back.upc.edu',
+  'https://ea5-api.upc.edu',
+  'https://ea5.upc.edu',
+  'https://ea5-back.upc.edu'
 ];
 
 app.use(
@@ -61,6 +64,7 @@ app.use('/calendars', calendarRoutes); // Rutas de calendarios
 app.use('/location', locationRoutes); // Rutas de ubicaciones
 app.use('/workers', workersRoutes); // Rutas de ubicaciones
 app.use('/business', businessRoutes); // Rutas de ubicaciones
+app.use('/ia', iaRoutes);
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;

@@ -10,6 +10,7 @@ export interface IWorker {
     mail: string;
     role: WorkerRole;
     location: mongoose.Types.ObjectId[];
+    businessAdministrated?: mongoose.Types.ObjectId;
     password: string;
     isDeleted: boolean;
     activationId?: string;
@@ -49,10 +50,15 @@ const WorkerSchema = new mongoose.Schema<IWorker>({
         enum: Object.values(WorkerRole), 
         default: WorkerRole.WORKER,
       },
-      location: [{ 
+    location: [{ 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Location',
+    }],
+    businessAdministrated: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Location',
-        }],
+        ref: 'Business',
+        required: false,
+    },
     activationId: {
         type: String,
         sparse: true ,
