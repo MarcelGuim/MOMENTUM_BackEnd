@@ -406,4 +406,32 @@ export class CalendarService {
         if(finalResult.length === 0) throw new Error("No slots found");
         return finalResult;
     }
+
+    async acceptRequestedAppointment(appointmentId: string): Promise<boolean|IAppointment>{
+        const appointment:IAppointment | null = await Appointment.findById(appointmentId);
+        if (!appointment) throw new Error("Appointment not found");
+        if (appointment.appointmentState != appointmentState.STANDBY && appointment.appointmentState != appointmentState.REQUESTED) throw new Error("Appointment can't be accepted, it already is");
+        const answer:IAppointment|null = await Appointment.findByIdAndUpdate(appointmentId, {appointmentState: "accepted"}, {new: true});
+        if(!answer) return false;
+        return answer;
+    }
+
+    async acceptStandByAppointment(appointment: IAppointment, userId: string): Promise<boolean|IAppointment>{
+        const user: IUsuari | null = await User.findById(userId);
+        if(!user) throw new Error("User not found");
+        const calendar: ICalendar | null = await Calendar.findOne({owner:user._id});
+        if (!calendar) throw new Error("Calendar not found");
+        appointment.appointmentState = appointmentState.ACCEPTED;
+        appointment.colour = calendar.defaultColour;
+        if(appointment.colour == undefined) delete appointment.colour;
+        const newAppointment = new Appointment(appointment);
+        const answer:IAppointment | null = await newAppointment.save();
+        if (!answer) throw new Error("Appointment not saved correctly");
+        await Calendar.findByIdAndUpdate(
+            calendar._id,
+            { $push: { appointments: answer._id } },
+            { new: true }
+        );
+        return answer;
+    }
 }

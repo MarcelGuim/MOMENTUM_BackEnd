@@ -137,7 +137,7 @@ export class IAService {
             Remember, the output must be a JSON array of appointments, and nothing else.
             The order of the output must be in chronological order. Lastly, you must fill the description value with a short text.
             In the CalendarId section, use on of the calendarId you got from the user request.
-            The colour, use a bright red.
+            The colour, use a bright red (#FF0000).
             `.trim();
         try {
             const response = await client.chat.completions.create({
