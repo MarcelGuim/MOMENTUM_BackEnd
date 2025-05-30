@@ -1,15 +1,23 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-
+import { typeOfXatUser } from '../../enums/typesOfXat.enum';
 const ChatSchema = new Schema<IChat>({
     user1: { 
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', 
         required: true 
     },
+    typeOfUser1: {
+        type: String,
+        enum: Object.values(typeOfXatUser),
+        required: true,
+    },
     user2: { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', 
+        type: mongoose.Schema.Types.ObjectId, 
         required: true 
+    },
+    typeOfUser2: {
+        type: String,
+        enum: Object.values(typeOfXatUser),
+        required: true,
     },
     messages: [
         {
@@ -18,12 +26,14 @@ const ChatSchema = new Schema<IChat>({
           timestamp: { type: Date, required: true },
           _id: false
         }
-      ]//El format del missatge és: [Emisor (el receptor ja és implicit), missatge, rebut? (True/False)]
+      ]
 });
 
 export interface IChat{
     user1: mongoose.Types.ObjectId;
+    typeOfUser1: typeOfXatUser;
     user2: mongoose.Types.ObjectId;
+    typeOfUser2: typeOfXatUser;
     messages: IMessage[];
     _id?: mongoose.Types.ObjectId;
 }
@@ -33,7 +43,6 @@ export interface IMessage {
     text: string;
     timestamp: Date;
   }
-
 
 const Chat = model<IChat>('Chat', ChatSchema);
 export default Chat;
