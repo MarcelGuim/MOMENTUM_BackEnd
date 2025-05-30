@@ -19,7 +19,8 @@ import {
     hardDeleteAppointment,
     softDeleteAppointment,
     acceptRequestedAppointment,
-    acceptStandByAppointment
+    acceptStandByAppointment,
+    planAppointmentsUsingAi
 } from './calendar.controller';
 
 const router = Router();
@@ -718,6 +719,36 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
  *         description: Error del servidor
  */
 router.post('/appointmentRequest', setAppointmentRequestForWorker);
+
+/**
+ * @swagger
+ * /calendars/appointment-planning:
+ *   post:
+ *     summary: Planifica un esdeveniment que demani l'usuari
+ *     tags: [Calendars]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - prompt
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID del l'usuari
+ *               prompt:
+ *                 type: string
+ *                 description: Entrada de la IA
+ *     responses:
+ *       200:
+ *         description: Esdeveniments planificats
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/appointment-planning', planAppointmentsUsingAi);
 
 /**
  * @swagger

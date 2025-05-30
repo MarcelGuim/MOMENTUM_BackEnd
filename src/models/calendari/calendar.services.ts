@@ -10,6 +10,8 @@ import { LocationService } from '../location/location.services';
 import Bussiness, { IBusiness } from '../business/business.model';
 import { BusinessService } from '../business/business.services';
 import mongoose from 'mongoose';
+import OpenAI from 'openai';
+import { AppointmentPlanningResponse, askAppointmentPlanning } from '../../clients/openAIClient';
 
 export class CalendarService {
     private locationService = new LocationService();
@@ -407,6 +409,28 @@ export class CalendarService {
         return finalResult;
     }
 
+    async planAppointmentUsingAI(userId: string, prompt: string, max: number): Promise<AppointmentPlanningResponse> {
+        const calendars = await this.getCalendarsOfUser(userId);
+        const now = new Date();
+        const future = new Date(Date.now() + max);
+        const populatedCalendars = [] as ICalendar[];
+        for (const calendar of calendars) {
+            const appointments = await this.getAppointmentsBetweenDates(
+                now,
+                future,
+                calendar._id!.toHexString()
+            );
+
+            populatedCalendars.push({
+                ...calendar,
+                appointments,
+            })
+        }
+
+        const response = await askAppointmentPlanning(populatedCalendars, prompt);
+        return JSON.parse(response.output_text);
+    }
+    
     async acceptRequestedAppointment(appointmentId: string): Promise<boolean|IAppointment>{
         const appointment:IAppointment | null = await Appointment.findById(appointmentId);
         if (!appointment) throw new Error("Appointment not found");

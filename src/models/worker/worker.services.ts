@@ -2,7 +2,7 @@
 
 import Worker, {IWorker} from './worker.model';
 import Calendar from '../calendari/calendar.model';
-import Appointment from '../appointment/appointment.model';
+import Appointment, { IAppointment } from '../appointment/appointment.model';
 import dotenv from 'dotenv';
 import Location from '../location/location.model';
 
@@ -77,7 +77,7 @@ export class WorkerService {
         );
       
         // 3. Extract all appointment IDs from these calendars
-        const appointmentIds = calendars.flatMap(c => c.appointments);
+        const appointmentIds = calendars.flatMap(c => c.appointments as IAppointment[]);
       
         // 4. Execute all cascade operations
         await Promise.all([
@@ -119,7 +119,7 @@ export class WorkerService {
           );
       
           // Extract all appointment IDs from these calendars
-          const appointmentIds = calendars.flatMap(c => c.appointments);
+          const appointmentIds = calendars.flatMap(c => c.appointments as IAppointment[]);
       
           // 3. Execute all cascade operations in parallel
           await Promise.all([
