@@ -63,9 +63,9 @@ export class CalendarService {
     }
 
     async getAppointmentsForADay(date: Date, calendarId: string): Promise<IAppointment[]> {
-        // Obtener las citas para el día especificado
-        const startOfDay = new Date(date.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+        const date1 = new Date(date);
+        const startOfDay = new Date(date1.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(date1.setHours(23, 59, 59, 999));
 
         return await this.getAppointmentsBetweenDates(startOfDay, endOfDay, calendarId);
     }
@@ -429,5 +429,33 @@ export class CalendarService {
 
         const response = await askAppointmentPlanning(populatedCalendars, prompt);
         return JSON.parse(response.output_text);
+    }
+    
+    async acceptRequestedAppointment(appointmentId: string): Promise<boolean|IAppointment>{
+        const appointment:IAppointment | null = await Appointment.findById(appointmentId);
+        if (!appointment) throw new Error("Appointment not found");
+        if (appointment.appointmentState != appointmentState.STANDBY && appointment.appointmentState != appointmentState.REQUESTED) throw new Error("Appointment can't be accepted, it already is");
+        const answer:IAppointment|null = await Appointment.findByIdAndUpdate(appointmentId, {appointmentState: "accepted"}, {new: true});
+        if(!answer) return false;
+        return answer;
+    }
+
+    async acceptStandByAppointment(appointment: IAppointment, userId: string): Promise<boolean|IAppointment>{
+        const user: IUsuari | null = await User.findById(userId);
+        if(!user) throw new Error("User not found");
+        const calendar: ICalendar | null = await Calendar.findOne({owner:user._id});
+        if (!calendar) throw new Error("Calendar not found");
+        appointment.appointmentState = appointmentState.ACCEPTED;
+        appointment.colour = calendar.defaultColour;
+        if(appointment.colour == undefined) delete appointment.colour;
+        const newAppointment = new Appointment(appointment);
+        const answer:IAppointment | null = await newAppointment.save();
+        if (!answer) throw new Error("Appointment not saved correctly");
+        await Calendar.findByIdAndUpdate(
+            calendar._id,
+            { $push: { appointments: answer._id } },
+            { new: true }
+        );
+        return answer;
     }
 }

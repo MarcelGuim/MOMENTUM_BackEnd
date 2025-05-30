@@ -163,8 +163,8 @@ export async function hardDeleteAppointment(req: Request, res: Response) {
 
 export async function softDeleteAppointment(req: Request, res: Response) {
     try {
-
         const { appointmentId } = req.params;
+        console.log("soft delete to apointment with id: " + appointmentId);
         if (!appointmentId) return res.status(400).json({message: "Bad Request"});
 
         const result = await calendarService.softDeleteAppointment(appointmentId);
@@ -498,6 +498,45 @@ export async function getCommonSlotsForOneUserAndOneBussiness(req:Request, res:R
     } catch(error){
         if (error instanceof Error && error.message) {
             return res.status(404).json({
+                message: error.message
+            });
+        }
+        else{
+            return res.status(500).json({
+                message: "Server Error"
+            });
+        }
+    }
+}
+
+export async function acceptRequestedAppointment(req:Request, res:Response): Promise<Response>{
+    try{
+        const appointmentId = req.body.appointmentId;
+        const result = await calendarService.acceptRequestedAppointment(appointmentId);
+        return res.status(200).json(result);
+    } catch(error){
+        if (error instanceof Error && error.message) {
+            return res.status(405).json({
+                message: error.message
+            });
+        }
+        else{
+            return res.status(500).json({
+                message: "Server Error"
+            });
+        }
+    }
+}
+
+export async function acceptStandByAppointment(req:Request, res:Response): Promise<Response>{
+    try{
+        const appointment: IAppointment = req.body.appointment;
+        const userId: string = req.body.userId;
+        const result = await calendarService.acceptStandByAppointment(appointment, userId);
+        return res.status(200).json(result);
+    } catch(error){
+        if (error instanceof Error && error.message) {
+            return res.status(405).json({
                 message: error.message
             });
         }

@@ -32,13 +32,19 @@ const options = {
             schemas: {
                 Chat: {
                     type: 'object',
-                    required: ['user1', 'user2', 'message', '_id?'],
+                    required: ['user1','typeOfUser1', 'user2','typeOfUser2', 'message', '_id?'],
                     properties: {
                         user1: {
                             type: 'string',
                         },
+                        typeOfUser1: {
+                            type: 'String',
+                        },
                         user2: {
                             type: 'string',
+                        },
+                        typeOfUser2: {
+                            type: 'String',
                         },
                         message: {
                             type: '[string,string,boolean,date]',

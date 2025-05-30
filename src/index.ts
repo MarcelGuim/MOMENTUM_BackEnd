@@ -15,6 +15,7 @@ import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import { Server } from 'socket.io';
 import { verifyAccessToken } from './utils/jwt.utils';
+import iaRoutes from './models/IA/IA.routes';
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use('/calendars', calendarRoutes); // Rutas de calendarios
 app.use('/location', locationRoutes); // Rutas de ubicaciones
 app.use('/workers', workersRoutes); // Rutas de ubicaciones
 app.use('/business', businessRoutes); // Rutas de ubicaciones
+app.use('/ia', iaRoutes);
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
