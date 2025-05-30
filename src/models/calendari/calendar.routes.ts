@@ -17,7 +17,9 @@ import {
     getCommonSlotsForOneUserAndOneLocation,
     getCommonSlotsForOneUserAndOneBussiness,
     hardDeleteAppointment,
-    softDeleteAppointment
+    softDeleteAppointment,
+    acceptRequestedAppointment,
+    acceptStandByAppointment
 } from './calendar.controller';
 
 const router = Router();
@@ -197,7 +199,7 @@ router.post('/:calendarId/appointments', addAppointmentToCalendar);
 
 /**
  * @swagger
- * /calendars/{calendarId}/appointments/{appointmentId/delete}:
+ * /calendars/appointments/{appointmentId}/delete:
  *   post:
  *     summary: Elimina permanentemente un appointment de un calendario
  *     tags: [Calendars]
@@ -226,7 +228,7 @@ router.delete('/appointments/:appointmentId/delete', hardDeleteAppointment);
 
 /**
  * @swagger
- * /calendars/{calendarId}/appointments/{appointmentId/soft-delete}:
+ * /calendars/appointments/{appointmentId}/soft-delete:
  *   post:
  *     summary: Marca un appointment de un calendario como eliminado
  *     tags: [Calendars]
@@ -717,6 +719,85 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
  */
 router.post('/appointmentRequest', setAppointmentRequestForWorker);
 
+/**
+ * @swagger
+ * /calendars/appointment/accept/requested:
+ *   put:
+ *     summary: Accepta una cita amb estat "requested"
+ *     tags:
+ *       - Calendars
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointmentId
+ *             properties:
+ *               appointmentId:
+ *                 type: string
+ *                 example: "665123a9d3f04e2b6a8fbd42"
+ *     responses:
+ *       200:
+ *         description: Cita acceptada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               description: Resultat de l'operació
+ *       405:
+ *         description: Error funcional (ex. cita no trobada o estat incorrecte)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error intern del servidor
+ */
+router.put('/appointment/accept/requested', acceptRequestedAppointment);
 
+/**
+ * @swagger
+ * /calendars/appointment/accept/standBy:
+ *   post:
+ *     summary: Accepta una cita en estat de "standBy"
+ *     tags:
+ *       - Calendars
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointment
+ *             properties:
+ *               appointment:
+ *                 $ref: '#/components/schemas/Appointment'
+ *     responses:
+ *       200:
+ *         description: Cita acceptada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               description: Resultat de l'operació
+ *       405:
+ *         description: Error funcional (ex. cita no trobada o estat incorrecte)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error intern del servidor
+ */
+router.post('/appointment/accept/standBy', acceptStandByAppointment);
 
 export default router;
