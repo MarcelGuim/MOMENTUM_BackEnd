@@ -11,47 +11,32 @@ type TravelMode = "DRIVE" | "BICYCLE" | "WALK" | "TRANSIT";
 
 export class LocationService {
     async createLocation(location: Partial<ILocation>): Promise<ILocation|Number> {
-        //Mirem que els serviceTypes siguin vàlids
         if (location.serviceType && Array.isArray(location.serviceType)) {
             const invalidServiceTypes = location.serviceType.filter(
                 (type) => !Object.values(locationServiceType).includes(type)
             );
-    
-            if (invalidServiceTypes.length > 0) {
-                //Retorna un 1 si el servicetype no forma part de enum de locationServiceType
-                return 1; 
-            }
+            if (invalidServiceTypes.length > 0) throw new Error("wrong service Type");
         }
-        //Mirem que les dades de schedule siguin valides
         if (location.schedule && Array.isArray(location.schedule)) {
             const invalidSchedules = location.schedule.filter((entry) => {
-                // Verificar que el dia sigui valid
-                if (!Object.values(locationSchedule).includes(entry.day)) {
+                const validDays = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+                if (!validDays.includes(entry.day.toLowerCase())) {
                     return true;
                 }
-                // Verificar que las hores estiguin en format HH:mm
                 const timeRegex = /^([0-1]\d|2[0-3]):([0-5]\d)$/;
                 if (!timeRegex.test(entry.open) || !timeRegex.test(entry.close)) {
                     return true;
                 }
-    
-                // Verificar que l'hora de tancament sigui posterior a l'hora d'obertura
                 return entry.open >= entry.close;
             });
-    
-            if (invalidSchedules.length > 0) {
-                return 0;
-            }
+            if (invalidSchedules.length > 0) throw new Error("wrong schedule");
         }
         const result = await Location.findOne({$or: [{ address: location.address }, { nombre: location.nombre }]});
-        if (result !== null) {
-          return -1;
-        } else {
-          const newLocation = new Location(location);
-          const newLocationSaved = await newLocation.save();
-          await Business.findByIdAndUpdate(location.business, { $push: { location: newLocationSaved._id } });
-          return newLocationSaved;
-        }
+        if (result) throw new Error("Location already exists");
+        const newLocation = new Location(location)
+        const newLocationSaved = await newLocation.save();
+        await Business.findByIdAndUpdate(location.business, { $push: { location: newLocationSaved._id } });
+        return newLocationSaved;
     }
 
     async getLocationById(id: string): Promise<ILocation | null> {
