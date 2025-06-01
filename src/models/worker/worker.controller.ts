@@ -14,19 +14,22 @@ const workerService = new WorkerService();
 export async function createWorker(req:Request, res:Response): Promise<Response> {
     console.log("Creating worker");
     try{
-        const{name,age,mail,password, location, role, } = req.body as IWorker
-        const newWorker: Partial<IWorker> = {name,age,mail,password, location, role, isDeleted:false};
-        const worker = await workerService.createWorker(newWorker);
-        if (!worker) {
-          console.log("Worker already exists:");
-          return res.status(409).json({ error: 'Worker already exists' });
-        }
-        else{
-          return res.status(201).json({ message: 'Worker  created', data: worker });
-        }
-    }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to create worker' });
+        const adminId = req.userPayload?.userId;
+        if (!adminId) return res.status(405).json({ message: "Invalid worker ID format" });
+        const worker:Partial<IWorker> = req.body.worker as IWorker
+        console.log(worker);
+        worker.isDeleted = false;
+        const locationName = req.body.location;
+        if(!locationName) return res.status(405).json({ error: "Location not sent"});
+        console.log(locationName);
+        await workerService.createWorkerByAdmin(worker, adminId, locationName.toString());
+        return res.status(201);
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        console.log((error as { message: string }).message);
+        return res.status(405).json({ error: (error as { message: string }).message });
+      }
+      return res.status(500).json({ message: "Failed to create location for business, server error" });
     }
 }
 

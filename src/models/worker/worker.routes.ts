@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import { workerValidationRules, workerValidator } from './worker.validation';
-import { verifyRefresh } from '../../middleware/auth.middleware';
+import {  verifyToken, requireAdmin } from '../../middleware/auth.middleware';
+
 import {
   diguesHola,
   createWorker,
@@ -68,7 +69,7 @@ router.get("/Hola", diguesHola);
  *       500:
  *         description: Error al crear trabajador
  */
-router.post("", workerValidationRules(), workerValidator, createWorker);
+router.post("", workerValidationRules(), workerValidator, verifyToken, requireAdmin, createWorker);
 
 /**
  * @swagger
@@ -129,7 +130,7 @@ router.get("/:workerId", getWorkerById);
  *       404:
  *         description: Trabajador no encontrado
  */
-router.put("/:workerId", workerValidationRules(), workerValidator, updateWorkerById);
+router.put("/:workerId", workerValidationRules(), workerValidator,  updateWorkerById);
 
 /**
  * @swagger

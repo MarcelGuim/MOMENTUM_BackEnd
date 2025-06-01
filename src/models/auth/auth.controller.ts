@@ -47,7 +47,7 @@ export const refresh = async (req: Request, res: Response) => {
     const { userId, modelType } = req.refreshPayload;
     
     console.log('Extracted userId:', userId || 'UNDEFINED');
-
+    console.log('Extracted modelType: ', modelType || 'UNDEFINED');
     if (!userId || !modelType) {
       console.error('Invalid token payload - missing required fields');
       throw new Error('Invalid token payload');
