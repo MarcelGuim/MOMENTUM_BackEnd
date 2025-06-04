@@ -13,6 +13,8 @@ import {
   restoreWorkerById,
   getWorkersPaginated,
   getWorkersPaginatedByCompany,
+  createWorkerWithMultipleLocations,
+  getWorkersByBusinessId
 } from './worker.controller';
 
 
@@ -70,6 +72,60 @@ router.get("/Hola", diguesHola);
  *         description: Error al crear trabajador
  */
 router.post("", workerValidationRules(), workerValidator, verifyToken, requireAdmin, createWorker);
+
+/**
+ * @swagger
+ * /workers/multiple-locations:
+ *   post:
+ *     summary: Create a worker with multiple locations
+ *     tags: [workers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, mail, password, location]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the worker
+ *                 example: John Doe
+ *               mail:
+ *                 type: string
+ *                 description: Email of the worker
+ *                 example: john.doe@example.com
+ *               password:
+ *                 type: string
+ *                 description: Password for the worker
+ *                 example: strongpassword123
+ *               location:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of location IDs
+ *                 example: ["60f7f9f5b5d6c81234567890", "60f7f9f5b5d6c81234567891"]
+ *     responses:
+ *       201:
+ *         description: Worker created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Worker created successfully with multiple locations
+ *                 worker:
+ *                   $ref: '#/components/schemas/Worker'
+ *       400:
+ *         description: Invalid input or locations
+ *       409:
+ *         description: Worker already exists
+ *       500:
+ *         description: Server error
+ */
+router.post("/multiple-locations", workerValidator, verifyToken, requireAdmin, createWorkerWithMultipleLocations);
 
 /**
  * @swagger
@@ -299,5 +355,37 @@ router.patch("/:userId/restore", restoreWorkerById);
  *         description: Paginated list of workers
  */
 router.get("", getWorkersPaginated);
+
+
+/**
+ * @swagger
+ * /workers/business/{businessId}:
+ *   get:
+ *     summary: Get all workers of a business
+ *     tags: [workers]
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the business
+ *     responses:
+ *       200:
+ *         description: List of workers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Worker'
+ *       400:
+ *         description: Invalid business ID
+ *       404:
+ *         description: Business not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/business/:businessId', getWorkersByBusinessId);
 
 export default router;

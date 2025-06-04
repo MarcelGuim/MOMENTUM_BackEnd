@@ -33,6 +33,29 @@ export async function createWorker(req:Request, res:Response): Promise<Response>
     }
 }
 
+export async function createWorkerWithMultipleLocations(req: Request, res: Response): Promise<Response> {
+    try {
+        const worker: Partial<IWorker> = req.body;
+
+        // Call the service to create the worker
+        const newWorker = await workerService.createWorkerWithMultipleLocations(worker);
+
+        return res.status(201).json({
+            message: "Worker created successfully with multiple locations",
+            worker: newWorker
+        });
+    } catch (error: any) {
+        console.error("Error creating worker with multiple locations:", error.message);
+        if (error.message === "Worker already exists") {
+            return res.status(409).json({ message: error.message });
+        }
+        if (error.message === "Some locations are invalid") {
+            return res.status(400).json({ message: error.message });
+        }
+        return res.status(500).json({ message: "Failed to create worker", error: error.message });
+    }
+}
+
 export async function getWorkerById(req: Request, res: Response): Promise<Response> {
   try {
     const { workerId } = req.params;
@@ -212,4 +235,15 @@ export async function getWorkersPaginatedByCompany(req: Request, res: Response):
         return res.status(500).json({ error: 'Failed to fetch workers' });
     }
     
+}
+
+export async function getWorkersByBusinessId(req: Request, res: Response): Promise<Response> {
+  try {
+    const { businessId } = req.params;
+    const workers = await workerService.getWorkersByBusinessId(businessId);
+    return res.status(200).json(workers);
+  } catch (error: any) {
+    console.error('Error fetching workers by business ID:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }
