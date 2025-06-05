@@ -1,7 +1,6 @@
 import { Request, Response, Router } from 'express';
-import { loginUser, refresh, logout, validateToken } from './auth.controller';
+import { loginUser, refresh, logout, validateToken, validateLogin, registerBusiness, loginWorker } from './auth.controller';
 import { verifyRefresh, verifyToken } from '../../middleware/auth.middleware';
-import { registerBusiness, loginWorker } from './auth.controller';
 
 
 const router = Router();
@@ -135,6 +134,19 @@ router.post('/logout', verifyRefresh,logout);
  *                   type: string
  */
 router.get('/validate', verifyToken, validateToken);
+
+/**
+ * @swagger
+ * /auth/validateLogin:
+ *   get:
+ *     summary: Validate if user or worker is logged in
+ *     tags: [auth]
+ *     responses:
+ *       200:
+ *         description: Hola
+ */
+router.get("/validateLogin", verifyToken, validateLogin);
+
 
 
 

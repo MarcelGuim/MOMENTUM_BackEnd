@@ -1,26 +1,82 @@
-// cal modificar certes parts per localitzacions varies i empreses, mirar imatge, sobretot pel tema serveis. Els que hi ha s'han de complir tot i això.
-
 import Worker, {IWorker} from './worker.model';
 import Calendar from '../calendari/calendar.model';
 import Appointment, { IAppointment } from '../appointment/appointment.model';
 import dotenv from 'dotenv';
-import Location from '../location/location.model';
+import Location, { ILocation } from '../location/location.model';
+import mongoose from 'mongoose';
+import Business, { IBusiness } from '../business/business.model';
 
 dotenv.config();
 
 export class WorkerService {
-    async createWorker(worker: Partial<IWorker>): Promise<IWorker | null> {
-        const result = await Worker.findOne({$or: [{ mail: worker.mail }, { name: worker.name }]});
-        if(result) return null;
-        else
-        {
-          const newWorker = new Worker(worker);
-          const savedWorker = await newWorker.save();
-          console.log("Worker created successfully");
-          await Location.findByIdAndUpdate(worker.location, { $push: { workers: savedWorker._id } });
-          return savedWorker;
-        }
+   async createWorker(worker: Partial<IWorker>): Promise<IWorker | null> {
+      const result = await Worker.findOne({$or: [{ mail: worker.mail }, { name: worker.name }]});
+      if(result) return null;
+      else
+      {
+        const newWorker = new Worker(worker);
+        const savedWorker = await newWorker.save();
+        console.log("Worker created successfully");
+        await Location.findByIdAndUpdate(worker.location, { $push: { workers: savedWorker._id } });
+        return savedWorker;
+      }
     }
+
+    async createWorkerByAdmin(worker: Partial<IWorker>, adminId: string, locationName: string): Promise<void> {
+      if (!mongoose.Types.ObjectId.isValid(adminId)) throw new Error("Wrong worker ID format");
+      console.log(locationName);
+      const location: ILocation | null = await Location.findOne({nombre: locationName});
+      if(!location) throw new Error("Location not found");
+      if(!location.id) throw new Error("Location not correctly saved, contact administrator");
+      const result = await Worker.findOne({$or: [{ mail: worker.mail }, { name: worker.name }]});
+      if(result) throw new Error("Worker already exists");
+      const workerAdmin = await Worker.findById(adminId);
+      if(!workerAdmin) throw new Error("Admin not found");
+      if(!workerAdmin.businessAdministrated) throw new Error("Business administrated not found");
+      const business: IBusiness | null = await Business.findById(workerAdmin.businessAdministrated);
+      if(!business) throw new Error("Business not found");
+      console.log(business.location);
+      console.log(location);
+      if(!business.location.includes(location.id)) throw new Error("You don't manage that locations");
+      worker.location = location.id;
+      console.log("0");
+      console.log(worker);
+      const newWorker = new Worker(worker);
+      console.log("1");
+      console.log(newWorker);
+      const savedWorker = await newWorker.save();
+      console.log("Worker created successfully");
+      await Location.findByIdAndUpdate(worker.location, { $push: { workers: savedWorker._id } });
+    }
+
+    async createWorkerWithMultipleLocations(worker: Partial<IWorker>): Promise<IWorker | null> {
+        // Check if the worker already exists by email or name
+        const existingWorker = await Worker.findOne({ $or: [{ mail: worker.mail }, { name: worker.name }] });
+        if (existingWorker) throw new Error("Worker already exists");
+
+        // Validate all provided locations
+        if (!worker.location || worker.location.length === 0) {
+            throw new Error("At least one location must be provided");
+        }
+
+        const validLocations = await Location.find({ _id: { $in: worker.location } });
+        if (validLocations.length !== worker.location.length) {
+            throw new Error("Some locations are invalid");
+        }
+
+        // Create the worker
+        const newWorker = new Worker(worker);
+        const savedWorker = await newWorker.save();
+
+        // Update all locations to include the worker
+        await Location.updateMany(
+            { _id: { $in: worker.location } },
+            { $push: { workers: savedWorker._id } }
+        );
+
+        return savedWorker;
+    }
+
     async getWorkerById(workerId: string): Promise<IWorker | null> {
         return await Worker.findById(workerId);
     }
@@ -29,6 +85,7 @@ export class WorkerService {
         return await Worker.findByIdAndUpdate(workerId, data, { new: true });
     
     }
+
     async getWorkersPaginated(page = 1, limit = 5, getDeleted = false): Promise<{ users: IWorker[]; totalPages: number; totalUsers: number, currentPage: number } | null> {
         const users = await Worker.find(getDeleted ? {} : {isDeleted: false})
           .sort({ name: 1 })
@@ -148,5 +205,30 @@ export class WorkerService {
     }
     async restoreWorkerById(userId: string): Promise<IWorker | null> {
         return await Worker.findByIdAndUpdate(userId, { isDeleted: false }, { new: true });
+    }
+
+    async getWorkersByBusinessId(businessId: string): Promise<IWorker[]> {
+      if (!mongoose.Types.ObjectId.isValid(businessId)) {
+        throw new Error('Invalid business ID format');
+      }
+
+      // Find the business and populate locations and their workers
+      const business = await Business.findById(businessId)
+        .populate({
+          path: 'location',
+          populate: {
+            path: 'workers',
+            model: 'Worker',
+          },
+        });
+
+      if (!business) {
+        throw new Error('Business not found');
+      }
+
+      // Extract workers from all locations
+      const workers = business.location.flatMap((location: any) => location.workers);
+
+      return workers;
     }
 }

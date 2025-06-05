@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { LocationService } from "../location/location.services";
 import { FilterOptions, LocationFilter } from '../../interfaces/filter.interface';
+import Worker from '../worker/worker.model';
 
 const locationService = new LocationService();
 export class BusinessService{
@@ -123,35 +124,14 @@ export class BusinessService{
     }
 
     //Funció que crea un location i l'afegeix a la llista de locations del business
-    async createLocationForBusiness(businessId: string, locationData: Partial<ILocation>): Promise<IBusiness | null | number> {
-        // Verificar si el ID del business té un format vàlid
-        if (!mongoose.Types.ObjectId.isValid(businessId)) {
-            return -1;
-        }
-        // Buscar el business per ID
-        const business = await Business.findById(businessId);
-        if (!business) {
-            return null; // Retorna null si no es troba el business
-        }
-
-        const location = await locationService.createLocation(locationData);
-
-        if (location === -1) {
-            return -2; // Ja existeix (nom o adreça duplicada)
-        }
-        if (location === 0) {
-            return -3; // Schedule invàlid
-        }
-        if (location === 1) {
-            return -4; // ServiceTypes invàlids
-        }
-
-        // Afegir la location al business
-        if (typeof location !== 'number' && 'id' in location && location._id) {
-            business.location.push(location._id);
-            return await business.save();
-        }
-        return -4; // Retorna -4 si no es pot afegir la location al business
+    async createLocationForBusiness(workerId: string, locationData: Partial<ILocation>): Promise<void> {
+        if (!mongoose.Types.ObjectId.isValid(workerId)) throw new Error("Wrong worker ID format");
+        const worker = await Worker.findById(workerId);
+        if (!worker) throw new Error("Worker not found");
+        if (!worker.businessAdministrated) throw new Error("Wrong business id for the administrator");
+        var newLocation: ILocation = new Location(locationData);;
+        newLocation.business = worker.businessAdministrated;
+        const location = await locationService.createLocation(newLocation);
     }
 
     //Funció que elimina un location de business i de la base de dades

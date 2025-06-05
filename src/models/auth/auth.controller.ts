@@ -9,6 +9,7 @@ import { IWorker } from '../../models/worker/worker.model';
 import { WorkerRole } from '../../enums/workerRoles.enum';
 import { BusinessService } from '../../models/business/business.services';
 import { WorkerService } from '../../models/worker/worker.services';
+import { IUsuari } from 'models/users/user.model';
 
 const authService = new AuthService();
 const userService = new UserService();
@@ -46,7 +47,7 @@ export const refresh = async (req: Request, res: Response) => {
     const { userId, modelType } = req.refreshPayload;
     
     console.log('Extracted userId:', userId || 'UNDEFINED');
-
+    console.log('Extracted modelType: ', modelType || 'UNDEFINED');
     if (!userId || !modelType) {
       console.error('Invalid token payload - missing required fields');
       throw new Error('Invalid token payload');
@@ -213,3 +214,20 @@ export const loginWorker = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid Credentials" });
     }
 }
+
+export async function validateLogin(req: Request, res: Response): Promise<Response> {
+  const id = req.userPayload?.userId;
+  if (!id)  return res.status(400);
+  const role = req.userPayload?.modelType;
+  console.log(role);
+  if (role == "User"){
+    const user: IUsuari | null = await userService.getUserById(id);
+    return res.status(200).json({"type": "user", "data": user});
+  }
+  else if (role == "Treballador"){
+    const worker: IWorker | null = await workerService.getWorkerById(id);
+    return res.status(200).json({"type": "worker", "data": worker});
+  }
+  return res.status(500);
+}
+ 

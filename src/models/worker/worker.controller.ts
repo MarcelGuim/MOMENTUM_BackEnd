@@ -14,19 +14,45 @@ const workerService = new WorkerService();
 export async function createWorker(req:Request, res:Response): Promise<Response> {
     console.log("Creating worker");
     try{
-        const{name,age,mail,password, location, role, } = req.body as IWorker
-        const newWorker: Partial<IWorker> = {name,age,mail,password, location, role, isDeleted:false};
-        const worker = await workerService.createWorker(newWorker);
-        if (!worker) {
-          console.log("Worker already exists:");
-          return res.status(409).json({ error: 'Worker already exists' });
-        }
-        else{
-          return res.status(201).json({ message: 'Worker  created', data: worker });
-        }
+        const adminId = req.userPayload?.userId;
+        if (!adminId) return res.status(405).json({ message: "Invalid worker ID format" });
+        const worker:Partial<IWorker> = req.body.worker as IWorker
+        console.log(worker);
+        worker.isDeleted = false;
+        const locationName = req.body.location;
+        if(!locationName) return res.status(405).json({ error: "Location not sent"});
+        console.log(locationName);
+        await workerService.createWorkerByAdmin(worker, adminId, locationName.toString());
+        return res.status(201);
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        console.log((error as { message: string }).message);
+        return res.status(405).json({ error: (error as { message: string }).message });
+      }
+      return res.status(500).json({ message: "Failed to create location for business, server error" });
     }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to create worker' });
+}
+
+export async function createWorkerWithMultipleLocations(req: Request, res: Response): Promise<Response> {
+    try {
+        const worker: Partial<IWorker> = req.body;
+
+        // Call the service to create the worker
+        const newWorker = await workerService.createWorkerWithMultipleLocations(worker);
+
+        return res.status(201).json({
+            message: "Worker created successfully with multiple locations",
+            worker: newWorker
+        });
+    } catch (error: any) {
+        console.error("Error creating worker with multiple locations:", error.message);
+        if (error.message === "Worker already exists") {
+            return res.status(409).json({ message: error.message });
+        }
+        if (error.message === "Some locations are invalid") {
+            return res.status(400).json({ message: error.message });
+        }
+        return res.status(500).json({ message: "Failed to create worker", error: error.message });
     }
 }
 
@@ -209,4 +235,15 @@ export async function getWorkersPaginatedByCompany(req: Request, res: Response):
         return res.status(500).json({ error: 'Failed to fetch workers' });
     }
     
+}
+
+export async function getWorkersByBusinessId(req: Request, res: Response): Promise<Response> {
+  try {
+    const { businessId } = req.params;
+    const workers = await workerService.getWorkersByBusinessId(businessId);
+    return res.status(200).json(workers);
+  } catch (error: any) {
+    console.error('Error fetching workers by business ID:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
 }

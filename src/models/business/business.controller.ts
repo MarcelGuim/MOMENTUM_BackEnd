@@ -153,45 +153,21 @@ export async function getAllBusinessWithLocationOfferingServiceType(req: Request
 }
 export async function createLocationForBusiness(req: Request, res: Response): Promise<Response> {
     try {
-        const { businessId } = req.params;
-        const locationData = req.body;
-
-        const result = await businessService.createLocationForBusiness(businessId, locationData);
-
-        if (result === -1) {
-            console.error("Invalid business ID format");
-            return res.status(400).json({ message: "Invalid business ID format" });
-        }
-
-        if (result === -2) {
-            console.error("Location already exists");
-            return res.status(409).json({ message: "Location already exists" });
-        }
-
-        if (result === -3) {
-            console.error("Invalid schedule format");
-            return res.status(400).json({ message: "Invalid schedule format" });
-        }
-
-        if (result === -4) {
-            console.error("ServiceTypes of location are not valid");
-            return res.status(400).json({ message: "ServiceTypes of location are not valid" });
-        }
-
-        if (result === null) {
-            console.error("Business not found");
-            return res.status(404).json({ message: "Business not found" });
-        }
-
-        return res.status(201).json({
-            message: "Location created and added to business",
-            business: result,
-        });
+        console.log("creating location");
+        const workerId = req.userPayload?.userId;
+        const  locationData = req.body.locationData;
+        if (!workerId) return res.status(400).json({ message: "Invalid worker ID format" });
+        await businessService.createLocationForBusiness(workerId, locationData);
+        return res.status(201).json({ message: "Location created" });
     } catch (error) {
-        console.error("Error creating location for business:", error);
-        return res.status(500).json({ message: "Failed to create location for business" });
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+            console.log((error as { message: string }).message);
+            return res.status(405).json({ error: (error as { message: string }).message });
+        }
+        return res.status(500).json({ message: "Failed to create location for business, server error" });
     }
 }
+
 export async function deleteLocationForBusiness(req: Request, res: Response): Promise<Response> {
     try {
         const { businessId, locationId } = req.params;

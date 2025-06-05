@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
+import { requireOwnership, verifyToken, requireAdmin } from '../../middleware/auth.middleware';
 import {
     createBusiness,
     getAllBusiness,
@@ -376,7 +376,6 @@ router.get('/:businessId/locations/by-serviceType', getAllLocationsFromBusinessb
  */
 router.get('/serviceType/:serviceType', getAllBusinessWithLocationOfferingServiceType);
 
-
 /**
  * @swagger
  * /business/{businessId}/locations:
@@ -519,7 +518,7 @@ router.get('/serviceType/:serviceType', getAllBusinessWithLocationOfferingServic
  *                   type: string
  *                   example: Failed to create location for business
  */
-router.post('/:businessId/locations', createLocationForBusiness);
+router.post('/locations',verifyToken, requireAdmin, createLocationForBusiness);
 
 /**
  * @swagger
