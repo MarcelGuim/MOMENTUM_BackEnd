@@ -171,7 +171,7 @@ export class ChatService {
     async createChat(user1ID: string, typeOfUser1: typeOfXatUser, user2ID: string, typeOfUser2: typeOfXatUser): Promise<IChat> {
         try{
             const chat = await this.getChat(user1ID, user2ID);
-            throw new Error("Chat already exists");
+            return chat;
         }
         catch(error) {
         }
