@@ -131,7 +131,7 @@ export class ChatService {
         else return false;
     }
 
-    async getPeopleWithWhomUserChatted(userId: string): Promise<[string,string, typeOfXatUser][]> {
+    async getPeopleWithWhomUserChatted(userId: string): Promise<[string, string, typeOfXatUser, string][]> {
         const user = await User.findById(userId);
         if (user === null) throw new Error("User not found");
         const chats = await Chat.find({$or: [{user1: userId}, {user2: userId}]});
@@ -145,21 +145,24 @@ export class ChatService {
         const peopleInfo = await Promise.all(
             chats.map(async (chat) => {
                 let otherId: string;
+                let selfId: string;
                 let otherType: typeOfXatUser;
 
                 if (chat.user1.toString() === userId) {
                     otherId = chat.user2.toString();
+                    selfId = chat.user1.toString();
                     otherType = chat.typeOfUser2;
                 } else {
                     otherId = chat.user1.toString();
+                    selfId = chat.user2.toString();
                     otherType = chat.typeOfUser1;
                 }
                 const name = await this.getNameFromChat(otherId, otherType);
                 if (!name) return null;
-                return [name, otherId, otherType] as [string, string, typeOfXatUser];
+                return [name, otherId, otherType, selfId] as [string, string, typeOfXatUser, string];
             })
         );
-        return peopleInfo.filter((entry): entry is [string, string, typeOfXatUser] => entry !== null);
+        return peopleInfo.filter((entry): entry is [string, string, typeOfXatUser, string] => entry !== null);
     }
 
     async verifyIfIdExists(id: string, type: typeOfXatUser): Promise<boolean> {
@@ -219,7 +222,7 @@ export class ChatService {
         return null;
     }
 
-        async getPeopleWithWhomWorkerChatted(workerId: string): Promise<[string,string, typeOfXatUser][]> {
+        async getPeopleWithWhomWorkerChatted(workerId: string): Promise<[string,string, typeOfXatUser, string][]> {
         const worker = await Worker.findById(workerId);
         console.log("Worker found: ", worker);
         if (worker === null) throw new Error("Worker not found");
@@ -238,21 +241,24 @@ export class ChatService {
                 let otherId: string;
                 let otherTypeReal: typeOfXatUser;
                 let otherTypeForFrontend: typeOfXatUser;
+                let selfId: string;
 
                 if (chat.user1.toString() === workerId) {
                     otherId = chat.user2.toString();
+                    selfId = chat.user1.toString();
                     otherTypeReal = chat.typeOfUser2;
                     otherTypeForFrontend = chat.typeOfUser1;
                 } else {
                     otherId = chat.user1.toString();
+                    selfId = chat.user2.toString();
                     otherTypeReal = chat.typeOfUser1;
                     otherTypeForFrontend = chat.typeOfUser2;
                 }
                 const name = await this.getNameFromChat(otherId, otherTypeReal);
                 if (!name) return null;
-                return [name, otherId, otherTypeForFrontend] as [string, string, typeOfXatUser];
+                return [name, otherId, otherTypeForFrontend, selfId] as [string, string, typeOfXatUser, string];
             })
         );
-        return peopleInfo.filter((entry): entry is [string, string, typeOfXatUser] => entry !== null);
+        return peopleInfo.filter((entry): entry is [string, string, typeOfXatUser, string] => entry !== null);
     }
 }

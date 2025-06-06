@@ -121,7 +121,7 @@ router.get("/people/user/:userId",  verifyToken, requireOwnership('userId'), get
  *       500:
  *         description: Error inesperat
  */
-router.get("/people/worker/:workerId",  verifyToken, requireOwnership('userId'), getPeopleWithWhomWorkerChatted);
+router.get("/people/worker/:workerId",  verifyToken, requireOwnership('workerId'), getPeopleWithWhomWorkerChatted);
 
 /**
  * @swagger
