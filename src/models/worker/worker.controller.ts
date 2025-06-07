@@ -17,11 +17,9 @@ export async function createWorker(req:Request, res:Response): Promise<Response>
         const adminId = req.userPayload?.userId;
         if (!adminId) return res.status(405).json({ message: "Invalid worker ID format" });
         const worker:Partial<IWorker> = req.body.worker as IWorker
-        console.log(worker);
         worker.isDeleted = false;
         const locationName = req.body.location;
         if(!locationName) return res.status(405).json({ error: "Location not sent"});
-        console.log(locationName);
         await workerService.createWorkerByAdmin(worker, adminId, locationName.toString());
         return res.status(201);
     } catch (error) {
@@ -35,10 +33,12 @@ export async function createWorker(req:Request, res:Response): Promise<Response>
 
 export async function createWorkerWithMultipleLocations(req: Request, res: Response): Promise<Response> {
     try {
+        const adminId = req.userPayload?.userId;
+        if (!adminId) return res.status(405).json({ message: "Invalid worker ID format" });
         const worker: Partial<IWorker> = req.body;
 
         // Call the service to create the worker
-        const newWorker = await workerService.createWorkerWithMultipleLocations(worker);
+        const newWorker = await workerService.createWorkerWithMultipleLocations(worker, adminId);
 
         return res.status(201).json({
             message: "Worker created successfully with multiple locations",
@@ -46,12 +46,20 @@ export async function createWorkerWithMultipleLocations(req: Request, res: Respo
         });
     } catch (error: any) {
         console.error("Error creating worker with multiple locations:", error.message);
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+          console.log((error as { message: string }).message);
+          return res.status(405).json({ error: (error as { message: string }).message });
+        }
+        /* console.error("Error creating worker with multiple locations:", error.message);
         if (error.message === "Worker already exists") {
             return res.status(409).json({ message: error.message });
         }
         if (error.message === "Some locations are invalid") {
             return res.status(400).json({ message: error.message });
         }
+        if (error.message === "You don't manage one of the locations") {
+            return res.status(400).json({ message: error.message });
+        } */
         return res.status(500).json({ message: "Failed to create worker", error: error.message });
     }
 }

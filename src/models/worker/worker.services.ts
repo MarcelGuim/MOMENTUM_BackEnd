@@ -24,7 +24,6 @@ export class WorkerService {
 
     async createWorkerByAdmin(worker: Partial<IWorker>, adminId: string, locationName: string): Promise<void> {
       if (!mongoose.Types.ObjectId.isValid(adminId)) throw new Error("Wrong worker ID format");
-      console.log(locationName);
       const location: ILocation | null = await Location.findOne({nombre: locationName});
       if(!location) throw new Error("Location not found");
       if(!location.id) throw new Error("Location not correctly saved, contact administrator");
@@ -35,22 +34,17 @@ export class WorkerService {
       if(!workerAdmin.businessAdministrated) throw new Error("Business administrated not found");
       const business: IBusiness | null = await Business.findById(workerAdmin.businessAdministrated);
       if(!business) throw new Error("Business not found");
-      console.log(business.location);
-      console.log(location);
       if(!business.location.includes(location.id)) throw new Error("You don't manage that locations");
       worker.location = location.id;
-      console.log("0");
-      console.log(worker);
       const newWorker = new Worker(worker);
-      console.log("1");
-      console.log(newWorker);
       const savedWorker = await newWorker.save();
-      console.log("Worker created successfully");
       await Location.findByIdAndUpdate(worker.location, { $push: { workers: savedWorker._id } });
     }
 
-    async createWorkerWithMultipleLocations(worker: Partial<IWorker>): Promise<IWorker | null> {
+    async createWorkerWithMultipleLocations(worker: Partial<IWorker>, adminId: string): Promise<IWorker | null> {
         // Check if the worker already exists by email or name
+        if (!mongoose.Types.ObjectId.isValid(adminId)) throw new Error("Wrong worker ID format");
+
         const existingWorker = await Worker.findOne({ $or: [{ mail: worker.mail }, { name: worker.name }] });
         if (existingWorker) throw new Error("Worker already exists");
 
@@ -64,6 +58,14 @@ export class WorkerService {
             throw new Error("Some locations are invalid");
         }
 
+        const workerAdmin = await Worker.findById(adminId);
+        if(!workerAdmin) throw new Error("Admin not found");
+        if(!workerAdmin.businessAdministrated) throw new Error("Business administrated not found");
+        const business: IBusiness | null = await Business.findById(workerAdmin.businessAdministrated);
+        if(!business) throw new Error("Business not found");
+        worker.location?.forEach((location) => {
+          if(!business.location.includes(location)) throw new Error("You don't manage one of the locations");
+        });
         // Create the worker
         const newWorker = new Worker(worker);
         const savedWorker = await newWorker.save();
