@@ -26,7 +26,7 @@ const ChatSchema = new Schema<IChat>({
           timestamp: { type: Date, required: true },
           _id: false
         }
-      ]
+    ],
 });
 
 export interface IChat{
@@ -42,7 +42,7 @@ export interface IMessage {
     from: string;
     text: string;
     timestamp: Date;
-  }
+}
 
 const Chat = model<IChat>('Chat', ChatSchema);
 export default Chat;

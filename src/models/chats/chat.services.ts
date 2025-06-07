@@ -222,20 +222,21 @@ export class ChatService {
         return null;
     }
 
-        async getPeopleWithWhomWorkerChatted(workerId: string): Promise<[string,string, typeOfXatUser, string][]> {
+    async getPeopleWithWhomWorkerChatted(workerId: string): Promise<[string,string, typeOfXatUser, string][]> {
         const worker = await Worker.findById(workerId);
         console.log("Worker found: ", worker);
         if (worker === null) throw new Error("Worker not found");
         const location = await Location.findById(worker.location);
         if (location === null) throw new Error("Location of worker not found");
         const chats = await Chat.find({$or: [{user1: workerId}, {user2: workerId}, {user2: worker.location}, {user1: worker.location}, {user2: location.business}, {user1: location.business}]});
-/*         const people = chats.map(chat => chat.user1.toString() === userId ? chat.user2.toString() : chat.user1.toString());
-        const peopleNames = await Promise.all(people.map(async (personId) => { 
-            const user = await User.findById(personId); 
-            return user?.name && user?._id ? [user.name, user._id.toString()] : null; 
-        }));
-        return peopleNames.filter((entry): entry is [string, string] => entry !== null);
-    } */
+        /*         const people = chats.map(chat => chat.user1.toString() === userId ? chat.user2.toString() : chat.user1.toString());
+            const peopleNames = await Promise.all(people.map(async (personId) => { 
+                const user = await User.findById(personId); 
+                return user?.name && user?._id ? [user.name, user._id.toString()] : null; 
+            }));
+            return peopleNames.filter((entry): entry is [string, string] => entry !== null);
+        }
+        */
         const peopleInfo = await Promise.all(
             chats.map(async (chat) => {
                 let otherId: string;
@@ -260,5 +261,15 @@ export class ChatService {
             })
         );
         return peopleInfo.filter((entry): entry is [string, string, typeOfXatUser, string] => entry !== null);
+    }
+
+    async editChat(chatId: string, changes: Partial<IChat>): Promise<IChat | null> {
+        const chat = await Chat.findByIdAndUpdate(chatId, changes, {new: true});
+        return chat;
+    }
+
+    async deleteChat(chatId: string): Promise<boolean> {
+        const res = await Chat.deleteOne({_id: chatId});
+        return res.deletedCount > 0;
     }
 }

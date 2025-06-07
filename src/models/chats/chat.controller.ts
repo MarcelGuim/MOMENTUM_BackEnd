@@ -149,3 +149,30 @@ export async function getPeopleWithWhomWorkerChatted(req: Request, res: Response
         return res.status(500).json({ error: 'Unexpected error getting people' });
     }
 }
+
+export async function editChat(req: Request, res: Response): Promise<Response> {
+    try {
+        const chatId = req.params.chatId;
+        const changes = req.body as Partial<IChat>;
+        
+        const chat = await chatService.editChat(chatId, changes);
+        if (!chat) return res.status(404).json({error: "Chat not found"});
+        return res.status(200).json(chat);
+    } catch (error) {
+        return res.status(500).json({error: error});
+    }
+}
+
+export async function deleteChat(req: Request, res: Response): Promise<Response> {
+    try {
+        const id = req.params.chatId;
+        const deleted = await chatService.deleteChat(id);
+        if (deleted) {
+            return res.status(200).json();
+        } else {
+            return res.status(404).json({error: "chat not found"});
+        }
+    } catch (error) {
+        return res.status(500).json({error: error});
+    }
+}

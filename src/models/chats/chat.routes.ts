@@ -8,6 +8,8 @@ import {
   createChat,
   getLast20Messages,
   getChatId,
+  editChat,
+  deleteChat,
 } from './chat.controller';
 import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
 
@@ -257,5 +259,108 @@ router.get("/id/:user1ID/:user2ID", getChatId);
  *         description: Error inesperat
  */
 router.post("/create", createChat);
+
+/**
+ * @swagger
+ * /chat/{chatId}:
+ *   patch:
+ *     summary: Edita un chat existent
+ *     tags:
+ *       - Chat
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         description: ID del xat
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user1:
+ *                 type: string
+ *                 description: ID de l'usuari 1
+ *               typeOfUser1:
+ *                 type: string
+ *                 enum: [worker, user, location, business]
+ *               user2:
+ *                 type: string
+ *                 description: ID de l'usuari 2
+ *               typeOfUser2:
+ *                 type: string
+ *                 enum: [worker, user, location, business]
+ *     responses:
+ *       200:
+ *         description: Xat editat. Retorna el nou xat
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Chat'
+ *       404:
+ *         description: Xat no trobat
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Chat not found
+ *       500:
+ *         description: Error intern
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ */
+router.patch("/:chatId", editChat);
+
+/**
+ * @swagger
+ * /chat/{chatId}:
+ *   delete:
+ *     summary: Elimina un xat
+ *     tags:
+ *       - Chat
+ *     parameters:
+ *       - in: path
+ *         name: chatId
+ *         required: true
+ *         description: ID del xat
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Xat eliminat
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Chat'
+ *       404:
+ *         description: Xat no trobat
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Chat not found
+ *       500:
+ *         description: Error intern
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ */
+router.delete("/:chatId", deleteChat);
 
 export default router;
