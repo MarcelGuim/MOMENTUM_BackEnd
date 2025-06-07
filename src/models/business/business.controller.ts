@@ -398,3 +398,24 @@ export async function getFilteredBusinesses(req: Request, res: Response): Promis
       return res.status(500).json({ message: 'Failed to retrieve favorite businesses' });
     }
   }
+
+  export async function getBusinessById(req: Request, res: Response): Promise<Response> {
+    try {
+        console.log("Getting business by id");
+      const { id } = req.params;
+  
+      if (!id) throw new Error("missing id");
+  
+      const result = await businessService.findBusinessById(id);
+  
+      if (!result) throw new Error("Business not found");
+        console.log(result);
+      return res.status(200).json(result);
+    } catch (error) {
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+          console.log((error as { message: string }).message);
+          return res.status(405).json({ error: (error as { message: string }).message });
+        }
+      return res.status(500).json({ message: 'Failed to search business' });
+    }
+}

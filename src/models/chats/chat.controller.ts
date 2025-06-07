@@ -94,10 +94,8 @@ export async function getChatId(req: Request, res: Response): Promise<Response> 
 }
 
 export async function createChat(req: Request, res: Response): Promise<Response> {
-    console.log("1");
     try {
         const { user1ID, user2ID, typeOfUser1, typeOfUser2 } = req.body;
-        console.log("2");
         const newChat = await chatService.createChat(user1ID,typeOfUser1, user2ID, typeOfUser2);
         return res.status(201).json({
             message: "Chat created",
@@ -118,7 +116,6 @@ export async function getLast20Messages(req: Request, res: Response): Promise<Re
     console.log("getting the last 20 messages of chat ");
     try {
         const { chatId } = req.params;
-        console.log("Chat ID:", chatId); // Log the chatId for debugging
         const messages = await chatService.getLast20MessagesOfChat(chatId);
         return res.status(200).json(messages);
     } catch (error: any) {

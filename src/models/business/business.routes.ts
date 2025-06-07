@@ -14,6 +14,7 @@ import {
     searchBusinessByName,
     getFavoriteBusinesses,
     getFilteredFavoriteBusinesses,
+    getBusinessById
 } from './business.controller';
 
 const router = Router();
@@ -1014,5 +1015,7 @@ router.get('/favorites/:userId',getFavoriteBusinesses);
  *                   example: Failed to retrieve favorite businesses
  */
 router.post('/favorites/filter/:userId', getFilteredFavoriteBusinesses);
+
+router.get('/name/:id', getBusinessById);
 
 export default router;

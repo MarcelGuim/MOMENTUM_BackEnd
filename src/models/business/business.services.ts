@@ -374,6 +374,10 @@ export class BusinessService{
       return businessesByLocation.length > 0 ? businessesByLocation : null;  
     }
 
+    async findBusinessById(id: string): Promise<IBusiness|null> {
+      return Business.findById(id);
+    }
+
     async getBusinessesWithFavoriteLocations(userId: string): Promise<IBusiness[] | null> {
       const user = await User.findById(userId).select('favoriteLocations');
     
