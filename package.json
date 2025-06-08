@@ -12,7 +12,8 @@
     "lint": "eslint 'src/**/*.{ts,js}' --quiet",
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
     "format": "prettier --write 'src/**/*.{ts,js,json,md}'",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "tes2": "npx lint-staged"
   },
   "author": "Your Name",
   "license": "MIT",
@@ -60,9 +61,9 @@
     "typescript": "^5.8.2"
   },
   "lint-staged": {
-    "*.{ts,js}": [
-      "eslint --fix",
-      "prettier --write"
+    "*.ts": [
+      "prettier --write",
+      "eslint --fix --max-warnings=0"
     ]
   }
 }
