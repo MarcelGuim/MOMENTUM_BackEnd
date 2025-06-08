@@ -1,6 +1,8 @@
 import { Server, Socket } from 'socket.io';
 import { verifyAccessToken } from '../utils/jwt.utils';
 import { ChatService } from '../models/chats/chat.services';
+import { typeOfXatUser } from '../enums/typesOfXat.enum';
+import { JoinRoomRequest, SocketMessage, TypingSocketMessage } from 'types/index';
 
 const chatService = new ChatService();
 const connectedUsers = new Map<string, string>;
@@ -37,34 +39,63 @@ export function configureSocketEvents(socketIo: Server) {
     En principi, jo no faria un broadcast per informar a la resta que aquest user s'ha connectat, perq no se si
     te sentit per la app.
     */
-    socket.on('user_login', (userName) => {
-      connectedUsers.set(socket.id, userName);
+    socket.on('user_login', (userId) => {
+      console.debug("user registered to websocket with id " + userId)
+      connectedUsers.set(socket.id, userId);
+    });
+
+    socket.on('join_rooms', (data: JoinRoomRequest) => {
+      console.debug(`client ${data.userId} joining rooms ${data.rooms}`);
+      data.rooms.forEach(room => {
+        socket.join(room);
+      })
     });
 
     socket.on('test', (message: String) => {
         socket.emit('test', 'response to test');
     });
 
-    socket.on('new_message', async (data) => {
-      const otherUser = await chatService.getNameFromOtherPersonInChat(data.chatId, data.sender)
-      const socketId = await getSocketFromUserName(otherUser as string);
-      if (socketId) {
-        const socket2 =await socketIo.sockets.sockets.get(socketId);
-        if (socket2) {
-          socket2.emit('new_message', data);
-        }
+    socket.on('new_message', async (data: SocketMessage) => {
+      switch (data.receiverType) {
+        case typeOfXatUser.USER:
+        case typeOfXatUser.WORKER:
+          const socketId = await getSocketFromUserId(data.receiverId);
+          if (socketId) {
+            const socket2 =await socketIo.sockets.sockets.get(socketId);
+            if (socket2) {
+              socket2.emit('new_message', data);
+            }
+          }
+          break;
+        case typeOfXatUser.LOCATION:
+          socketIo.to("location/" + data.receiverId).emit('new_message', data);
+          break;
+        case typeOfXatUser.BUSINESS:
+          socketIo.to("business/" + data.receiverId).emit('new_message', data);
+          break;
       }
     });
 
-    socket.on('typing', async (data) => {
-      const otherUser = await chatService.getNameFromOtherPersonInChat(data.chatId, data.sender);
-      const socketId = await getSocketFromUserName(otherUser as string);
-      if (socketId) {
-        const socket2 = await socketIo.sockets.sockets.get(socketId);
-        if (socket2) {
-          socket2.emit('typing', data.chatId);
-        }
-      }
+    socket.on('typing', async (data: TypingSocketMessage) => {
+      switch (data.receiverType) {
+        case typeOfXatUser.USER:
+        case typeOfXatUser.WORKER:
+          const socketId = await getSocketFromUserId(data.receiverId);
+          if (socketId) {
+            const socket2 = await socketIo.sockets.sockets.get(socketId);
+            if (socket2) {
+              socket2.emit('typing', data.chatId);
+            }
+          }
+          break;
+        case typeOfXatUser.LOCATION:
+          socketIo.to("location/" + data.receiverId).emit('typing', data);
+          break;
+        case typeOfXatUser.BUSINESS:
+          socketIo.to("business/" + data.receiverId).emit('typing', data);
+          break;
+    }
+
     });
 
     socket.on('disconnect', () => {
@@ -74,9 +105,9 @@ export function configureSocketEvents(socketIo: Server) {
   });
 }
 
-async function getSocketFromUserName(userName: string) {
-    for (const [socketId, storedUserName] of connectedUsers) {
-        if (storedUserName === userName) {
+async function getSocketFromUserId(userId: string) {
+    for (const [socketId, storedUserId] of connectedUsers) {
+        if (storedUserId === userId) {
             return socketId;
         }
     }
