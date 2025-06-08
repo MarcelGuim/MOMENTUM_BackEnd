@@ -33,3 +33,19 @@ node_modules/
 
 # IntelliJ IDEA files
 .idea/
+
+# Husky hooks directory (normalment sí que es puja, però si vols pots ignorar-lo)
+.husky/
+
+# lint-staged does not create files, so no need to ignore anything here
+
+# Prettier does not create files, no need to ignore
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Optional coverage reports
+coverage/

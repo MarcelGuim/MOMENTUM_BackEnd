@@ -1,26 +1,24 @@
-
 import { AccessTokenPayload } from '../utils/jwt.utils';
 import { RefreshTokenPayload } from '../utils/jwt.utils';
-import { Request } from 'express';
 
 export interface LoginRequestBody {
-    name_or_mail: string;
-    password: string;
+  name_or_mail: string;
+  password: string;
 }
 
 export interface BusinessRegisterRequestBody {
-    name: string;
-    age: number;
-    mail: string;
-    password: string;
-    businessName: string;
+  name: string;
+  age: number;
+  mail: string;
+  password: string;
+  businessName: string;
 }
-
+/* eslint-disable no-unused-vars */
 export enum ModelType {
   USER = 'User',
   TREB = 'Treballador',
 }
-
+/* eslint-enable no-unused-vars */
 export interface GeoJSONPoint {
   type: 'Point';
   coordinates: [number, number]; // [longitude, latitude]

@@ -1,565 +1,637 @@
 import { Request, Response } from 'express';
 import { ICalendar } from './calendar.model';
 import { CalendarService } from './calendar.services';
-import {IAppointment} from '../appointment/appointment.model'
-import { ResponseStream } from 'openai/lib/responses/ResponseStream.mjs';
+import { IAppointment } from '../appointment/appointment.model';
 
 const calendarService = new CalendarService();
 
-export async function createCalendar(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Creating calendar");
-        const calendar: Partial<ICalendar> = req.body;
-        const answer = await calendarService.createCalendar(calendar);
+export async function createCalendar(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Creating calendar');
+    const calendar: Partial<ICalendar> = req.body;
+    const answer = await calendarService.createCalendar(calendar);
 
-        if (answer === null) {
-            console.log("Owner not found or invalid calendar name");
-            return res.status(404).json({
-                message: "Owner not found or invalid calendar name"
-            });
-        } else {
-            console.log("Calendar created");
-            return res.status(201).json({
-                message: "Calendar created",
-                calendar: answer
-            });
-        }
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
+    if (answer === null) {
+      console.log('Owner not found or invalid calendar name');
+      return res.status(404).json({
+        message: 'Owner not found or invalid calendar name',
+      });
+    } else {
+      console.log('Calendar created');
+      return res.status(201).json({
+        message: 'Calendar created',
+        calendar: answer,
+      });
     }
+  } catch {
+    console.log('Server Error');
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
 }
 
-export async function getAllAppointments(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding all appointments")
-        const {calendarId } = req.params;
+export async function getAllAppointments(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding all appointments');
+    const { calendarId } = req.params;
 
-        const answer = await calendarService.getAllAppointments(calendarId);
+    const answer = await calendarService.getAllAppointments(calendarId);
 
-        return res.status(200).json({
-            message: "Appointments obtained",
-            appointments: answer,
-        })
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
-    }
+    return res.status(200).json({
+      message: 'Appointments obtained',
+      appointments: answer,
+    });
+  } catch {
+    console.log('Server Error');
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
 }
 
-export async function getAppointmentsBetweenDates(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding appointments between two dates");
-        const { calendarId, d1, d2 } = req.params;
-        const date1 = new Date(d1);
-        const date2 = new Date(d2);
+export async function getAppointmentsBetweenDates(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding appointments between two dates');
+    const { calendarId, d1, d2 } = req.params;
+    const date1 = new Date(d1);
+    const date2 = new Date(d2);
 
-        const answer = await calendarService.getAppointmentsBetweenDates(date1, date2, calendarId);
-        return res.status(200).json({
-            message: "Appointments obtained",
-            appointments: answer,
-        })
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
-    }
+    const answer = await calendarService.getAppointmentsBetweenDates(
+      date1,
+      date2,
+      calendarId
+    );
+    return res.status(200).json({
+      message: 'Appointments obtained',
+      appointments: answer,
+    });
+  } catch {
+    console.log('Server Error');
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
 }
 
-export async function getAppointmentsForADay(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding appointments for a day");
-        const { calendarId, date } = req.params;
-        const date1 = new Date(date);
+export async function getAppointmentsForADay(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding appointments for a day');
+    const { calendarId, date } = req.params;
+    const date1 = new Date(date);
 
-        // Llamar al servicio
-        const answer = await calendarService.getAppointmentsForADay(date1, calendarId);
+    // Llamar al servicio
+    const answer = await calendarService.getAppointmentsForADay(
+      date1,
+      calendarId
+    );
 
-        console.log("Appointments obtained");
-        return res.status(200).json({
-            message: "Appointments obtained",
-            appointments: answer
-        });
-    } catch (error) {
-        console.log("Server Error");
-        return res.status(500).json({
-            message: "Server Error"
-        });
-    }
+    console.log('Appointments obtained');
+    return res.status(200).json({
+      message: 'Appointments obtained',
+      appointments: answer,
+    });
+  } catch {
+    console.log('Server Error');
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
 }
 
-export async function getCalendarsOfUser(req:Request, res:Response): Promise<Response>{
-    try{
-        console.log("Finding the calendars of a user");
-        const { userId } = req.params;
-        const answer = await calendarService.getCalendarsOfUser(userId);
+export async function getCalendarsOfUser(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding the calendars of a user');
+    const { userId } = req.params;
+    const answer = await calendarService.getCalendarsOfUser(userId);
 
-        console.log("Calendar obtained");
-        return res.status(200).json({
-            message:"Calendar obtained",
-            calendars: answer
-        });
-    } catch(error){
-        console.log("Server Error")
-        return res.status(500).json({
-            message:"Server Error"
-        });
-    }
+    console.log('Calendar obtained');
+    return res.status(200).json({
+      message: 'Calendar obtained',
+      calendars: answer,
+    });
+  } catch {
+    console.log('Server Error');
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
 }
 
-export async function addAppointmentToCalendar(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Adding an appointment to the calendar of a user. Calendar ID:", req.params.calendarId);
-        console.log("Appointment data:", req.body);
+export async function addAppointmentToCalendar(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log(
+      'Adding an appointment to the calendar of a user. Calendar ID:',
+      req.params.calendarId
+    );
+    console.log('Appointment data:', req.body);
 
-        const { calendarId } = req.params;
-        const appointment: Partial<IAppointment> = req.body;
-        console.log(appointment);
-        console.log(calendarId);
-        // Llamar al servicio
-        const answer = await calendarService.addAppointmentToCalendar(calendarId, appointment);
+    const { calendarId } = req.params;
+    const appointment: Partial<IAppointment> = req.body;
+    console.log(appointment);
+    console.log(calendarId);
+    // Llamar al servicio
+    const answer = await calendarService.addAppointmentToCalendar(
+      calendarId,
+      appointment
+    );
 
-        // Handle the service response
-        if (answer === null) {
-            console.warn("Calendar not found for ID:", calendarId);
-            return res.status(404).json({
-                message: "Calendar not found"
-            });
-        } else {
-            console.log("Appointment successfully added to calendar. Updated calendar:", answer);
-            return res.status(201).json({
-                message: "Appointment added to calendar",
-                calendar: answer
-            });
-        }
-    } catch (error) {
-        console.error("Error adding appointment to calendar:", error);
-        return res.status(500).json({
-            message: "Server Error",
-            error: error instanceof Error ? error.message : "Unknown error"
-        });
+    // Handle the service response
+    if (answer === null) {
+      console.warn('Calendar not found for ID:', calendarId);
+      return res.status(404).json({
+        message: 'Calendar not found',
+      });
+    } else {
+      console.log(
+        'Appointment successfully added to calendar. Updated calendar:',
+        answer
+      );
+      return res.status(201).json({
+        message: 'Appointment added to calendar',
+        calendar: answer,
+      });
     }
+  } catch (error) {
+    console.error('Error adding appointment to calendar:', error);
+    return res.status(500).json({
+      message: 'Server Error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 }
 
 export async function hardDeleteAppointment(req: Request, res: Response) {
-    try {
+  try {
+    const { appointmentId } = req.params;
+    if (!appointmentId) return res.status(400).json({ message: 'Bad Request' });
 
-        const { appointmentId } = req.params;
-        if (!appointmentId) return res.status(400).json({message: "Bad Request"});
+    const result = await calendarService.hardDeleteAppointment(appointmentId);
+    if (result == null || result == 0)
+      return res.status(404).json({ message: 'Appointment not found' });
 
-        const result = await calendarService.hardDeleteAppointment(appointmentId);
-        if( result == null || result == 0 ) return res.status(404).json({message: "Appointment not found"});
-
-        return res.status(200).json({message: "OK"});
-    } catch (error) {
-        return res.status(500).json({message: "Internal Error"});
-    }
+    return res.status(200).json({ message: 'OK' });
+  } catch {
+    return res.status(500).json({ message: 'Internal Error' });
+  }
 }
 
 export async function softDeleteAppointment(req: Request, res: Response) {
-    try {
-        const { appointmentId } = req.params;
-        console.log("soft delete to apointment with id: " + appointmentId);
-        if (!appointmentId) return res.status(400).json({message: "Bad Request"});
+  try {
+    const { appointmentId } = req.params;
+    console.log('soft delete to apointment with id: ' + appointmentId);
+    if (!appointmentId) return res.status(400).json({ message: 'Bad Request' });
 
-        const result = await calendarService.softDeleteAppointment(appointmentId);
-        if( result == null || result == 0 ) return res.status(404).json({message: "Appointment not found"});
+    const result = await calendarService.softDeleteAppointment(appointmentId);
+    if (result == null || result == 0)
+      return res.status(404).json({ message: 'Appointment not found' });
 
-        return res.status(200).json({message: "OK"});
-    } catch (error) {
-        return res.status(500).json({message: "Internal Error"});
-    }
+    return res.status(200).json({ message: 'OK' });
+  } catch {
+    return res.status(500).json({ message: 'Internal Error' });
+  }
 }
 
 export async function hardDeleteCalendarsUser(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const numDeleted = await calendarService.hardDeleteCalendarsUser(calendarId);
+  try {
+    const { calendarId } = req.params;
+    const numDeleted =
+      await calendarService.hardDeleteCalendarsUser(calendarId);
 
-        if (numDeleted > 0) {
-            return res.status(200).json({
-                message: "Calendars permanently deleted",
-                numDeleted: numDeleted,
-            });
-        } else {
-            return res.status(404).json({ error: "User had no calendars" });
-        }
-    } catch (error) {
-        return res.status(500).json({ error: "Failed to delete calendar" });
+    if (numDeleted > 0) {
+      return res.status(200).json({
+        message: 'Calendars permanently deleted',
+        numDeleted: numDeleted,
+      });
+    } else {
+      return res.status(404).json({ error: 'User had no calendars' });
     }
+  } catch {
+    return res.status(500).json({ error: 'Failed to delete calendar' });
+  }
 }
 
 export async function softDeleteCalendarsUser(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const calendar = await calendarService.softDeleteCalendarUser(calendarId);
+  try {
+    const { calendarId } = req.params;
+    const calendar = await calendarService.softDeleteCalendarUser(calendarId);
 
-        if (calendar !== null) {
-            return res.status(200).json({
-                message: "Calendars soft deleted (marked as unavailable)",
-                calendar: calendar,
-            });
-        } else {
-            return res.status(404).json({ error: "User had no calendar" });
-        }
-    } catch (error) {
-        return res.status(500).json({ error: "Failed to soft delete calendars" });
+    if (calendar !== null) {
+      return res.status(200).json({
+        message: 'Calendars soft deleted (marked as unavailable)',
+        calendar: calendar,
+      });
+    } else {
+      return res.status(404).json({ error: 'User had no calendar' });
     }
+  } catch {
+    return res.status(500).json({ error: 'Failed to soft delete calendars' });
+  }
 }
 
 export async function restoreCalendarsUser(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const calendar = await calendarService.restoreCalendarsUser(calendarId);
+  try {
+    const { calendarId } = req.params;
+    const calendar = await calendarService.restoreCalendarsUser(calendarId);
 
-        if (calendar !== null) {
-            return res.status(200).json({
-                message: "Calendars restored (marked as available)",
-                calendar: calendar,
-            });
-        } else {
-            return res.status(404).json({ error: "User had no calendars" });
-        }
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ error: "Failed to restore calendars" });
+    if (calendar !== null) {
+      return res.status(200).json({
+        message: 'Calendars restored (marked as available)',
+        calendar: calendar,
+      });
+    } else {
+      return res.status(404).json({ error: 'User had no calendars' });
     }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: 'Failed to restore calendars' });
+  }
 }
 
 export async function editCalendar(req: Request, res: Response) {
-    try {
-        const { calendarId } = req.params;
-        const changes = req.body;
+  try {
+    const { calendarId } = req.params;
+    const changes = req.body;
 
-        const result = await calendarService.editCalendar(calendarId, changes);
-        if (result == null) return res.status(404).json({ error: "Could not find calendar"});
-        return res.json(result);
-    } catch (error) {
-        return res.status(500).json({ error: "Failed to edit calendar" });
-    }
+    const result = await calendarService.editCalendar(calendarId, changes);
+    if (result == null)
+      return res.status(404).json({ error: 'Could not find calendar' });
+    return res.json(result);
+  } catch {
+    return res.status(500).json({ error: 'Failed to edit calendar' });
+  }
 }
 
-export async function getCommonSlotsForTwoCalendars(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding common slots between two calendars");
-        
-        const { date1, date2, user1Id, user2Id } = req.body;
-        if (!date1 || !date2 || !user1Id || !user2Id) {
-            return res.status(400).json({
-                message: "All parameters are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForTwoUserCalendars(
-            user1Id, 
-            user2Id, 
-            startDate, 
-            endDate
-        );
-        if (result === 0) {
-            return res.status(404).json({
-                message: "One or both users not found"
-            });
-        } else if (result === 1) {
-            return res.status(404).json({
-                message: "One or both users have no calendars"
-            });
-        } else if (result === 4){
-            return res.status(406).json({
-                message: "User 1 has no empty slots in the given range"
-            });
-        } else if (result === 5) {
-            return res.status(406).json({
-                message: "User 2 has no empty slots in the given range"
-            }); 
-        } else if (result === null) {
-            return res.status(404).json({
-                message: "No common slots found"
-            });
-        } else {
-            return res.status(200).json({
-                message: "Common slots found",
-                commonSlots: result
-            });
-        }
-    } catch (error) {
-        console.log("Server Error", error);
+export async function getCommonSlotsForTwoCalendars(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding common slots between two calendars');
+
+    const { date1, date2, user1Id, user2Id } = req.body;
+    if (!date1 || !date2 || !user1Id || !user2Id) {
+      return res.status(400).json({
+        message: 'All parameters are required in the request body',
+      });
+    }
+    const startDate = new Date(date1);
+    const endDate = new Date(date2);
+    const result = await calendarService.getSlotsCommonForTwoUserCalendars(
+      user1Id,
+      user2Id,
+      startDate,
+      endDate
+    );
+    if (result === 0) {
+      return res.status(404).json({
+        message: 'One or both users not found',
+      });
+    } else if (result === 1) {
+      return res.status(404).json({
+        message: 'One or both users have no calendars',
+      });
+    } else if (result === 4) {
+      return res.status(406).json({
+        message: 'User 1 has no empty slots in the given range',
+      });
+    } else if (result === 5) {
+      return res.status(406).json({
+        message: 'User 2 has no empty slots in the given range',
+      });
+    } else if (result === null) {
+      return res.status(404).json({
+        message: 'No common slots found',
+      });
+    } else {
+      return res.status(200).json({
+        message: 'Common slots found',
+        commonSlots: result,
+      });
+    }
+  } catch (error) {
+    console.log('Server Error', error);
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
+}
+
+export async function getCommonSlotsForNCalendars(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding common slots between multiple calendars');
+
+    const { userIds } = req.body;
+    const { date1, date2 } = req.body;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length < 2) {
+      return res.status(400).json({
+        message: 'An array of at least 2 user IDs is required',
+      });
+    }
+
+    if (!date1 || !date2) {
+      return res.status(400).json({
+        message: 'Both date1 and date2 are required in the request body',
+      });
+    }
+    const startDate = new Date(date1);
+    const endDate = new Date(date2);
+    console.log(userIds);
+    console.log(startDate);
+    console.log(endDate);
+    const result = await calendarService.getSlotsCommonForCalendarsOfNUsers(
+      userIds,
+      startDate,
+      endDate
+    );
+
+    console.log('RESULTS FINALS');
+    console.log(result);
+    if (
+      Array.isArray(result) &&
+      Array.isArray(result[0]) &&
+      typeof result[0] === 'number'
+    ) {
+      const [errorType, affectedUserIds] = result;
+      console.log('ENTRA');
+      console.log(errorType, affectedUserIds);
+      if (errorType === 1) {
+        return res.status(404).json({
+          message: 'Some users were not found',
+          userIdsNotFound: affectedUserIds,
+        });
+      } else if (errorType === 2) {
+        return res.status(404).json({
+          message: 'Some users have no calendars',
+          userIdsWithNoCalendars: affectedUserIds,
+        });
+      } else if (errorType === 3) {
+        return res.status(404).json({
+          message: 'Some users have no empty slots in the given range',
+          userIdsWithNoEmptySlots: affectedUserIds,
+        });
+      } else {
+        console.log('Server Error');
         return res.status(500).json({
-            message: "Server Error"
+          message: 'Server Error',
         });
+      }
+    } else if (result === null) {
+      return res.status(404).json({
+        message: 'No common slots found across all calendars',
+      });
+    } else {
+      return res.status(201).json({
+        message: 'Common slots found across all calendars',
+        commonSlots: result,
+      });
     }
+  } catch (error) {
+    console.log('Server Error', error);
+    return res.status(500).json({
+      message: 'Server Error',
+    });
+  }
 }
 
-export async function getCommonSlotsForNCalendars(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Finding common slots between multiple calendars");
-        
-        const { userIds } = req.body;
-        const { date1, date2 } = req.body;
+export async function setAppointmentRequestForWorker(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Setting appointment request for worker');
+    const { appointment, calendarId, workerId } = req.body;
 
-        if (!userIds || !Array.isArray(userIds) || userIds.length < 2) {
-            return res.status(400).json({
-                message: "An array of at least 2 user IDs is required"
-            });
-        }
-
-        if (!date1 || !date2) {
-            return res.status(400).json({
-                message: "Both date1 and date2 are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        console.log(userIds)
-        console.log(startDate)
-        console.log(endDate)
-        const result = await calendarService.getSlotsCommonForCalendarsOfNUsers(
-            userIds, 
-            startDate, 
-            endDate
-        );
-
-        console.log("RESULTS FINALS")
-        console.log(result)
-        if (Array.isArray(result) && Array.isArray(result[0]) && typeof result[0] === 'number') {
-            const [errorType, affectedUserIds] = result;
-            console.log("ENTRA")
-            console.log(errorType, affectedUserIds)
-            if (errorType === 1) {
-                return res.status(404).json({
-                    message: "Some users were not found",
-                    userIdsNotFound: affectedUserIds
-                });
-            } else if (errorType === 2) {
-                return res.status(404).json({
-                    message: "Some users have no calendars",
-                    userIdsWithNoCalendars: affectedUserIds
-                });
-            } else if (errorType === 3) {
-                return res.status(404).json({
-                    message: "Some users have no empty slots in the given range",
-                    userIdsWithNoEmptySlots: affectedUserIds
-                });
-            }
-            else {
-                console.log("Server Error");
-                return res.status(500).json({
-                    message: "Server Error"
-                });
-            }
-        } else if (result === null) {
-            return res.status(404).json({
-                message: "No common slots found across all calendars"
-            });
-        } else {
-            return res.status(201).json({
-                message: "Common slots found across all calendars",
-                commonSlots: result
-            });
-        }
-    } catch (error) {
-        console.log("Server Error", error);
-        return res.status(500).json({
-            message: "Server Error"
-        });
+    await calendarService.setAppointmentRequestForWorker(
+      calendarId,
+      workerId,
+      appointment
+    );
+    return res.status(200).json({
+      message: 'Appointment request set for worker',
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Calendar not found') {
+      return res.status(404).json({ message: 'Calendar not found' });
+    } else if (error instanceof Error && error.message === 'Worker not found') {
+      return res.status(404).json({ message: 'Worker not found' });
+    } else if (
+      error instanceof Error &&
+      error.message === 'Slot already taken'
+    ) {
+      return res.status(404).json({ message: 'Slot already taken' });
+    } else {
+      console.log('Server Error', error);
+      return res.status(500).json({
+        message: 'Server Error',
+      });
     }
+  }
 }
 
-export async function setAppointmentRequestForWorker(req: Request, res: Response): Promise<Response> {
-    try {
-        console.log("Setting appointment request for worker");
-        const { appointment, calendarId, workerId  } = req.body;
+export async function getCommonSlotsForOneUserAndOneWorker(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding common slots between a user and a worker');
+    const { date1, date2, userId, workerId } = req.body;
 
-        const result = await calendarService.setAppointmentRequestForWorker(calendarId, workerId, appointment);
-        return res.status(200).json({
-            message: "Appointment request set for worker",
-        });
-    } catch (error) {
-        if (error instanceof Error && error.message === "Calendar not found") {
-            return res.status(404).json({ message: "Calendar not found" });
-        }
-        else if (error instanceof Error && error.message === "Worker not found") {
-            return res.status(404).json({ message: "Worker not found" });
-        }
-        else if (error instanceof Error && error.message === "Slot already taken") {
-            return res.status(404).json({ message: "Slot already taken" });
-        }
-        else{
-            console.log("Server Error", error);
-            return res.status(500).json({
-                message: "Server Error"
-            });
-        }
+    if (!date1 || !date2) {
+      return res.status(400).json({
+        message: 'Both date1 and date2 are required in the request body',
+      });
     }
-}
-
-export async function getCommonSlotsForOneUserAndOneWorker(req:Request, res:Response): Promise<Response>{
-    try{
-        console.log("Finding common slots between a user and a worker");
-        const { date1, date2, userId, workerId } = req.body;
-
-        if (!date1 || !date2) {
-            return res.status(400).json({
-                message: "Both date1 and date2 are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
-            userId,
-            workerId,
-            startDate,
-            endDate
-        );
-        return res.status(200).json({
-            message: "Common slots found",
-            commonSlots: result
-        });
-    } catch(error){
-        if (error instanceof Error && error.message) {
-            return res.status(404).json({
-                message: error.message
-            });
-        }
-        else{
-            return res.status(500).json({
-                message: "Server Error"
-            });
-        }
-    }
-}
-
-export async function getCommonSlotsForOneUserAndOneLocation(req:Request, res:Response): Promise<Response>{
-    try{
-        console.log("Finding common slots between a user and a location");
-        const { date1, date2, userId, locationId } = req.body;
-
-        if (!date1 || !date2) {
-            return res.status(400).json({
-                message: "Both date1 and date2 are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
-            userId,
-            locationId,
-            startDate,
-            endDate
-        );
-        return res.status(200).json({
-            message: "Common slots found",
-            commonSlots: result
-        });
-    }
-    catch(error){
-        if (error instanceof Error && error.message) {
-            return res.status(404).json({
-                message: error.message
-            });
-        }
-        else{
-            return res.status(500).json({
-                message: "Server Error"
-            });
-        }
-    }
-}
-
-export async function getCommonSlotsForOneUserAndOneBussiness(req:Request, res:Response): Promise<Response>{
-    try{
-        console.log("Finding common slots between a user and a bussiness");
-        const { date1, date2, userId, bussinessId, serviceType } = req.body;
-
-        if (!date1 || !date2) {
-            return res.status(400).json({
-                message: "Both date1 and date2 are required in the request body"
-            });
-        }
-        const startDate = new Date(date1);
-        const endDate = new Date(date2);
-        const result = await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneBussiness(
-            serviceType,
-            userId,
-            bussinessId,
-            startDate,
-            endDate
-        );
-        return res.status(200).json({
-            message: "Common slots found",
-            commonSlots: result
-        });
-    } catch(error){
-        if (error instanceof Error && error.message) {
-            return res.status(404).json({
-                message: error.message
-            });
-        }
-        else{
-            return res.status(500).json({
-                message: "Server Error"
-            });
-        }
-    }
-}
-
-export async function acceptRequestedAppointment(req:Request, res:Response): Promise<Response>{
-    try{
-        const appointmentId = req.body.appointmentId;
-        const result = await calendarService.acceptRequestedAppointment(appointmentId);
-        return res.status(200).json(result);
-    } catch(error){
-        if (error instanceof Error && error.message) {
-            return res.status(405).json({
-                message: error.message
-            });
-        }
-        else{
-            return res.status(500).json({
-                message: "Server Error"
-            });
-        }
-    }
-}
-
-export async function acceptStandByAppointment(req:Request, res:Response): Promise<Response>{
-    try{
-        const appointment: IAppointment = req.body.appointment;
-        const userId: string = req.body.userId;
-        const result = await calendarService.acceptStandByAppointment(appointment, userId);
-        return res.status(200).json(result);
-    } catch(error){
-        if (error instanceof Error && error.message) {
-            return res.status(405).json({
-                message: error.message
-            });
-        }
-        else{
-            return res.status(500).json({
-                message: "Server Error"
-            });
-        }
-    }
-}
-
-export async function planAppointmentsUsingAi(req: Request, res: Response): Promise<Response> {
-    const {
+    const startDate = new Date(date1);
+    const endDate = new Date(date2);
+    const result =
+      await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneWorker(
         userId,
-        prompt,
-    } = req.body;
-    try {
-        // busca fins a una setmana endavant
-        const response = await calendarService.planAppointmentUsingAI(userId, prompt, 604800000);
-        return res.json(response);
-    } catch (error) {
-        return res.status(500).json({
-            message: "Server error",
-        });
+        workerId,
+        startDate,
+        endDate
+      );
+    return res.status(200).json({
+      message: 'Common slots found',
+      commonSlots: result,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return res.status(404).json({
+        message: error.message,
+      });
+    } else {
+      return res.status(500).json({
+        message: 'Server Error',
+      });
     }
+  }
+}
+
+export async function getCommonSlotsForOneUserAndOneLocation(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding common slots between a user and a location');
+    const { date1, date2, userId, locationId } = req.body;
+
+    if (!date1 || !date2) {
+      return res.status(400).json({
+        message: 'Both date1 and date2 are required in the request body',
+      });
+    }
+    const startDate = new Date(date1);
+    const endDate = new Date(date2);
+    const result =
+      await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
+        userId,
+        locationId,
+        startDate,
+        endDate
+      );
+    return res.status(200).json({
+      message: 'Common slots found',
+      commonSlots: result,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return res.status(404).json({
+        message: error.message,
+      });
+    } else {
+      return res.status(500).json({
+        message: 'Server Error',
+      });
+    }
+  }
+}
+
+export async function getCommonSlotsForOneUserAndOneBussiness(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    console.log('Finding common slots between a user and a bussiness');
+    const { date1, date2, userId, bussinessId, serviceType } = req.body;
+
+    if (!date1 || !date2) {
+      return res.status(400).json({
+        message: 'Both date1 and date2 are required in the request body',
+      });
+    }
+    const startDate = new Date(date1);
+    const endDate = new Date(date2);
+    const result =
+      await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneBussiness(
+        serviceType,
+        userId,
+        bussinessId,
+        startDate,
+        endDate
+      );
+    return res.status(200).json({
+      message: 'Common slots found',
+      commonSlots: result,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return res.status(404).json({
+        message: error.message,
+      });
+    } else {
+      return res.status(500).json({
+        message: 'Server Error',
+      });
+    }
+  }
+}
+
+export async function acceptRequestedAppointment(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    const appointmentId = req.body.appointmentId;
+    const result =
+      await calendarService.acceptRequestedAppointment(appointmentId);
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return res.status(405).json({
+        message: error.message,
+      });
+    } else {
+      return res.status(500).json({
+        message: 'Server Error',
+      });
+    }
+  }
+}
+
+export async function acceptStandByAppointment(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    const appointment: IAppointment = req.body.appointment;
+    const userId: string = req.body.userId;
+    const result = await calendarService.acceptStandByAppointment(
+      appointment,
+      userId
+    );
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof Error && error.message) {
+      return res.status(405).json({
+        message: error.message,
+      });
+    } else {
+      return res.status(500).json({
+        message: 'Server Error',
+      });
+    }
+  }
+}
+
+export async function planAppointmentsUsingAi(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  const { userId, prompt } = req.body;
+  try {
+    // busca fins a una setmana endavant
+    const response = await calendarService.planAppointmentUsingAI(
+      userId,
+      prompt,
+      604800000
+    );
+    return res.json(response);
+  } catch {
+    return res.status(500).json({
+      message: 'Server error',
+    });
+  }
 }

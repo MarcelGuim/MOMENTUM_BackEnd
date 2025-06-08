@@ -1,6 +1,6 @@
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
 import { workerValidationRules, workerValidator } from './worker.validation';
-import {  verifyToken, requireAdmin } from '../../middleware/auth.middleware';
+import { verifyToken, requireAdmin } from '../../middleware/auth.middleware';
 
 import {
   diguesHola,
@@ -14,9 +14,8 @@ import {
   getWorkersPaginated,
   getWorkersPaginatedByCompany,
   createWorkerWithMultipleLocations,
-  getWorkersByBusinessId
+  getWorkersByBusinessId,
 } from './worker.controller';
-
 
 const router = Router();
 /**
@@ -38,7 +37,7 @@ const router = Router();
  *       200:
  *         description: Saludo obtenido
  */
-router.get("/Hola", diguesHola);
+router.get('/Hola', diguesHola);
 
 /**
  * @swagger
@@ -71,7 +70,14 @@ router.get("/Hola", diguesHola);
  *       500:
  *         description: Error al crear trabajador
  */
-router.post("", workerValidationRules(), workerValidator, verifyToken, requireAdmin, createWorker);
+router.post(
+  '',
+  workerValidationRules(),
+  workerValidator,
+  verifyToken,
+  requireAdmin,
+  createWorker
+);
 
 /**
  * @swagger
@@ -125,7 +131,13 @@ router.post("", workerValidationRules(), workerValidator, verifyToken, requireAd
  *       500:
  *         description: Server error
  */
-router.post("/multiple-locations", workerValidator, verifyToken, requireAdmin, createWorkerWithMultipleLocations);
+router.post(
+  '/multiple-locations',
+  workerValidator,
+  verifyToken,
+  requireAdmin,
+  createWorkerWithMultipleLocations
+);
 
 /**
  * @swagger
@@ -149,7 +161,7 @@ router.post("/multiple-locations", workerValidator, verifyToken, requireAdmin, c
  *       404:
  *         description: Trabajador no encontrado
  */
-router.get("/:workerId", getWorkerById);
+router.get('/:workerId', getWorkerById);
 
 /**
  * @swagger
@@ -186,7 +198,12 @@ router.get("/:workerId", getWorkerById);
  *       404:
  *         description: Trabajador no encontrado
  */
-router.put("/:workerId", workerValidationRules(), workerValidator,  updateWorkerById);
+router.put(
+  '/:workerId',
+  workerValidationRules(),
+  workerValidator,
+  updateWorkerById
+);
 
 /**
  * @swagger
@@ -231,7 +248,7 @@ router.put("/:workerId", workerValidationRules(), workerValidator,  updateWorker
  *                 currentPage:
  *                   type: integer
  */
-router.get("/company/:companyId/paginated", getWorkersPaginatedByCompany);
+router.get('/company/:companyId/paginated', getWorkersPaginatedByCompany);
 
 /**
  * @swagger
@@ -251,7 +268,7 @@ router.get("/company/:companyId/paginated", getWorkersPaginatedByCompany);
  *       404:
  *         description: Worker not found
  */
-router.delete("/:workerId", hardDeleteWorkerById);
+router.delete('/:workerId', hardDeleteWorkerById);
 
 /**
  * @swagger
@@ -269,7 +286,7 @@ router.delete("/:workerId", hardDeleteWorkerById);
  *       200:
  *         description: Worker soft deleted
  */
-router.patch("/:workerId/soft", softDeleteWorkerById);
+router.patch('/:workerId/soft', softDeleteWorkerById);
 
 /**
  * @swagger
@@ -293,7 +310,7 @@ router.patch("/:workerId/soft", softDeleteWorkerById);
  *       200:
  *         description: Workers soft deleted
  */
-router.patch("/soft", softDeleteWorkersByIds);
+router.patch('/soft', softDeleteWorkersByIds);
 
 /**
  * @swagger
@@ -311,11 +328,11 @@ router.patch("/soft", softDeleteWorkersByIds);
  *       200:
  *         description: Worker restored
  */
-router.patch("/:workerId/restore", restoreWorkerById);
+router.patch('/:workerId/restore', restoreWorkerById);
 
 /**
  */
-router.patch("/soft", softDeleteWorkersByIds);
+router.patch('/soft', softDeleteWorkersByIds);
 
 /**
  * @swagger
@@ -333,7 +350,7 @@ router.patch("/soft", softDeleteWorkersByIds);
  *       200:
  *         description: Worker restored
  */
-router.patch("/:userId/restore", restoreWorkerById);
+router.patch('/:userId/restore', restoreWorkerById);
 
 /**
  * @swagger
@@ -354,8 +371,7 @@ router.patch("/:userId/restore", restoreWorkerById);
  *       200:
  *         description: Paginated list of workers
  */
-router.get("", getWorkersPaginated);
-
+router.get('', getWorkersPaginated);
 
 /**
  * @swagger

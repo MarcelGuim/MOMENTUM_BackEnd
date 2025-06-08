@@ -1,17 +1,19 @@
-import { Router } from "express";
-import { createLocationHandler, 
-    getLocationByIdHandler, 
-    getAllLocationsHandler, 
-    updateLocationByIdHandler, 
-    deleteLocationByIdHandler, 
-    getAllLocationsByServiceTypeHandler, 
-    getLocationsNearHandler, 
-    getPlacesHandler, 
-    getRouteHandler,
-    getBussinessIdFromLocationId,
-    getLocationByNameHandler,
-    getWorkersOfLocation,
-    getCities } from "./location.controller";
+import { Router } from 'express';
+import {
+  createLocationHandler,
+  getLocationByIdHandler,
+  getAllLocationsHandler,
+  updateLocationByIdHandler,
+  deleteLocationByIdHandler,
+  getAllLocationsByServiceTypeHandler,
+  getLocationsNearHandler,
+  getPlacesHandler,
+  getRouteHandler,
+  getBussinessIdFromLocationId,
+  getLocationByNameHandler,
+  getWorkersOfLocation,
+  getCities,
+} from './location.controller';
 
 const router = Router();
 
@@ -731,7 +733,5 @@ router.get('/name/:name', getLocationByNameHandler);
  *         description: Server error
  */
 router.get('/:id/business', getBussinessIdFromLocationId);
-
-
 
 export default router;

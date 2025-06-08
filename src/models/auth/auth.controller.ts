@@ -3,7 +3,10 @@ import { LoginRequestBody, BusinessRegisterRequestBody } from '../../types';
 import { AuthService } from './auth.services';
 import { UserService } from '..//users/user.services';
 import { ModelType } from '../../types';
-import { AccessTokenPayload, refreshTokenCookieOptions } from '../../utils/jwt.utils';
+import {
+  AccessTokenPayload,
+  refreshTokenCookieOptions,
+} from '../../utils/jwt.utils';
 import { IBusiness } from '../../models/business/business.model';
 import { IWorker } from '../../models/worker/worker.model';
 import { WorkerRole } from '../../enums/workerRoles.enum';
@@ -18,23 +21,26 @@ const workerService = new WorkerService();
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-      const { name_or_mail, password } = req.body as LoginRequestBody;
-      const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password);
-  
-      res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
-  
-      console.log('Sending refreshToken in cookie:', refreshToken);
-      console.log('Sending accessToken in response:',  accessToken );
-  
-      return res.status(200).json({
-        user,
-        accessToken // Store this in localStorage
-      });
-    } catch (error: any) {
-      return res.status(401).json({ error: "Invalid Credentials" });
-    }
+    const { name_or_mail, password } = req.body as LoginRequestBody;
+    const { user, accessToken, refreshToken } = await authService.loginUser(
+      name_or_mail,
+      password
+    );
+
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+
+    console.log('Sending refreshToken in cookie:', refreshToken);
+    console.log('Sending accessToken in response:', accessToken);
+
+    return res.status(200).json({
+      user,
+      accessToken, // Store this in localStorage
+    });
+  } catch {
+    return res.status(401).json({ error: 'Invalid Credentials' });
+  }
 };
-  
+
 export const refresh = async (req: Request, res: Response) => {
   try {
     // 1. First check if refreshPayload exists
@@ -45,7 +51,7 @@ export const refresh = async (req: Request, res: Response) => {
 
     // 2. Destructure with type safety
     const { userId, modelType } = req.refreshPayload;
-    
+
     console.log('Extracted userId:', userId || 'UNDEFINED');
     console.log('Extracted modelType: ', modelType || 'UNDEFINED');
     if (!userId || !modelType) {
@@ -54,38 +60,45 @@ export const refresh = async (req: Request, res: Response) => {
     }
 
     const { accessToken } = await authService.refreshTokens(userId, modelType);
-    
+
     console.log('Tokens generated:', {
-      accessToken: accessToken ? `${accessToken.substring(0, 10)}...` : 'UNDEFINED',
+      accessToken: accessToken
+        ? `${accessToken.substring(0, 10)}...`
+        : 'UNDEFINED',
     });
 
-    return res.json({ 
+    return res.json({
       accessToken,
-      debug: process.env.NODE_ENV === 'development' ? {
-        userId,
-        tokenExpiresIn: '15m' // Match your JWT expiry
-      } : undefined
+      debug:
+        process.env.NODE_ENV === 'development'
+          ? {
+              userId,
+              tokenExpiresIn: '15m', // Match your JWT expiry
+            }
+          : undefined,
     });
-
   } catch (error: any) {
     console.error('Refresh failed:', {
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : 'HIDDEN IN PRODUCTION',
-      timestamp: new Date().toISOString()
+      stack:
+        process.env.NODE_ENV === 'development'
+          ? error.stack
+          : 'HIDDEN IN PRODUCTION',
+      timestamp: new Date().toISOString(),
     });
 
-    return res.status(401).json({ 
+    return res.status(401).json({
       error: error.message || 'Token refresh failed',
       ...(process.env.NODE_ENV === 'development' && {
         details: {
           suggestion: 'Check if user exists and refresh token is valid',
-          timestamp: new Date().toISOString()
-        }
-      })
+          timestamp: new Date().toISOString(),
+        },
+      }),
     });
   }
 };
-  
+
 export const logout = async (req: Request, res: Response) => {
   try {
     if (!req.refreshPayload) {
@@ -94,7 +107,7 @@ export const logout = async (req: Request, res: Response) => {
 
     // 2. Add token to blacklist (if using token invalidation)
     // await tokenService.blacklistToken(refreshToken);
-    
+
     // 3. Clear the refresh token cookie
     const clearCookieOptions = { ...refreshTokenCookieOptions };
     delete clearCookieOptions.maxAge;
@@ -135,9 +148,8 @@ export const validateToken = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       isValid: true,
-      model: payload.modelType
+      model: payload.modelType,
     });
-
   } catch (error: any) {
     return res.status(401).json({
       isValid: false,
@@ -152,25 +164,32 @@ export const validateToken = async (req: Request, res: Response) => {
 
 export const registerBusiness = async (req: Request, res: Response) => {
   try {
-    const { name, mail, age, password, businessName } = req.body as BusinessRegisterRequestBody;
+    const { name, mail, age, password, businessName } =
+      req.body as BusinessRegisterRequestBody;
     const buss: IBusiness = {
       name: businessName,
       location: [],
-      isDeleted: false
+      isDeleted: false,
     };
-    const businessResult= await businessService.createBusiness(buss);
-    
+    const businessResult = await businessService.createBusiness(buss);
+
     if (typeof businessResult === 'number' && businessResult > 0) {
-      return res.status(400).json({ message: `There are ${businessResult} invalid locations when creating business` });
+      return res.status(400).json({
+        message: `There are ${businessResult} invalid locations when creating business`,
+      });
     }
     if (typeof businessResult === 'number' && businessResult === -1) {
-      return res.status(409).json({ message: "The business already exists" });
+      return res.status(409).json({ message: 'The business already exists' });
     }
     if (typeof businessResult === 'number' && businessResult === -2) {
-      return res.status(400).json({ message: "The IDs format of locations is not valid" });
+      return res
+        .status(400)
+        .json({ message: 'The IDs format of locations is not valid' });
     }
     if (typeof businessResult !== 'object' || businessResult === null) {
-      return res.status(500).json({ message: "Unexpected error when creating business" });
+      return res
+        .status(500)
+        .json({ message: 'Unexpected error when creating business' });
     }
 
     const worker: Partial<IWorker> = {
@@ -181,53 +200,57 @@ export const registerBusiness = async (req: Request, res: Response) => {
       location: [],
       businessAdministrated: businessResult._id,
       password: password,
-      isDeleted: false
+      isDeleted: false,
     };
-    const workerResult= await workerService.createWorker(worker);
+    const workerResult = await workerService.createWorker(worker);
     if (!workerResult) {
-      return res.status(409).json({ message: "Worker already exists" });
+      return res.status(409).json({ message: 'Worker already exists' });
     }
 
     // If both business and worker are created successfully
     return res.status(201).json({
-      message: "Business and admin created successfully",
+      message: 'Business and admin created successfully',
       business: businessResult,
-      admin: workerResult
+      admin: workerResult,
     });
-  } catch (error: any) {
-      return res.status(500).json({ error: 'Failed to create business' });
+  } catch {
+    return res.status(500).json({ error: 'Failed to create business' });
   }
 };
 
 export const loginWorker = async (req: Request, res: Response) => {
-  try{
+  try {
     const { name_or_mail, password } = req.body as LoginRequestBody;
-    const { worker, accessToken, refreshToken } = await authService.loginWorker(name_or_mail, password);
+    const { worker, accessToken, refreshToken } = await authService.loginWorker(
+      name_or_mail,
+      password
+    );
     res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
     console.log('Sending refreshToken in cookie:', refreshToken);
-    console.log('Sending accessToken in response:',  accessToken );
+    console.log('Sending accessToken in response:', accessToken);
     return res.status(200).json({
-        worker,
-        accessToken // Store this in localStorage
-      });
-  } catch (error: any) {
-      return res.status(401).json({ error: "Invalid Credentials" });
-    }
-}
+      worker,
+      accessToken, // Store this in localStorage
+    });
+  } catch {
+    return res.status(401).json({ error: 'Invalid Credentials' });
+  }
+};
 
-export async function validateLogin(req: Request, res: Response): Promise<Response> {
+export async function validateLogin(
+  req: Request,
+  res: Response
+): Promise<Response> {
   const id = req.userPayload?.userId;
-  if (!id)  return res.status(400);
+  if (!id) return res.status(400);
   const role = req.userPayload?.modelType;
   console.log(role);
-  if (role == "User"){
+  if (role == 'User') {
     const user: IUsuari | null = await userService.getUserById(id);
-    return res.status(200).json({"type": "user", "data": user});
-  }
-  else if (role == "Treballador"){
+    return res.status(200).json({ type: 'user', data: user });
+  } else if (role == 'Treballador') {
     const worker: IWorker | null = await workerService.getWorkerById(id);
-    return res.status(200).json({"type": "worker", "data": worker});
+    return res.status(200).json({ type: 'worker', data: worker });
   }
   return res.status(500);
 }
- 

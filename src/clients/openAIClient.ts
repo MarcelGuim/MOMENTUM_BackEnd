@@ -1,30 +1,32 @@
-import { GeoJSONPoint } from "types";
-import { ICalendar } from "models/calendari/calendar.model";
-import OpenAI from "openai";
+import { GeoJSONPoint } from 'types';
+import { ICalendar } from 'models/calendari/calendar.model';
+import OpenAI from 'openai';
 
 const openAIClient = new OpenAI();
 
 export interface PlannedAppointment {
-    calendarId?: string;
-    inTime: Date;
-    outTime: Date;
-    title: string;
-    description?: string;
-    colour?: string;
-    customAddress?: string;
-    customUbicacion?: GeoJSONPoint;
+  calendarId?: string;
+  inTime: Date;
+  outTime: Date;
+  title: string;
+  description?: string;
+  colour?: string;
+  customAddress?: string;
+  customUbicacion?: GeoJSONPoint;
 }
 
 export interface AppointmentPlanningResponse {
-    response: string,
-    appointments: PlannedAppointment[],
+  response: string;
+  appointments: PlannedAppointment[];
 }
 
-export async function askAppointmentPlanning(calendars: ICalendar[], prompt: string): Promise<OpenAI.Responses.Response> {
-    
-    const response = openAIClient.responses.create({
-        model: "gpt-4.1",
-        instructions: `
+export async function askAppointmentPlanning(
+  calendars: ICalendar[],
+  prompt: string
+): Promise<OpenAI.Responses.Response> {
+  const response = openAIClient.responses.create({
+    model: 'gpt-4.1',
+    instructions: `
 # Identity
 
 You are a virtual assistant helping a user to plan one or more appointments. The
@@ -68,8 +70,8 @@ It's very important you follow the defined structure, as it must be parsed by an
 application. The user doesn't have the option to ask follow-up questions, so make
 sure to include all appointments you think about in the structure.
         `,
-        input: JSON.stringify(calendars) + "\n\n" + prompt,
-    });
-    
-    return response;
+    input: JSON.stringify(calendars) + '\n\n' + prompt,
+  });
+
+  return response;
 }

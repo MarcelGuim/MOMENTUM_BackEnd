@@ -11,7 +11,10 @@ import {
   editChat,
   deleteChat,
 } from './chat.controller';
-import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
+import {
+  requireOwnership,
+  verifyToken,
+} from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -57,7 +60,7 @@ const router = Router();
  *       500:
  *         description: Error inesperat
  */
-router.post("/send", sendMessage);
+router.post('/send', sendMessage);
 
 /**
  * @swagger
@@ -90,7 +93,12 @@ router.post("/send", sendMessage);
  *       500:
  *         description: Error inesperat
  */
-router.get("/people/user/:userId",  verifyToken, requireOwnership('userId'), getPeopleWithWhomUserChatted);
+router.get(
+  '/people/user/:userId',
+  verifyToken,
+  requireOwnership('userId'),
+  getPeopleWithWhomUserChatted
+);
 
 /**
  * @swagger
@@ -123,7 +131,12 @@ router.get("/people/user/:userId",  verifyToken, requireOwnership('userId'), get
  *       500:
  *         description: Error inesperat
  */
-router.get("/people/worker/:workerId",  verifyToken, requireOwnership('workerId'), getPeopleWithWhomWorkerChatted);
+router.get(
+  '/people/worker/:workerId',
+  verifyToken,
+  requireOwnership('workerId'),
+  getPeopleWithWhomWorkerChatted
+);
 
 /**
  * @swagger
@@ -151,7 +164,7 @@ router.get("/people/worker/:workerId",  verifyToken, requireOwnership('workerId'
  *       500:
  *         description: Error inesperat
  */
-router.get("/messages/:chatId", getLast20Messages);
+router.get('/messages/:chatId', getLast20Messages);
 
 /**
  * @swagger
@@ -182,7 +195,7 @@ router.get("/messages/:chatId", getLast20Messages);
  *       500:
  *         description: Error inesperat
  */
-router.get("/:user1ID/:user2ID", getChat);
+router.get('/:user1ID/:user2ID', getChat);
 
 /**
  * @swagger
@@ -213,7 +226,7 @@ router.get("/:user1ID/:user2ID", getChat);
  *       500:
  *         description: Error inesperat
  */
-router.get("/id/:user1ID/:user2ID", getChatId);
+router.get('/id/:user1ID/:user2ID', getChatId);
 
 /**
  * @swagger
@@ -258,7 +271,7 @@ router.get("/id/:user1ID/:user2ID", getChatId);
  *       500:
  *         description: Error inesperat
  */
-router.post("/create", createChat);
+router.post('/create', createChat);
 
 /**
  * @swagger
@@ -319,7 +332,7 @@ router.post("/create", createChat);
  *               properties:
  *                 error:
  */
-router.patch("/:chatId", editChat);
+router.patch('/:chatId', editChat);
 
 /**
  * @swagger
@@ -361,6 +374,6 @@ router.patch("/:chatId", editChat);
  *               properties:
  *                 error:
  */
-router.delete("/:chatId", deleteChat);
+router.delete('/:chatId', deleteChat);
 
 export default router;

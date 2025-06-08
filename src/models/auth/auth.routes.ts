@@ -1,7 +1,14 @@
-import { Request, Response, Router } from 'express';
-import { loginUser, refresh, logout, validateToken, validateLogin, registerBusiness, loginWorker } from './auth.controller';
+import { Router } from 'express';
+import {
+  loginUser,
+  refresh,
+  logout,
+  validateToken,
+  validateLogin,
+  registerBusiness,
+  loginWorker,
+} from './auth.controller';
 import { verifyRefresh, verifyToken } from '../../middleware/auth.middleware';
-
 
 const router = Router();
 
@@ -47,7 +54,7 @@ const router = Router();
  *       500:
  *         description: Server error
  */
-router.post("/login", loginUser);
+router.post('/login', loginUser);
 
 /**
  * @swagger
@@ -80,7 +87,7 @@ router.post('/refresh', verifyRefresh, refresh);
  *   post:
  *     summary: Logout user
  *     tags: [Authentication]
- *     security: []  
+ *     security: []
  *     responses:
  *       200:
  *         description: Logout successful
@@ -93,7 +100,7 @@ router.post('/refresh', verifyRefresh, refresh);
  *       500:
  *         description: Server error
  */
-router.post('/logout', verifyRefresh,logout); 
+router.post('/logout', verifyRefresh, logout);
 
 /**
  * @swagger
@@ -145,10 +152,7 @@ router.get('/validate', verifyToken, validateToken);
  *       200:
  *         description: Hola
  */
-router.get("/validateLogin", verifyToken, validateLogin);
-
-
-
+router.get('/validateLogin', verifyToken, validateLogin);
 
 /////////////////////////////////
 // Business Part
@@ -240,7 +244,6 @@ router.get("/validateLogin", verifyToken, validateLogin);
  */
 router.post('/registerBusiness', registerBusiness);
 
-
 /**
  * @swagger
  * /auth/loginWorker:
@@ -306,6 +309,5 @@ router.post('/registerBusiness', registerBusiness);
  *                   example: Failed to authenticate worker
  */
 router.post('/loginWorker', loginWorker);
-
 
 export default router;

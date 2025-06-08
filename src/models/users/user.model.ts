@@ -1,77 +1,83 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 export interface IUsuari {
-    _id?: mongoose.ObjectId;
-    name: string;
-    age: number;
-    mail: string;
-    password: string;
-    isDeleted: boolean;
-    activationId?: string;
-    favoriteLocations: mongoose.Types.ObjectId[];
-    isValidPassword: (password: string) => Promise<boolean>;
+  _id?: mongoose.ObjectId;
+  name: string;
+  age: number;
+  mail: string;
+  password: string;
+  isDeleted: boolean;
+  activationId?: string;
+  favoriteLocations: mongoose.Types.ObjectId[];
+  // eslint-disable-next-line no-unused-vars
+  isValidPassword: (password: string) => Promise<boolean>;
 }
 
 const UserSchema = new mongoose.Schema<IUsuari>({
-    name: { 
-        type: String, 
-        required: true,
-        unique: true,
-        index: true 
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
+  age: {
+    type: Number,
+    required: true,
+  },
+  mail: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    select: false,
+  },
+  isDeleted: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  activationId: {
+    type: String,
+    sparse: true,
+    select: false,
+  },
+  favoriteLocations: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Location',
+      default: [],
     },
-    age: { 
-        type: Number, 
-        required: true 
-    },
-    mail: { 
-        type: String, 
-        required: true,
-        unique: true, 
-        index: true 
-    },
-    password: { 
-        type: String, 
-        required: true,
-        select: false  
-    },
-    isDeleted: {
-        type: Boolean,
-        required: true, 
-        default: false
-    },
-    activationId: {
-        type: String,
-        sparse: true ,
-        select: false
-    },
-    favoriteLocations: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Location',
-          default: [],
-        },
-    ],
+  ],
 });
 
 // UserSchema.pre('find', function() {
 //   this.where({ isDeleted: false });
 // });
 
-UserSchema.pre('findOne', function() {
+UserSchema.pre('findOne', function () {
   this.where({ isDeleted: false });
 });
 
-UserSchema.pre('save',async function(next) {
-    const hashedPassword= await bcrypt.hash(this.password, bcrypt.genSaltSync(8));
-    this.password = hashedPassword;
-    next();
+UserSchema.pre('save', async function (next) {
+  const hashedPassword = await bcrypt.hash(
+    this.password,
+    bcrypt.genSaltSync(8)
+  );
+  this.password = hashedPassword;
+  next();
 });
 
-UserSchema.method('isValidPassword',async function(password: string): Promise<boolean> {
-    const isValid =  await bcrypt.compare(password, this.password);
+UserSchema.method(
+  'isValidPassword',
+  async function (password: string): Promise<boolean> {
+    const isValid = await bcrypt.compare(password, this.password);
     return isValid;
-});
-
+  }
+);
 
 const User = mongoose.model<IUsuari>('User', UserSchema);
 

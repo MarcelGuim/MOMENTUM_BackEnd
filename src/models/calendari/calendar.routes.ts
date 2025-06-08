@@ -1,26 +1,26 @@
 import { Router } from 'express';
 import {
-    createCalendar,
-    getAppointmentsForADay,
-    getCalendarsOfUser,
-    addAppointmentToCalendar,
-    hardDeleteCalendarsUser,
-    softDeleteCalendarsUser,
-    restoreCalendarsUser,
-    getAllAppointments,
-    getAppointmentsBetweenDates,
-    editCalendar,
-    getCommonSlotsForNCalendars,
-    getCommonSlotsForTwoCalendars,
-    setAppointmentRequestForWorker,
-    getCommonSlotsForOneUserAndOneWorker,
-    getCommonSlotsForOneUserAndOneLocation,
-    getCommonSlotsForOneUserAndOneBussiness,
-    hardDeleteAppointment,
-    softDeleteAppointment,
-    acceptRequestedAppointment,
-    acceptStandByAppointment,
-    planAppointmentsUsingAi
+  createCalendar,
+  getAppointmentsForADay,
+  getCalendarsOfUser,
+  addAppointmentToCalendar,
+  hardDeleteCalendarsUser,
+  softDeleteCalendarsUser,
+  restoreCalendarsUser,
+  getAllAppointments,
+  getAppointmentsBetweenDates,
+  editCalendar,
+  getCommonSlotsForNCalendars,
+  getCommonSlotsForTwoCalendars,
+  setAppointmentRequestForWorker,
+  getCommonSlotsForOneUserAndOneWorker,
+  getCommonSlotsForOneUserAndOneLocation,
+  getCommonSlotsForOneUserAndOneBussiness,
+  hardDeleteAppointment,
+  softDeleteAppointment,
+  acceptRequestedAppointment,
+  acceptStandByAppointment,
+  planAppointmentsUsingAi,
 } from './calendar.controller';
 
 const router = Router();
@@ -254,7 +254,10 @@ router.delete('/appointments/:appointmentId/delete', hardDeleteAppointment);
  *       500:
  *         description: Error del servidor
  */
-router.delete('/appointments/:appointmentId/soft-delete', softDeleteAppointment);
+router.delete(
+  '/appointments/:appointmentId/soft-delete',
+  softDeleteAppointment
+);
 
 /**
  * @swagger
@@ -532,7 +535,10 @@ router.post('/common-slots/user-worker', getCommonSlotsForOneUserAndOneWorker);
  *       500:
  *         description: Error del servidor
  */
-router.post('/common-slots/user-location', getCommonSlotsForOneUserAndOneLocation);
+router.post(
+  '/common-slots/user-location',
+  getCommonSlotsForOneUserAndOneLocation
+);
 
 /**
  * @swagger
@@ -596,7 +602,10 @@ router.post('/common-slots/user-location', getCommonSlotsForOneUserAndOneLocatio
  *       500:
  *         description: Error del servidor
  */
-router.post('/common-slots/user-bussiness', getCommonSlotsForOneUserAndOneBussiness);
+router.post(
+  '/common-slots/user-bussiness',
+  getCommonSlotsForOneUserAndOneBussiness
+);
 
 /**
  * @swagger

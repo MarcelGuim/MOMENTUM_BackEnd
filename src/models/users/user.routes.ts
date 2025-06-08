@@ -1,23 +1,29 @@
 import { Router } from 'express';
-import { userValidationRules, userValidator } from '../../middleware/user.validation';
+import {
+  userValidationRules,
+  userValidator,
+} from '../../middleware/user.validation';
 import { changePasswordValidator } from '../../middleware/changePasswordValidation';
-import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
+import {
+  requireOwnership,
+  verifyToken,
+} from '../../middleware/auth.middleware';
 
 const router = Router();
 
-import { 
-  createUser, 
-  getUserById, 
-  hardDeleteUserById, 
-  updateUserById, 
-  refreshUser, 
-  restoreUserById, 
+import {
+  createUser,
+  getUserById,
+  hardDeleteUserById,
+  updateUserById,
+  refreshUser,
+  restoreUserById,
   softDeleteUserById,
   softDeleteUsersByIds,
-  getUsersPaginated, 
+  getUsersPaginated,
   activateUser,
   changePassword,
-  toggleFavoriteLocationController
+  toggleFavoriteLocationController,
 } from './user.controller';
 
 /**
@@ -30,7 +36,7 @@ import {
  *       200:
  *         description: Hola
  */
-router.get("/refreshUser", verifyToken, refreshUser);
+router.get('/refreshUser', verifyToken, refreshUser);
 
 /**
  * @swagger
@@ -59,7 +65,7 @@ router.get("/refreshUser", verifyToken, refreshUser);
  *       500:
  *         description: Failed to create user
  */
-router.post("", userValidationRules(), userValidator, createUser);
+router.post('', userValidationRules(), userValidator, createUser);
 
 /**
  * @swagger
@@ -88,7 +94,7 @@ router.post("", userValidationRules(), userValidator, createUser);
  *       500:
  *         description: Fallo al validar el usuario
  */
-router.get("/activate/:name/:id", activateUser);
+router.get('/activate/:name/:id', activateUser);
 
 /**
  * @swagger
@@ -111,7 +117,7 @@ router.get("/activate/:name/:id", activateUser);
  *       500:
  *         description: Failed to get user
  */
-router.get("/:userId",verifyToken, requireOwnership('userId'), getUserById);
+router.get('/:userId', verifyToken, requireOwnership('userId'), getUserById);
 
 /**
  * @swagger
@@ -168,7 +174,13 @@ router.get("/:userId",verifyToken, requireOwnership('userId'), getUserById);
  *       500:
  *         description: Server error
  */
-router.put("/:userId/password", verifyToken, requireOwnership('userId'), changePasswordValidator, changePassword );
+router.put(
+  '/:userId/password',
+  verifyToken,
+  requireOwnership('userId'),
+  changePasswordValidator,
+  changePassword
+);
 
 /**
  * @swagger
@@ -206,7 +218,14 @@ router.put("/:userId/password", verifyToken, requireOwnership('userId'), changeP
  *       500:
  *         description: Failed to update user
  */
-router.put("/:userId", verifyToken, requireOwnership('userId'),userValidationRules(), userValidator, updateUserById);
+router.put(
+  '/:userId',
+  verifyToken,
+  requireOwnership('userId'),
+  userValidationRules(),
+  userValidator,
+  updateUserById
+);
 
 /**
  * @swagger
@@ -229,7 +248,7 @@ router.put("/:userId", verifyToken, requireOwnership('userId'),userValidationRul
  *       500:
  *         description: Failed to delete user
  */
-router.delete("/:userId", hardDeleteUserById);
+router.delete('/:userId', hardDeleteUserById);
 
 /**
  * @swagger
@@ -252,7 +271,7 @@ router.delete("/:userId", hardDeleteUserById);
  *       500:
  *         description: Failed to soft delete user
  */
-router.patch("/:userId/soft", softDeleteUserById);
+router.patch('/:userId/soft', softDeleteUserById);
 
 /**
  * @swagger
@@ -282,7 +301,7 @@ router.patch("/:userId/soft", softDeleteUserById);
  *       500:
  *         description: Failed to soft delete users
  */
-router.patch("/soft", softDeleteUsersByIds);
+router.patch('/soft', softDeleteUsersByIds);
 
 /**
  * @swagger
@@ -305,7 +324,7 @@ router.patch("/soft", softDeleteUsersByIds);
  *       500:
  *         description: Failed to restore user
  */
-router.patch("/:userId/restore", restoreUserById);
+router.patch('/:userId/restore', restoreUserById);
 
 /**
  * @swagger
@@ -331,7 +350,7 @@ router.patch("/:userId/restore", restoreUserById);
  *       500:
  *         description: Server error
  */
-router.get("",getUsersPaginated);
+router.get('', getUsersPaginated);
 
 /**
  * @swagger
@@ -370,7 +389,9 @@ router.get("",getUsersPaginated);
  *       500:
  *         description: Internal server error
  */
-router.patch('/:userId/favorites/:locationId', toggleFavoriteLocationController);
-
+router.patch(
+  '/:userId/favorites/:locationId',
+  toggleFavoriteLocationController
+);
 
 export default router;

@@ -10,9 +10,12 @@ export class AppointmentService {
   async getAppointmentById(id: string): Promise<IAppointment | null> {
     return await Appointment.findById(id);
   }
-  
+
   // Actualizar cita por ID
-  async updateAppointmentById(id: string, data: Partial<IAppointment>): Promise<IAppointment | null> {
+  async updateAppointmentById(
+    id: string,
+    data: Partial<IAppointment>
+  ): Promise<IAppointment | null> {
     return await Appointment.findByIdAndUpdate(id, data, { new: true });
   }
 

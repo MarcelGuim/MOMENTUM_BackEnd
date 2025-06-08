@@ -1,11 +1,5 @@
 import { Router } from 'express';
-import {
-  TestConnection,
-  optimizeAppointments
-} from './IA.controller';
-
-import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
-
+import { TestConnection, optimizeAppointments } from './IA.controller';
 const router = Router();
 /**
  * @swagger
