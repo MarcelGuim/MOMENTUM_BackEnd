@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { workerValidationRules, workerValidator } from './worker.validation';
-import { verifyToken, requireAdmin } from '../../middleware/auth.middleware';
+import {
+  verifyToken,
+  requireAdmin,
+  requireOwnership,
+} from '../../middleware/auth.middleware';
 
 import {
   diguesHola,
@@ -15,6 +19,7 @@ import {
   getWorkersPaginatedByCompany,
   createWorkerWithMultipleLocations,
   getWorkersByBusinessId,
+  getWorkerByName,
 } from './worker.controller';
 
 const router = Router();
@@ -202,6 +207,17 @@ router.put(
   '/:workerId',
   workerValidationRules(),
   workerValidator,
+  verifyToken,
+  requireOwnership,
+  updateWorkerById
+);
+
+router.put(
+  '/admin/:workerId',
+  workerValidationRules(),
+  workerValidator,
+  verifyToken,
+  requireAdmin,
   updateWorkerById
 );
 
@@ -403,5 +419,7 @@ router.get('', getWorkersPaginated);
  *         description: Server error
  */
 router.get('/business/:businessId', getWorkersByBusinessId);
+
+router.get('/name/:workerName', getWorkerByName);
 
 export default router;

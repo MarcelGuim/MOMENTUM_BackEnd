@@ -321,3 +321,20 @@ export async function getWorkersByBusinessId(
     return res.status(500).json({ error: error.message });
   }
 }
+
+export async function getWorkerByName(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    const { workerName } = req.params;
+    const worker = await workerService.getWorkerByName(workerName);
+    if (worker) {
+      return res.status(200).json(worker);
+    } else {
+      return res.status(404).json({ error: 'Worker not found' });
+    }
+  } catch {
+    return res.status(500).json({ error: 'Failed to get worker' });
+  }
+}
