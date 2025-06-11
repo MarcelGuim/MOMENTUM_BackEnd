@@ -44,10 +44,13 @@ export class AuthService {
 
       accessToken = generateAccessToken(userId, modelType);
     } else if (modelType == ModelType.TREB) {
-      /* PSEUDOCODE PER QUAN HO TIGNUEM
-      user = await.Treballador.findById(userId)
-      .select('+mail +isDeleted');
-      */
+      const worker = await Worker.findById(userId).select('+mail +isDeleted');
+
+      if (!worker || worker.isDeleted) {
+        throw new Error('Invalid or inactive worker');
+      }
+
+      accessToken = generateAccessToken(userId, modelType);
     } else {
       throw new Error('Invalid model type');
     }

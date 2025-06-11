@@ -1,7 +1,7 @@
-import { IUsuari } from './user.model.js';
-import User from './user.model.js';
-import Calendar from '../calendari/calendar.model.js';
-import Appointment, { IAppointment } from '../appointment/appointment.model.js';
+import { IUsuari } from './user.model';
+import User from './user.model';
+import Calendar from '../calendari/calendar.model';
+import Appointment, { IAppointment } from '../appointment/appointment.model';
 import nodemailer from 'nodemailer';
 import * as crypto from 'node:crypto';
 import dotenv from 'dotenv';
