@@ -33,3 +33,12 @@ node_modules/
 
 # IntelliJ IDEA files
 .idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Optional coverage reports
+coverage/

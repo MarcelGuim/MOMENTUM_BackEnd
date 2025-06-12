@@ -1,6 +1,7 @@
-import { Request, Response, Router } from 'express';
+import { Router } from 'express';
 import { workerValidationRules, workerValidator } from './worker.validation';
-import { verifyRefresh } from '../../middleware/auth.middleware';
+import { verifyToken, requireAdmin } from '../../middleware/auth.middleware';
+
 import {
   diguesHola,
   createWorker,
@@ -12,8 +13,9 @@ import {
   restoreWorkerById,
   getWorkersPaginated,
   getWorkersPaginatedByCompany,
+  createWorkerWithMultipleLocations,
+  getWorkersByBusinessId,
 } from './worker.controller';
-
 
 const router = Router();
 /**
@@ -35,7 +37,7 @@ const router = Router();
  *       200:
  *         description: Saludo obtenido
  */
-router.get("/Hola", diguesHola);
+router.get('/Hola', diguesHola);
 
 /**
  * @swagger
@@ -68,7 +70,74 @@ router.get("/Hola", diguesHola);
  *       500:
  *         description: Error al crear trabajador
  */
-router.post("", workerValidationRules(), workerValidator, createWorker);
+router.post(
+  '',
+  workerValidationRules(),
+  workerValidator,
+  verifyToken,
+  requireAdmin,
+  createWorker
+);
+
+/**
+ * @swagger
+ * /workers/multiple-locations:
+ *   post:
+ *     summary: Create a worker with multiple locations
+ *     tags: [workers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, mail, password, location]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the worker
+ *                 example: John Doe
+ *               mail:
+ *                 type: string
+ *                 description: Email of the worker
+ *                 example: john.doe@example.com
+ *               password:
+ *                 type: string
+ *                 description: Password for the worker
+ *                 example: strongpassword123
+ *               location:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of location IDs
+ *                 example: ["60f7f9f5b5d6c81234567890", "60f7f9f5b5d6c81234567891"]
+ *     responses:
+ *       201:
+ *         description: Worker created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Worker created successfully with multiple locations
+ *                 worker:
+ *                   $ref: '#/components/schemas/Worker'
+ *       400:
+ *         description: Invalid input or locations
+ *       409:
+ *         description: Worker already exists
+ *       500:
+ *         description: Server error
+ */
+router.post(
+  '/multiple-locations',
+  workerValidator,
+  verifyToken,
+  requireAdmin,
+  createWorkerWithMultipleLocations
+);
 
 /**
  * @swagger
@@ -92,7 +161,7 @@ router.post("", workerValidationRules(), workerValidator, createWorker);
  *       404:
  *         description: Trabajador no encontrado
  */
-router.get("/:workerId", getWorkerById);
+router.get('/:workerId', getWorkerById);
 
 /**
  * @swagger
@@ -129,7 +198,12 @@ router.get("/:workerId", getWorkerById);
  *       404:
  *         description: Trabajador no encontrado
  */
-router.put("/:workerId", workerValidationRules(), workerValidator, updateWorkerById);
+router.put(
+  '/:workerId',
+  workerValidationRules(),
+  workerValidator,
+  updateWorkerById
+);
 
 /**
  * @swagger
@@ -174,7 +248,7 @@ router.put("/:workerId", workerValidationRules(), workerValidator, updateWorkerB
  *                 currentPage:
  *                   type: integer
  */
-router.get("/company/:companyId/paginated", getWorkersPaginatedByCompany);
+router.get('/company/:companyId/paginated', getWorkersPaginatedByCompany);
 
 /**
  * @swagger
@@ -194,7 +268,7 @@ router.get("/company/:companyId/paginated", getWorkersPaginatedByCompany);
  *       404:
  *         description: Worker not found
  */
-router.delete("/:workerId", hardDeleteWorkerById);
+router.delete('/:workerId', hardDeleteWorkerById);
 
 /**
  * @swagger
@@ -212,7 +286,7 @@ router.delete("/:workerId", hardDeleteWorkerById);
  *       200:
  *         description: Worker soft deleted
  */
-router.patch("/:workerId/soft", softDeleteWorkerById);
+router.patch('/:workerId/soft', softDeleteWorkerById);
 
 /**
  * @swagger
@@ -236,7 +310,7 @@ router.patch("/:workerId/soft", softDeleteWorkerById);
  *       200:
  *         description: Workers soft deleted
  */
-router.patch("/soft", softDeleteWorkersByIds);
+router.patch('/soft', softDeleteWorkersByIds);
 
 /**
  * @swagger
@@ -254,11 +328,11 @@ router.patch("/soft", softDeleteWorkersByIds);
  *       200:
  *         description: Worker restored
  */
-router.patch("/:workerId/restore", restoreWorkerById);
+router.patch('/:workerId/restore', restoreWorkerById);
 
 /**
  */
-router.patch("/soft", softDeleteWorkersByIds);
+router.patch('/soft', softDeleteWorkersByIds);
 
 /**
  * @swagger
@@ -276,7 +350,7 @@ router.patch("/soft", softDeleteWorkersByIds);
  *       200:
  *         description: Worker restored
  */
-router.patch("/:userId/restore", restoreWorkerById);
+router.patch('/:userId/restore', restoreWorkerById);
 
 /**
  * @swagger
@@ -297,6 +371,37 @@ router.patch("/:userId/restore", restoreWorkerById);
  *       200:
  *         description: Paginated list of workers
  */
-router.get("", getWorkersPaginated);
+router.get('', getWorkersPaginated);
+
+/**
+ * @swagger
+ * /workers/business/{businessId}:
+ *   get:
+ *     summary: Get all workers of a business
+ *     tags: [workers]
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the business
+ *     responses:
+ *       200:
+ *         description: List of workers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Worker'
+ *       400:
+ *         description: Invalid business ID
+ *       404:
+ *         description: Business not found
+ *       500:
+ *         description: Server error
+ */
+router.get('/business/:businessId', getWorkersByBusinessId);
 
 export default router;

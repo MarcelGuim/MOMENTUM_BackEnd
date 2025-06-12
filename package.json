@@ -1,13 +1,19 @@
 {
-  "name": "your-project-name",
-  "version": "1.0.0",
+  "name": "momentum",
+  "version": "2.0.0",
+  "type": "commonjs",
   "description": "Your project description",
   "main": "dist/index.js",
   "scripts": {
     "start": "tsc && node dist/index.js",
     "build": "tsc",
     "dev": "ts-node src/index.ts",
-    "test": "tsc && node dist/index.js"
+    "test": "tsc && node dist/index.js",
+    "lint": "eslint 'src/**/*.{ts,js}' --quiet",
+    "lint:fix": "eslint 'src/**/*.{ts,js}' --fix",
+    "format": "prettier --write 'src/**/*.{ts,js,json,md}'",
+    "prepare": "husky install",
+    "tes2": "npx lint-staged"
   },
   "author": "Your Name",
   "license": "MIT",
@@ -23,11 +29,13 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
     "nodemailer": "^6.10.0",
+    "openai": "^4.103.0",
     "socket.io": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.28.0",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.17",
@@ -39,7 +47,23 @@
     "@types/socket.io": "^3.0.1",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.7",
+    "@typescript-eslint/eslint-plugin": "^8.33.1",
+    "@typescript-eslint/parser": "^8.33.1",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-n": "^17.19.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.4.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
+    "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write",
+      "eslint --fix --max-warnings=0"
+    ]
   }
 }

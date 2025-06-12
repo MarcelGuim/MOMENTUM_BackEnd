@@ -1,23 +1,26 @@
 import { Router } from 'express';
 import {
-    createCalendar,
-    getAppointmentsForADay,
-    getCalendarsOfUser,
-    addAppointmentToCalendar,
-    hardDeleteCalendarsUser,
-    softDeleteCalendarsUser,
-    restoreCalendarsUser,
-    getAllAppointments,
-    getAppointmentsBetweenDates,
-    editCalendar,
-    getCommonSlotsForNCalendars,
-    getCommonSlotsForTwoCalendars,
-    setAppointmentRequestForWorker,
-    getCommonSlotsForOneUserAndOneWorker,
-    getCommonSlotsForOneUserAndOneLocation,
-    getCommonSlotsForOneUserAndOneBussiness,
-    hardDeleteAppointment,
-    softDeleteAppointment
+  createCalendar,
+  getAppointmentsForADay,
+  getCalendarsOfUser,
+  addAppointmentToCalendar,
+  hardDeleteCalendarsUser,
+  softDeleteCalendarsUser,
+  restoreCalendarsUser,
+  getAllAppointments,
+  getAppointmentsBetweenDates,
+  editCalendar,
+  getCommonSlotsForNCalendars,
+  getCommonSlotsForTwoCalendars,
+  setAppointmentRequestForWorker,
+  getCommonSlotsForOneUserAndOneWorker,
+  getCommonSlotsForOneUserAndOneLocation,
+  getCommonSlotsForOneUserAndOneBussiness,
+  hardDeleteAppointment,
+  softDeleteAppointment,
+  acceptRequestedAppointment,
+  acceptStandByAppointment,
+  planAppointmentsUsingAi,
 } from './calendar.controller';
 
 const router = Router();
@@ -197,7 +200,7 @@ router.post('/:calendarId/appointments', addAppointmentToCalendar);
 
 /**
  * @swagger
- * /calendars/{calendarId}/appointments/{appointmentId/delete}:
+ * /calendars/appointments/{appointmentId}/delete:
  *   post:
  *     summary: Elimina permanentemente un appointment de un calendario
  *     tags: [Calendars]
@@ -226,7 +229,7 @@ router.delete('/appointments/:appointmentId/delete', hardDeleteAppointment);
 
 /**
  * @swagger
- * /calendars/{calendarId}/appointments/{appointmentId/soft-delete}:
+ * /calendars/appointments/{appointmentId}/soft-delete:
  *   post:
  *     summary: Marca un appointment de un calendario como eliminado
  *     tags: [Calendars]
@@ -251,7 +254,10 @@ router.delete('/appointments/:appointmentId/delete', hardDeleteAppointment);
  *       500:
  *         description: Error del servidor
  */
-router.delete('/appointments/:appointmentId/soft-delete', softDeleteAppointment);
+router.delete(
+  '/appointments/:appointmentId/soft-delete',
+  softDeleteAppointment
+);
 
 /**
  * @swagger
@@ -529,7 +535,10 @@ router.post('/common-slots/user-worker', getCommonSlotsForOneUserAndOneWorker);
  *       500:
  *         description: Error del servidor
  */
-router.post('/common-slots/user-location', getCommonSlotsForOneUserAndOneLocation);
+router.post(
+  '/common-slots/user-location',
+  getCommonSlotsForOneUserAndOneLocation
+);
 
 /**
  * @swagger
@@ -593,7 +602,10 @@ router.post('/common-slots/user-location', getCommonSlotsForOneUserAndOneLocatio
  *       500:
  *         description: Error del servidor
  */
-router.post('/common-slots/user-bussiness', getCommonSlotsForOneUserAndOneBussiness);
+router.post(
+  '/common-slots/user-bussiness',
+  getCommonSlotsForOneUserAndOneBussiness
+);
 
 /**
  * @swagger
@@ -717,6 +729,115 @@ router.post('/common-slots/multiple-users', getCommonSlotsForNCalendars);
  */
 router.post('/appointmentRequest', setAppointmentRequestForWorker);
 
+/**
+ * @swagger
+ * /calendars/appointment-planning:
+ *   post:
+ *     summary: Planifica un esdeveniment que demani l'usuari
+ *     tags: [Calendars]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userId
+ *               - prompt
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: ID del l'usuari
+ *               prompt:
+ *                 type: string
+ *                 description: Entrada de la IA
+ *     responses:
+ *       200:
+ *         description: Esdeveniments planificats
+ *       500:
+ *         description: Error del servidor
+ */
+router.post('/appointment-planning', planAppointmentsUsingAi);
 
+/**
+ * @swagger
+ * /calendars/appointment/accept/requested:
+ *   put:
+ *     summary: Accepta una cita amb estat "requested"
+ *     tags:
+ *       - Calendars
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointmentId
+ *             properties:
+ *               appointmentId:
+ *                 type: string
+ *                 example: "665123a9d3f04e2b6a8fbd42"
+ *     responses:
+ *       200:
+ *         description: Cita acceptada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               description: Resultat de l'operació
+ *       405:
+ *         description: Error funcional (ex. cita no trobada o estat incorrecte)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error intern del servidor
+ */
+router.put('/appointment/accept/requested', acceptRequestedAppointment);
+
+/**
+ * @swagger
+ * /calendars/appointment/accept/standBy:
+ *   post:
+ *     summary: Accepta una cita en estat de "standBy"
+ *     tags:
+ *       - Calendars
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - appointment
+ *             properties:
+ *               appointment:
+ *                 $ref: '#/components/schemas/Appointment'
+ *     responses:
+ *       200:
+ *         description: Cita acceptada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               description: Resultat de l'operació
+ *       405:
+ *         description: Error funcional (ex. cita no trobada o estat incorrecte)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Error intern del servidor
+ */
+router.post('/appointment/accept/standBy', acceptStandByAppointment);
 
 export default router;

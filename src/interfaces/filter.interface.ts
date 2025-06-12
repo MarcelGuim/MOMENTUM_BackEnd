@@ -1,4 +1,3 @@
-
 import { locationSchedule } from '../enums/locationSchedule.enum';
 export interface LocationFilter {
   isDeleted: boolean;
@@ -21,10 +20,9 @@ export interface LocationFilter {
       $maxDistance: number;
     };
   };
-  $or?: { address: { $regex: string; $options: string } }[]; 
+  $or?: { address: { $regex: string; $options: string } }[];
 }
 
-  
 export interface FilterOptions {
   serviceTypes?: string[];
   cities?: string[];
