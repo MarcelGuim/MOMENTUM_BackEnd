@@ -233,7 +233,7 @@ export class UserService {
   ]);
 
   return users;
-  }
+ }
 
   async followUser(followerId: string, followeeId: string): Promise<IUsuari | null> {
       if (followerId === followeeId) {

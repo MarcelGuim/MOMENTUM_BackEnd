@@ -26,6 +26,36 @@ import {
 
 /**
  * @swagger
+ * /users/search:
+ *   get:
+ *     summary: Buscar usuarios por nombre
+ *     description: Devuelve una lista de usuarios cuyo nombre coincide parcial o totalmente con el parámetro dado.
+ *     tags: [users]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Nombre o parte del nombre del usuario a buscar
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios encontrados
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Parámetro de búsqueda inválido
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get("/search", findUsersByName);
+
+/**
+ * @swagger
  * /users/Hola:
  *   get:
  *     summary: Obtenir un Hola
@@ -339,36 +369,6 @@ router.get("",getUsersPaginated);
 
 /**
  * @swagger
- * /users/search:
- *   get:
- *     summary: Buscar usuarios por nombre
- *     description: Devuelve una lista de usuarios cuyo nombre coincide parcial o totalmente con el parámetro dado.
- *     tags: [users]
- *     parameters:
- *       - in: query
- *         name: name
- *         schema:
- *           type: string
- *         required: true
- *         description: Nombre o parte del nombre del usuario a buscar
- *     responses:
- *       200:
- *         description: Lista de usuarios encontrados
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
- *       400:
- *         description: Parámetro de búsqueda inválido
- *       500:
- *         description: Error interno del servidor
- */
-router.get("/search", findUsersByName);
-
-/**
- * @swagger
  * /users/{userId}/favorites/{locationId}:
  *   patch:
  *     summary: Add or remove a favorite location for the user
@@ -519,8 +519,6 @@ router.post('/follow/:followerId/:followeeId', followUser);
  *         description: Error interno del servidor
  */
 router.post('/unfollow/:followerId/:followeeId', unfollowUser);
-
-
 
 
 export default router;
