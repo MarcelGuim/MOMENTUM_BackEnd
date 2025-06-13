@@ -113,11 +113,19 @@ export class WorkerService {
   async getWorkerById(workerId: string): Promise<IWorker | null> {
     return await Worker.findById(workerId);
   }
+
+  async getWorkerByName(workerName: string): Promise<IWorker | null> {
+    const worker: null | IWorker = await Worker.findOne({ name: workerName });
+    if (worker) worker.password = '';
+    return worker;
+  }
+
   async updateWorkerById(
     workerId: string,
     data: Partial<IWorker>
   ): Promise<IWorker | null> {
     console.log('Updating user at the service:', data, workerId);
+    if (data.password) data.password = undefined;
     return await Worker.findByIdAndUpdate(workerId, data, { new: true });
   }
 
