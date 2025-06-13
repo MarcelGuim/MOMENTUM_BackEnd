@@ -13,6 +13,8 @@ import { WorkerRole } from '../../enums/workerRoles.enum';
 import { BusinessService } from '../../models/business/business.services';
 import { WorkerService } from '../../models/worker/worker.services';
 import { IUsuari } from 'models/users/user.model';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const authService = new AuthService();
 const userService = new UserService();
@@ -238,7 +240,7 @@ export const loginWorker = async (req: Request, res: Response) => {
 };
 
 export const googleAuthCtrl = async (req: Request, res: Response) => {
-  const redirectUri = 'http://localhost:8080/auth/google/callback'; // modificar uri per la ruta de angular quan exitsteixi.
+  const redirectUri = `${process.env.APP_BASE_URL}/auth/google/callback`; // modificar uri per la ruta de angular quan exitsteixi.
 
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth'; //ojo tema versió
   const options = new URLSearchParams({
@@ -282,6 +284,12 @@ export const googleAuthCallback = async (req: Request, res: Response) => {
       sameSite: 'none',
       maxAge: 86400000, // 1 día
     });
+    res.cookie(
+      'refreshToken',
+      authData.refreshToken,
+      refreshTokenCookieOptions
+    );
+
     console.log(authData.accessToken);
     if (platform === 'mobile') {
       // Redirigir a deep link para mobile
@@ -289,7 +297,7 @@ export const googleAuthCallback = async (req: Request, res: Response) => {
     } else {
       // Redirigir a URL web (ajusta el puerto según tu app Flutter web)
       res.redirect(
-        'http://localhost:52032/auth-callback?token=' + authData.accessToken
+        `${process.env.FRONTEND_URL}/auth-callback?token=${authData.accessToken}&refreshToken=${authData.refreshToken}&userId=${authData.user._id}`
       ); // cal ajustar per a web
     }
   } catch (error: any) {

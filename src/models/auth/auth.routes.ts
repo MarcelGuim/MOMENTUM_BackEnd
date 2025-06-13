@@ -312,6 +312,9 @@ router.post('/registerBusiness', registerBusiness);
  */
 router.post('/loginWorker', loginWorker);
 
+/////////////////////////////////
+// Google Part
+
 /**
  * @swagger
  * /auth/google:

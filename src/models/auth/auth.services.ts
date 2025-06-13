@@ -1,6 +1,6 @@
 import User from '../users/user.model';
 import Worker from '../worker/worker.model';
-import { hash } from 'bcrypt';
+//import { hash } from 'bcrypt';
 import axios from 'axios';
 import { IUsuari } from '../users/user.model';
 import { IWorker } from '../worker/worker.model';
@@ -9,6 +9,8 @@ import {
   generateRefreshToken,
 } from '../../utils/jwt.utils';
 import { ModelType } from '../../types';
+import dotenv from 'dotenv';
+dotenv.config();
 
 export class AuthService {
   async loginUser(identifier: string, password: string) {
@@ -88,7 +90,7 @@ export class AuthService {
           client_id:
             '104261057122-bd1sulgdh5m811ppg1tfgev3jqidnb3u.apps.googleusercontent.com',
           client_secret: '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',
-          redirect_uri: 'http://localhost:8080/auth/google/callback',
+          redirect_uri: `${process.env.APP_BASE_URL}/auth/google/callback`,
           grant_type: 'authorization_code',
         }
       );
@@ -113,19 +115,27 @@ export class AuthService {
 
       if (!user) {
         const randomPassword = Math.random().toString(36).slice(-8);
-        const passHash = await hash(randomPassword, 10); //possible punt de conflicte: sinó fer-ho amb bcrypt.
+        //const passHash = await hash(randomPassword, 10); //possible punt de conflicte: sinó fer-ho amb bcrypt.
         user = await User.create({
           name: profile.name,
           mail: profile.email,
-          password: passHash,
+          password: randomPassword,
+          age: 18,
         });
       }
 
       // Genera el token JWT
-      const accessToken = generateAccessToken(user.id, ModelType.USER);
-      const refreshToken = generateRefreshToken(user.id, ModelType.USER);
+      const accessToken = generateAccessToken(
+        user._id.toString(),
+        ModelType.USER
+      );
+      const refreshToken = generateRefreshToken(
+        user.id.toString(),
+        ModelType.USER
+      );
 
       console.log(accessToken, refreshToken);
+      console.log('User Id:', user._id);
       return { accessToken, refreshToken, user };
     } catch (error: any) {
       console.error(
