@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import iaRoutes from './models/IA/IA.routes';
-
+import recordatorisRoutes from './models/recordatoris/recordatoris.routes';
 dotenv.config();
 
 // Configuración de Express
@@ -63,6 +63,7 @@ app.use('/location', locationRoutes); // Rutas de ubicaciones
 app.use('/workers', workersRoutes); // Rutas de ubicaciones
 app.use('/business', businessRoutes); // Rutas de ubicaciones
 app.use('/ia', iaRoutes);
+app.use('/recordatoris', recordatorisRoutes);
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;
