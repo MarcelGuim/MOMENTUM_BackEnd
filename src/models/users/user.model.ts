@@ -1,16 +1,18 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 export interface IUsuari {
-  _id?: mongoose.ObjectId;
-  name: string;
-  age: number;
-  mail: string;
-  password: string;
-  isDeleted: boolean;
-  activationId?: string;
-  favoriteLocations: mongoose.Types.ObjectId[];
-  // eslint-disable-next-line no-unused-vars
-  isValidPassword: (password: string) => Promise<boolean>;
+    _id?: mongoose.ObjectId;
+    name: string;
+    age: number;
+    mail: string;
+    password: string;
+    isDeleted: boolean;
+    activationId?: string;
+    favoriteLocations: mongoose.Types.ObjectId[];
+    followers: mongoose.Types.ObjectId[];
+    following: mongoose.Types.ObjectId[];
+    // eslint-disable-next-line no-unused-vars
+    isValidPassword: (password: string) => Promise<boolean>;
 }
 
 const UserSchema = new mongoose.Schema<IUsuari>({
@@ -51,7 +53,7 @@ const UserSchema = new mongoose.Schema<IUsuari>({
       ref: 'Location',
       default: [],
     },
-  ],
+ ],
 });
 
 // UserSchema.pre('find', function() {
@@ -62,11 +64,12 @@ UserSchema.pre('findOne', function () {
   this.where({ isDeleted: false });
 });
 
-UserSchema.pre('save', async function (next) {
-  const hashedPassword = await bcrypt.hash(
-    this.password,
-    bcrypt.genSaltSync(8)
-  );
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password') || !this.password) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(8);
+  const hashedPassword = await bcrypt.hash(this.password, salt);
   this.password = hashedPassword;
   next();
 });
