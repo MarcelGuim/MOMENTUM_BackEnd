@@ -21,7 +21,13 @@ import {
   findUsersByName,
   followUser,
   unfollowUser,
-
+  sendFriendRequest,
+  acceptFriendRequest,
+  getFriendRequests,
+  searchUsersByEmailFragment,
+  denyFriendRequest,
+  getFriends,
+  removeFriend,
 } from './user.controller';
 
 /**
@@ -519,5 +525,127 @@ router.post('/follow/:followerId/:followeeId', followUser);
  *         description: Error interno del servidor
  */
 router.post('/unfollow/:followerId/:followeeId', unfollowUser);
+/**
+ * @swagger
+ * /users/{userId}/friend-request:
+ *   post:
+ *     summary: Enviar una sol·licitud d'amistat a un usuari
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del remitent (usuari que fa la petició)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               toId:
+ *                 type: string
+ *                 description: ID del destinatari de la sol·licitud
+ *     responses:
+ *       200:
+ *         description: Sol·licitud enviada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Sol·licitud enviada
+ *       404:
+ *         description: Usuari no trobat o ja afegit
+ */
+router.post('/:userId/friend-request', verifyToken, sendFriendRequest);
+
+/**
+ * @swagger
+ * /users/{userId}/accept-friend:
+ *   post:
+ *     summary: Acceptar una sol·licitud d'amistat
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l’usuari que accepta la sol·licitud
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fromId:
+ *                 type: string
+ *                 description: ID de l’usuari que va enviar la sol·licitud
+ *     responses:
+ *       200:
+ *         description: Amistat acceptada correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Amistat acceptada
+ *       404:
+ *         description: Usuari no trobat
+ */
+router.post('/:userId/accept-friend', verifyToken, acceptFriendRequest);
+
+/**
+ * @swagger
+ * /users/{userId}/friend-requests:
+ *   get:
+ *     summary: Consultar sol·licituds d'amistat pendents
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID de l’usuari autenticat
+ *     responses:
+ *       200:
+ *         description: Llista de sol·licituds pendents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 requests:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       mail:
+ *                         type: string
+ *       404:
+ *         description: Usuari no trobat
+ */
+router.get('/:userId/friend-requests', verifyToken, requireOwnership('userId'), getFriendRequests);
+
+router.post('/search-by-email', verifyToken, searchUsersByEmailFragment);
+
+router.post('/:userId/deny-friend', verifyToken, denyFriendRequest);
+
+router.get('/:userId/friends', verifyToken, getFriends);
+
+router.delete('/friends/:userId/remove/:friendId', verifyToken, removeFriend);
 
 export default router;

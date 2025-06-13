@@ -21,24 +21,22 @@ const workerService = new WorkerService();
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { name_or_mail, password } = req.body as LoginRequestBody;
-    const { user, accessToken, refreshToken } = await authService.loginUser(
-      name_or_mail,
-      password
-    );
+      const { name_or_mail, password, fcmToken } = req.body as LoginRequestBody & { fcmToken?: string };
+      const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password, fcmToken);
+  
+      res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
 
-    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
 
-    console.log('Sending refreshToken in cookie:', refreshToken);
-    console.log('Sending accessToken in response:', accessToken);
-
-    return res.status(200).json({
-      user,
-      accessToken, // Store this in localStorage
-    });
-  } catch {
-    return res.status(401).json({ error: 'Invalid Credentials' });
-  }
+      return res.status(200).json({
+        user,
+        accessToken // Store this in localStorage
+      });
+    } catch (error: any) {
+      return res.status(401).json({ 
+        error: "Invalid Credentials", 
+        details: error.message 
+      });
+    }
 };
 
 export const refresh = async (req: Request, res: Response) => {

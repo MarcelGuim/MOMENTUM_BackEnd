@@ -325,7 +325,119 @@ export class UserService {
     return follower;
   }
 
+  async sendFriendRequest(fromId: string, toId: string): Promise<{ toUser: IUsuari, fromUser: IUsuari } | null> {
+    const fromUser = await User.findById(fromId);
+    const toUser = await User.findById(toId);
+
+    if (!fromUser || !toUser) return null;
+
+    if (!toUser.friendRequests.includes(fromUser.id!)) {
+      toUser.friendRequests.push(fromUser.id!);
+      await toUser.save();
+      return { toUser, fromUser }; 
+    }
+    return null;
+  }
+
+  async acceptFriendRequest(toId: string, fromId: string): Promise<IUsuari | null> {
+    const toUser = await User.findById(toId);
+    const fromUser = await User.findById(fromId);
+
+    if (!toUser || !fromUser) return null;
+
+    toUser.friendRequests = toUser.friendRequests.filter(id => !id.equals(fromUser.id!));
+    toUser.friends.push(fromUser.id!);
+    fromUser.friends.push(toUser.id!);
+
+    await toUser.save();
+    await fromUser.save();
+    return toUser;
+  }
+
+  async getFriendRequests(userId: string): Promise<Partial<IUsuari>[]> {
+    const user = await User.findById(userId).select('friendRequests');
+    if (!user) return [];
+
+    const requestIds = user.friendRequests.map(id => id.toString());
+
+    // Obtenir les dades bàsiques dels usuaris que han enviat la sol·licitud
+    const requestUsers = await User.find({
+      _id: { $in: requestIds },
+      isDeleted: false
+    }).select('_id mail');
+
+    return requestUsers;
+  }
+  
+  async searchUsersByEmailFragment(currentUserId: string, emailFragment: string) {
+    const currentUser = await User.findById(currentUserId).select('friends friendRequests');
+    if (!currentUser) return [];
+
+    const users = await User.find({
+      mail: { $regex: emailFragment, $options: 'i' },
+      _id: { $ne: currentUserId },
+      isDeleted: false,
+    }).select('mail _id');
+
+    const friendIds = (currentUser.friends || []).map(id => id.toString());
+    const requestedIds = (currentUser.friendRequests || []).map(id => id.toString());
+
+    const filteredUsers = users.filter(u => {
+      const id = u._id.toString();
+      return !friendIds.includes(id) && !requestedIds.includes(id);
+    });
+
+    return filteredUsers.map(u => ({
+      _id: u._id.toString(),
+      mail: u.mail
+    }));
+  }
+
+  async denyFriendRequest(toId: string, fromId: string): Promise<boolean> {
+   const toUser = await User.findById(toId);
+    if (!toUser) return false;
+
+    toUser.friendRequests = toUser.friendRequests.filter(
+      id => id.toString() !== fromId
+    );
+
+    await toUser.save();
+    return true;
+  }
+  async getFriendsByUserId(userId: string) {
+    const user = await User.findById(userId)
+      .populate('friends', 'mail _id') 
+      .select('friends');
+
+    if (!user) {
+      throw new Error('Usuari no trobat');
+    }
+
+    const formattedFriends = user.friends.map((friend: any) => ({
+      _id: friend._id.toString(),
+      mail: friend.mail,
+    }));
+
+    return formattedFriends;
+  }
+  async removeFriend(userId: string, friendId: string): Promise<boolean> {
+    const user = await User.findById(userId);
+    const friend = await User.findById(friendId);
+
+    if (!user || !friend) return false;
+
+    // Eliminar mútuament
+    user.friends = user.friends.filter(id => id.toString() !== friendId);
+    friend.friends = friend.friends.filter(id => id.toString() !== userId);
+
+    await user.save();
+    await friend.save();
+
+    return true;
+  }
 }
+
+
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
