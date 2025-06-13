@@ -302,3 +302,58 @@ export async function toggleFavoriteLocationController(
     return res.status(500).json({ message: 'Internal server error' });
   }
 }
+
+export async function findUsersByName(req: Request, res: Response): Promise<Response> {
+  try {
+    const { name } = req.query;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'Invalid name parameter' });
+    }
+
+    const users = await userService.findUsersByName(name);
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error('Error finding users by name:', error);
+    return res.status(500).json({ error: 'Failed to find users' });
+  }
+}
+
+export async function followUser(req: Request, res: Response) {
+  try {
+    const { followerId, followeeId } = req.params;
+
+    if (followerId === followeeId) {
+      return res.status(400).json({ message: "No puedes seguirte a ti mismo" });
+    }
+
+    const user = await userService.followUser(followerId, followeeId);
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Usuario seguido correctamente", user });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+export async function unfollowUser(req: Request, res: Response) {
+  try {
+    const { followerId, followeeId } = req.params;
+
+    if (followerId === followeeId) {
+      return res.status(400).json({ message: "No puedes dejar de seguirte a ti mismo" });
+    }
+
+    const user = await userService.unfollowUser(followerId, followeeId);
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Usuario dejado de seguir correctamente", user });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
