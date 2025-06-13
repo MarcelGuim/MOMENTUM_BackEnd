@@ -16,10 +16,9 @@ class ConnectDB {
       if (!dbURI) {
         throw new Error(' MongoDB URI is not defined');
       }
-      mongoose.set('strictQuery', false); 
-      
-      await mongoose.connect(dbURI, {
-      } as mongoose.ConnectOptions);
+      mongoose.set('strictQuery', false);
+
+      await mongoose.connect(dbURI, {} as mongoose.ConnectOptions);
 
       this.connection = mongoose.connection;
 
@@ -30,13 +29,11 @@ class ConnectDB {
       this.connection.on('error', (error) => {
         console.error(' MongoDB connection error:', error);
       });
-
     } catch (error) {
       console.error(' Error connecting to MongoDB:', error);
       throw error;
     }
   }
-
 
   public static async disconnect(): Promise<void> {
     if (this.connection) {

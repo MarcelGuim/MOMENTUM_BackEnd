@@ -1,23 +1,26 @@
 import { Router } from 'express';
-import { userValidationRules, userValidator } from '../../middleware/user.validation';
+import { userValidationRules, userValidator,} from '../../middleware/user.validation';
 import { changePasswordValidator } from '../../middleware/changePasswordValidation';
 import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
 
 const router = Router();
 
-import { 
-  createUser, 
-  getUserById, 
-  hardDeleteUserById, 
-  updateUserById, 
-  refreshUser, 
-  restoreUserById, 
+import {
+  createUser,
+  getUserById,
+  hardDeleteUserById,
+  updateUserById,
+  refreshUser,
+  restoreUserById,
   softDeleteUserById,
   softDeleteUsersByIds,
-  getUsersPaginated, 
+  getUsersPaginated,
   activateUser,
   changePassword,
   toggleFavoriteLocationController,
+  findUsersByName,
+  followUser,
+  unfollowUser,
   sendFriendRequest,
   acceptFriendRequest,
   getFriendRequests,
@@ -29,6 +32,36 @@ import {
 
 /**
  * @swagger
+ * /users/search:
+ *   get:
+ *     summary: Buscar usuarios por nombre
+ *     description: Devuelve una lista de usuarios cuyo nombre coincide parcial o totalmente con el parámetro dado.
+ *     tags: [users]
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Nombre o parte del nombre del usuario a buscar
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios encontrados
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Parámetro de búsqueda inválido
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get("/search", findUsersByName);
+
+/**
+ * @swagger
  * /users/Hola:
  *   get:
  *     summary: Obtenir un Hola
@@ -37,7 +70,7 @@ import {
  *       200:
  *         description: Hola
  */
-router.get("/refreshUser", verifyToken, refreshUser);
+router.get('/refreshUser', verifyToken, refreshUser);
 
 /**
  * @swagger
@@ -66,7 +99,7 @@ router.get("/refreshUser", verifyToken, refreshUser);
  *       500:
  *         description: Failed to create user
  */
-router.post("", userValidationRules(), userValidator, createUser);
+router.post('', userValidationRules(), userValidator, createUser);
 
 /**
  * @swagger
@@ -95,7 +128,7 @@ router.post("", userValidationRules(), userValidator, createUser);
  *       500:
  *         description: Fallo al validar el usuario
  */
-router.get("/activate/:name/:id", activateUser);
+router.get('/activate/:name/:id', activateUser);
 
 /**
  * @swagger
@@ -118,7 +151,7 @@ router.get("/activate/:name/:id", activateUser);
  *       500:
  *         description: Failed to get user
  */
-router.get("/:userId",verifyToken, requireOwnership('userId'), getUserById);
+router.get('/:userId', verifyToken, requireOwnership('userId'), getUserById);
 
 /**
  * @swagger
@@ -175,7 +208,7 @@ router.get("/:userId",verifyToken, requireOwnership('userId'), getUserById);
  *       500:
  *         description: Server error
  */
-router.put("/:userId/password", verifyToken, requireOwnership('userId'), changePasswordValidator, changePassword );
+router.put('/:userId/password', verifyToken, requireOwnership('userId'), changePasswordValidator, changePassword);
 
 /**
  * @swagger
@@ -213,7 +246,7 @@ router.put("/:userId/password", verifyToken, requireOwnership('userId'), changeP
  *       500:
  *         description: Failed to update user
  */
-router.put("/:userId", verifyToken, requireOwnership('userId'),userValidationRules(), userValidator, updateUserById);
+router.put('/:userId', verifyToken, requireOwnership('userId'), userValidationRules(), userValidator, updateUserById );
 
 /**
  * @swagger
@@ -236,7 +269,7 @@ router.put("/:userId", verifyToken, requireOwnership('userId'),userValidationRul
  *       500:
  *         description: Failed to delete user
  */
-router.delete("/:userId", hardDeleteUserById);
+router.delete('/:userId', hardDeleteUserById);
 
 /**
  * @swagger
@@ -259,7 +292,7 @@ router.delete("/:userId", hardDeleteUserById);
  *       500:
  *         description: Failed to soft delete user
  */
-router.patch("/:userId/soft", softDeleteUserById);
+router.patch('/:userId/soft', softDeleteUserById);
 
 /**
  * @swagger
@@ -289,7 +322,7 @@ router.patch("/:userId/soft", softDeleteUserById);
  *       500:
  *         description: Failed to soft delete users
  */
-router.patch("/soft", softDeleteUsersByIds);
+router.patch('/soft', softDeleteUsersByIds);
 
 /**
  * @swagger
@@ -312,7 +345,7 @@ router.patch("/soft", softDeleteUsersByIds);
  *       500:
  *         description: Failed to restore user
  */
-router.patch("/:userId/restore", restoreUserById);
+router.patch('/:userId/restore', restoreUserById);
 
 /**
  * @swagger
@@ -338,7 +371,7 @@ router.patch("/:userId/restore", restoreUserById);
  *       500:
  *         description: Server error
  */
-router.get("",getUsersPaginated);
+router.get('', getUsersPaginated);
 
 /**
  * @swagger
@@ -379,6 +412,119 @@ router.get("",getUsersPaginated);
  */
 router.patch('/:userId/favorites/:locationId', toggleFavoriteLocationController);
 
+/**
+ * @swagger
+ * /users/follow/{followerId}/{followeeId}:
+ *   post:
+ *     summary: Seguir a un usuario
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: followerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario que sigue
+ *       - in: path
+ *         name: followeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario a seguir
+ *     responses:
+ *       200:
+ *         description: Usuario seguido correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario seguido correctamente
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Error en la solicitud (por ejemplo, seguirse a uno mismo)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No puedes seguirte a ti mismo
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/follow/:followerId/:followeeId', followUser);
+
+/**
+ * @swagger
+ * /users/unfollow/{followerId}/{followeeId}:
+ *   post:
+ *     summary: Dejar de seguir a un usuario
+ *     tags: [users]
+ *     parameters:
+ *       - in: path
+ *         name: followerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario que deja de seguir
+ *       - in: path
+ *         name: followeeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del usuario al que se deja de seguir
+ *     responses:
+ *       200:
+ *         description: Usuario dejado de seguir correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario dejado de seguir correctamente
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Error en la solicitud (por ejemplo, dejar de seguirse a uno mismo)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No puedes dejar de seguirte a ti mismo
+ *       404:
+ *         description: Usuario no encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Usuario no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/unfollow/:followerId/:followeeId', unfollowUser);
 /**
  * @swagger
  * /users/{userId}/friend-request:

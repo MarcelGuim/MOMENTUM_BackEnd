@@ -1,19 +1,20 @@
 import { Router } from 'express';
-import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
+import { verifyToken, requireAdmin } from '../../middleware/auth.middleware';
 import {
-    createBusiness,
-    getAllBusiness,
-    getLocationsFromBusinessbyId,
-    getAllLocationsFromBusinessbyServiceType,
-    getAllBusinessWithLocationOfferingServiceType,
-    createLocationForBusiness,
-    deleteLocationForBusiness,
-    softDeleteBusiness,
-    hardDeleteBusiness,
-    getFilteredBusinesses,
-    searchBusinessByName,
-    getFavoriteBusinesses,
-    getFilteredFavoriteBusinesses,
+  createBusiness,
+  getAllBusiness,
+  getLocationsFromBusinessbyId,
+  getAllLocationsFromBusinessbyServiceType,
+  getAllBusinessWithLocationOfferingServiceType,
+  createLocationForBusiness,
+  deleteLocationForBusiness,
+  softDeleteBusiness,
+  hardDeleteBusiness,
+  getFilteredBusinesses,
+  searchBusinessByName,
+  getFavoriteBusinesses,
+  getFilteredFavoriteBusinesses,
+  getBusinessById,
 } from './business.controller';
 
 const router = Router();
@@ -278,7 +279,10 @@ router.get('/:id/locations', getLocationsFromBusinessbyId);
  *                   type: string
  *                   example: Server error when getting locations by service type
  */
-router.get('/:businessId/locations/by-serviceType', getAllLocationsFromBusinessbyServiceType);
+router.get(
+  '/:businessId/locations/by-serviceType',
+  getAllLocationsFromBusinessbyServiceType
+);
 
 /**
  * @swagger
@@ -374,8 +378,10 @@ router.get('/:businessId/locations/by-serviceType', getAllLocationsFromBusinessb
  *                   type: string
  *                   example: Failed to retrieve businesses
  */
-router.get('/serviceType/:serviceType', getAllBusinessWithLocationOfferingServiceType);
-
+router.get(
+  '/serviceType/:serviceType',
+  getAllBusinessWithLocationOfferingServiceType
+);
 
 /**
  * @swagger
@@ -519,7 +525,7 @@ router.get('/serviceType/:serviceType', getAllBusinessWithLocationOfferingServic
  *                   type: string
  *                   example: Failed to create location for business
  */
-router.post('/:businessId/locations', createLocationForBusiness);
+router.post('/locations', verifyToken, requireAdmin, createLocationForBusiness);
 
 /**
  * @swagger
@@ -910,7 +916,7 @@ router.get('/search/:name', searchBusinessByName);
  *                   type: string
  *                   example: Failed to retrieve favorite businesses
  */
-router.get('/favorites/:userId',getFavoriteBusinesses);
+router.get('/favorites/:userId', getFavoriteBusinesses);
 
 /**
  * @swagger
@@ -1015,5 +1021,7 @@ router.get('/favorites/:userId',getFavoriteBusinesses);
  *                   example: Failed to retrieve favorite businesses
  */
 router.post('/favorites/filter/:userId', getFilteredFavoriteBusinesses);
+
+router.get('/name/:id', getBusinessById);
 
 export default router;

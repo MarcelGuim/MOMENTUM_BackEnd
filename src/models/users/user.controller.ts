@@ -10,30 +10,41 @@ import { getMessaging } from 'firebase-admin/messaging';
 const userService = new UserService();
 
 //PART CRUD
-export async function createUser(req:Request, res:Response): Promise<Response> {
-    console.log("Creating user");
-    try{
-        const{name,age,mail,password} = req.body as IUsuari
-        const newUser: Partial<IUsuari> = {name,age,mail,password,isDeleted:false};
-        const user = await userService.createUser(newUser);
-        if(user===0){
-          return res.status(409).json({error: 'User already exists'});
-        }else if (user === 1){
-          return res.status(404).json({error: 'User not created, there has been an error'});
-        }
-        else{
-          return res.status(200).json({
-            message:"Validate user in the email"
-          });
-            
-        }
+export async function createUser(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  console.log('Creating user');
+  try {
+    const { name, age, mail, password } = req.body as IUsuari;
+    const newUser: Partial<IUsuari> = {
+      name,
+      age,
+      mail,
+      password,
+      isDeleted: false,
+    };
+    const user = await userService.createUser(newUser);
+    if (user === 0) {
+      return res.status(409).json({ error: 'User already exists' });
+    } else if (user === 1) {
+      return res
+        .status(404)
+        .json({ error: 'User not created, there has been an error' });
+    } else {
+      return res.status(200).json({
+        message: 'Validate user in the email',
+      });
     }
-    catch(error){
-        return res.status(500).json({ error: 'Failed to create user' });
-    }
+  } catch {
+    return res.status(500).json({ error: 'Failed to create user' });
+  }
 }
 
-export async function getUserById(req: Request, res: Response): Promise<Response> {
+export async function getUserById(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { userId } = req.params;
     const user = await userService.getUserById(userId);
@@ -42,89 +53,105 @@ export async function getUserById(req: Request, res: Response): Promise<Response
     } else {
       return res.status(404).json({ error: 'User not found' });
     }
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to get user' });
   }
 }
 
-export async function updateUserById(req: Request, res: Response): Promise<Response> {
+export async function updateUserById(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const userId = req.params.userId;
     const updateData: Partial<IUsuari> = req.body;
 
     // Only hash password if it was provided and not empty
     if (updateData.password && updateData.password.trim() !== '') {
-      updateData.password = await bcrypt.hash(updateData.password, bcrypt.genSaltSync(8));
+      updateData.password = await bcrypt.hash(
+        updateData.password,
+        bcrypt.genSaltSync(8)
+      );
     } else {
       // Remove password field if empty or not provided
       delete updateData.password;
     }
 
     const user = await userService.updateUserById(userId, updateData);
-    
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
-    return res.status(200).json({
-      message: "User updated successfully"
-    });
 
+    return res.status(200).json({
+      message: 'User updated successfully',
+    });
   } catch (error) {
     console.error('Error updating user:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Failed to update user',
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 }
 
-export async function refreshUser(req: Request, res: Response): Promise<Response> {
+export async function refreshUser(
+  req: Request,
+  res: Response
+): Promise<Response> {
   const id = req.userPayload?.userId;
-  if (!id)  return res.status(400);
-  else{
+  if (!id) return res.status(400);
+  else {
     const user: IUsuari | null = await userService.getUserById(id);
     return res.status(200).json(user);
   }
-
 }
 
-export async function hardDeleteUserById(req: Request, res: Response): Promise<Response> {
+export async function hardDeleteUserById(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { userId } = req.params;
     const user = await userService.hardDeleteUserById(userId);
     if (user) {
       return res.status(200).json({
-        message: "User deleted",
-        user
+        message: 'User deleted',
+        user,
       });
     } else {
       return res.status(404).json({ error: 'User not found' });
     }
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to delete user' });
   }
 }
 
-export async function softDeleteUserById(req: Request, res: Response): Promise<Response> {
+export async function softDeleteUserById(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { userId } = req.params;
     const user = await userService.softDeleteUserById(userId);
     if (user) {
       return res.status(200).json({
-        message: "User soft deleted",
-        user
+        message: 'User soft deleted',
+        user,
       });
     } else {
       return res.status(404).json({ error: 'User not found' });
     }
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to soft delete user' });
   }
 }
-export async function softDeleteUsersByIds(req: Request, res: Response): Promise<Response> {
+export async function softDeleteUsersByIds(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
-    console.log("Body recibido;", req.body)
+    console.log('Body recibido;', req.body);
     const { usersIds } = req.body;
     if (!Array.isArray(usersIds) || usersIds.length === 0) {
       return res.status(400).json({ error: 'Invalid format' });
@@ -133,61 +160,74 @@ export async function softDeleteUsersByIds(req: Request, res: Response): Promise
     const result = await userService.softDeleteUsersByIds(usersIds);
     if (result === usersNum) {
       return res.status(200).json({
-        message: "All Users soft deleted",
+        message: 'All Users soft deleted',
       });
     } else {
-      return res.status(404).json({ error: `Only ${result} users soft deleted successfully` });
+      return res
+        .status(404)
+        .json({ error: `Only ${result} users soft deleted successfully` });
     }
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to soft delete user' });
   }
 }
 
-export async function restoreUserById(req: Request, res: Response): Promise<Response> {
+export async function restoreUserById(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { userId } = req.params;
     const user = await userService.restoreUserById(userId);
     if (user) {
       return res.status(200).json({
-        message: "User restored",
-        user
+        message: 'User restored',
+        user,
       });
     } else {
       return res.status(404).json({ error: 'User not found' });
     }
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to restore user' });
   }
 }
 
-export async function activateUser(req: Request, res: Response): Promise<Response> {
+export async function activateUser(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { name, id } = req.params;
     const user = await userService.activateUser(name, id);
     if (user) {
       return res.status(200).json({
-        message: "User activated",
-        user
+        message: 'User activated',
+        user,
       });
     } else {
-      return res.status(404).json({ error: 'User not found or invalid activation' });
+      return res
+        .status(404)
+        .json({ error: 'User not found or invalid activation' });
     }
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Failed to activate user' });
   }
 }
 
 type PaginatedUsersQueryParams = {
-  page: number,
-  limit: number | undefined,
-  getDeleted: string | undefined,
-}
+  page: number;
+  limit: number | undefined;
+  getDeleted: string | undefined;
+};
 
-export async function getUsersPaginated(req: Request<{}, {}, {}, PaginatedUsersQueryParams>, res: Response): Promise<Response> {
+export async function getUsersPaginated(
+  req: Request<{}, {}, {}, PaginatedUsersQueryParams>,
+  res: Response
+): Promise<Response> {
   try {
     const page = req.query.page;
     const limit = req.query.limit ?? 5;
-    const getDeleted = req.query.getDeleted == "true";
+    const getDeleted = req.query.getDeleted == 'true';
 
     const result = await userService.getUsersPaginated(page, limit, getDeleted);
     if (result) {
@@ -203,12 +243,11 @@ export async function getUsersPaginated(req: Request<{}, {}, {}, PaginatedUsersQ
 }
 
 export async function changePassword(
-  
   req: Request,
   res: Response
 ): Promise<Response> {
-  console.log("Request body:", req.body);
-  console.log("Params:", req.params);
+  console.log('Request body:', req.body);
+  console.log('Params:', req.params);
   const { userId } = req.params;
   const { currentPassword, newPassword } = req.body;
 
@@ -234,18 +273,28 @@ export async function changePassword(
   }
 }
 
-export async function toggleFavoriteLocationController(req: Request, res: Response): Promise<Response> {
+export async function toggleFavoriteLocationController(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { userId, locationId } = req.params;
 
     if (!userId || !locationId) {
-      return res.status(400).json({ message: 'Missing userId or locationId in request parameters' });
+      return res.status(400).json({
+        message: 'Missing userId or locationId in request parameters',
+      });
     }
 
-    const updatedUser = await userService.toggleFavoriteLocation(userId, locationId);
+    const updatedUser = await userService.toggleFavoriteLocation(
+      userId,
+      locationId
+    );
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found or failed to update favorites' });
+      return res
+        .status(404)
+        .json({ message: 'User not found or failed to update favorites' });
     }
 
     return res.status(200).json({
@@ -255,6 +304,61 @@ export async function toggleFavoriteLocationController(req: Request, res: Respon
   } catch (error) {
     console.error('Error updating favorite location:', error);
     return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+export async function findUsersByName(req: Request, res: Response): Promise<Response> {
+  try {
+    const { name } = req.query;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'Invalid name parameter' });
+    }
+
+    const users = await userService.findUsersByName(name);
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error('Error finding users by name:', error);
+    return res.status(500).json({ error: 'Failed to find users' });
+  }
+}
+
+export async function followUser(req: Request, res: Response) {
+  try {
+    const { followerId, followeeId } = req.params;
+
+    if (followerId === followeeId) {
+      return res.status(400).json({ message: "No puedes seguirte a ti mismo" });
+    }
+
+    const user = await userService.followUser(followerId, followeeId);
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Usuario seguido correctamente", user });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
+export async function unfollowUser(req: Request, res: Response) {
+  try {
+    const { followerId, followeeId } = req.params;
+
+    if (followerId === followeeId) {
+      return res.status(400).json({ message: "No puedes dejar de seguirte a ti mismo" });
+    }
+
+    const user = await userService.unfollowUser(followerId, followeeId);
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Usuario dejado de seguir correctamente", user });
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
   }
 }
 export async function sendFriendRequest(req: Request, res: Response) {

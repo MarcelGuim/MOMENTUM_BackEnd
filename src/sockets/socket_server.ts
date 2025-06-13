@@ -1,5 +1,5 @@
 import http from 'http';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { configureSocketEvents } from './socket_service';
 
 const allowedOrigins = [
@@ -7,7 +7,7 @@ const allowedOrigins = [
   'http://localhost:4200',
   'http://ea5-api.upc.edu',
   'http://ea5.upc.edu',
-  'http://ea5-back.upc.edu'
+  'http://ea5-back.upc.edu',
 ];
 
 export async function startSocketServer(httpServer: http.Server) {
@@ -20,10 +20,10 @@ export async function startSocketServer(httpServer: http.Server) {
           callback(new Error('Not allowed by CORS'));
         }
       },
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-      allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-      credentials: true
-    }
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+      credentials: true,
+    },
   });
 
   configureSocketEvents(socketIO);
