@@ -237,6 +237,67 @@ export const loginWorker = async (req: Request, res: Response) => {
   }
 };
 
+export const googleAuthCtrl = async (req: Request, res: Response) => {
+  const redirectUri = 'http://localhost:8080/auth/google/callback'; // modificar uri per la ruta de angular quan exitsteixi.
+
+  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth'; //ojo tema versió
+  const options = new URLSearchParams({
+    // codi amb el que google respon
+    redirect_uri: redirectUri!,
+    client_id:
+      '104261057122-bd1sulgdh5m811ppg1tfgev3jqidnb3u.apps.googleusercontent.com'!,
+    access_type: 'offline',
+    response_type: 'code',
+    prompt: 'consent',
+    scope:
+      'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+  });
+  const fullUrl = `${rootUrl}?${options.toString()}`;
+  console.log('Redireccionando a:', fullUrl);
+  res.redirect(fullUrl);
+};
+
+export const googleAuthCallback = async (req: Request, res: Response) => {
+  try {
+    const code = req.query.code as string;
+    console.log('Código de autorización:', code);
+    const platform = req.query.state || 'web';
+    if (!code) {
+      return res
+        .status(400)
+        .json({ message: 'Código de autorización faltante' });
+    }
+
+    const authData = await authService.googleAuth(code);
+
+    if (!authData) {
+      return res.redirect('/login?error=authentication_failed');
+    }
+
+    console.log(authData.accessToken);
+    // Configurar cookies no https (secure)--> acces des del web.
+    res.cookie('token', authData.accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'none',
+      maxAge: 86400000, // 1 día
+    });
+    console.log(authData.accessToken);
+    if (platform === 'mobile') {
+      // Redirigir a deep link para mobile
+      res.redirect(`momentum://auth?token=${authData.accessToken}`);
+    } else {
+      // Redirigir a URL web (ajusta el puerto según tu app Flutter web)
+      res.redirect(
+        'http://localhost:52032/auth-callback?token=' + authData.accessToken
+      ); // cal ajustar per a web
+    }
+  } catch (error: any) {
+    console.error('Error en callback de Google:', error);
+    res.redirect('/login?error=server_error');
+  }
+};
+
 export async function validateLogin(
   req: Request,
   res: Response
