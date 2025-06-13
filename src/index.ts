@@ -16,7 +16,7 @@ import { startSocketServer } from './sockets/socket_server';
 import { Server } from 'socket.io';
 import { verifyAccessToken } from './utils/jwt.utils';
 import admin from 'firebase-admin';
-import serviceAccount from './firebase/firebase-adminsdk.json';
+import serviceAccount from './firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json';
 
 dotenv.config();
 

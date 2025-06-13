@@ -21,6 +21,10 @@ import {
   sendFriendRequest,
   acceptFriendRequest,
   getFriendRequests,
+  searchUsersByEmailFragment,
+  denyFriendRequest,
+  getFriends,
+  removeFriend,
 } from './user.controller';
 
 /**
@@ -488,7 +492,14 @@ router.post('/:userId/accept-friend', verifyToken, acceptFriendRequest);
  *       404:
  *         description: Usuari no trobat
  */
-router.get('/:userId/friend-requests', verifyToken, getFriendRequests);
+router.get('/:userId/friend-requests', verifyToken, requireOwnership('userId'), getFriendRequests);
 
+router.post('/search-by-email', verifyToken, searchUsersByEmailFragment);
+
+router.post('/:userId/deny-friend', verifyToken, denyFriendRequest);
+
+router.get('/:userId/friends', verifyToken, getFriends);
+
+router.delete('/friends/:userId/remove/:friendId', verifyToken, removeFriend);
 
 export default router;

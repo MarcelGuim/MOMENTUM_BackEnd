@@ -18,7 +18,12 @@ const workerService = new WorkerService();
 export const loginUser = async (req: Request, res: Response) => {
   try {
       const { name_or_mail, password, fcmToken } = req.body as LoginRequestBody & { fcmToken?: string };
+      console.log("🔐 Login attempt");
+      console.log("📨 Input received:", { name_or_mail, hasPassword: !!password, hasFcmToken: !!fcmToken });
       const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password, fcmToken);
+      console.log("✅ Login success for user:", user?.name || user?.mail);
+      console.log("🔑 AccessToken generated:", accessToken ? "[TOKEN GENERATED]" : "[NO TOKEN]");
+      console.log("🔄 RefreshToken generated:", refreshToken ? "[TOKEN GENERATED]" : "[NO TOKEN]");
   
       res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
   
@@ -30,7 +35,11 @@ export const loginUser = async (req: Request, res: Response) => {
         accessToken // Store this in localStorage
       });
     } catch (error: any) {
-      return res.status(401).json({ error: "Invalid Credentials" });
+      console.error("❌ Error in loginUser:", error);
+      return res.status(401).json({ 
+        error: "Invalid Credentials", 
+        details: error.message 
+      });
     }
 };
   

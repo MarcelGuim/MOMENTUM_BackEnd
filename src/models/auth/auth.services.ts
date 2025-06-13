@@ -7,14 +7,25 @@ import { ModelType } from '../../types';
 
 export class AuthService {
   async loginUser(identifier:string, password:string, fcmToken?: string){
+    console.log("🟡 Iniciant loginUser");
+    console.log("📨 Rebut identifier:", identifier);
+    console.log("📨 Rebut password:", password);
+    console.log("📨 Rebut fcmToken:", fcmToken);
     const isEmail = identifier.includes('@');
+    console.log("📧 És un correu?", isEmail);
     const query = isEmail ? { mail: identifier } : { name: identifier };
+    console.log("🔍 Buscant usuari amb query:", query);
+
     const user = await User.findOne(query).select('+password');
     if (!user) {
+      console.error("❌ Usuari no trobat!");
       throw new Error('User not found');
     }
+    console.log("✅ Usuari trobat:", user.name || user.mail);
     const isMatch : boolean = await user.isValidPassword(password);
+    console.log("🔐 Resultat de la comparació de contrasenya:", isMatch);
     if(!isMatch){
+      console.error("❌ Contrasenya incorrecta!");
       throw new Error('Invalid password');
     }
 
@@ -22,12 +33,16 @@ export class AuthService {
     if (fcmToken) { 
       user.fcmToken = fcmToken; 
       await user.save(); 
+      console.log("📲 FCM Token actualitzat:", fcmToken);
     }
     const accessToken = generateAccessToken(user.id, ModelType.USER);
     const refreshToken = generateRefreshToken(user.id, ModelType.USER);
+    console.log("🔑 AccessToken generat:", accessToken);
+    console.log("🔁 RefreshToken generat:", refreshToken);
     
     const userWithoutPassword = user.toObject() as Partial<IUsuari>;
     delete userWithoutPassword.password;
+    console.log("✅ Login completat correctament");
 
     return {
       user: userWithoutPassword,

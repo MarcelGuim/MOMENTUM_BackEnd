@@ -34,3 +34,5 @@ node_modules/
 # IntelliJ IDEA files
 .idea/
 #src/firebase/firebase-adminsdk.json
+src/firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json
+src/firebase/firebase-adminsdk.copy.json
