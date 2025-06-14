@@ -1,18 +1,21 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 export interface IUsuari {
-    _id?: mongoose.ObjectId;
-    name: string;
-    age: number;
-    mail: string;
-    password: string;
-    isDeleted: boolean;
-    activationId?: string;
-    favoriteLocations: mongoose.Types.ObjectId[];
-    followers: mongoose.Types.ObjectId[];
-    following: mongoose.Types.ObjectId[];
-    // eslint-disable-next-line no-unused-vars
-    isValidPassword: (password: string) => Promise<boolean>;
+  _id?: mongoose.ObjectId;
+  name: string;
+  age: number;
+  mail: string;
+  password: string;
+  isDeleted: boolean;
+  activationId?: string;
+  favoriteLocations: mongoose.Types.ObjectId[];
+  followers: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[];
+  friends: mongoose.Types.ObjectId[];
+  friendRequests: mongoose.Types.ObjectId[];
+  fcmToken: string;
+  // eslint-disable-next-line no-unused-vars
+  isValidPassword: (password: string) => Promise<boolean>;
 }
 
 const UserSchema = new mongoose.Schema<IUsuari>({
@@ -53,18 +56,32 @@ const UserSchema = new mongoose.Schema<IUsuari>({
       ref: 'Location',
       default: [],
     },
- ],
+  ],
+  friends: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: [],
+    },
+  ],
+  friendRequests: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: [],
+    },
+  ],
+  fcmToken: {
+    type: String,
+    default: null,
+  },
 });
-
-// UserSchema.pre('find', function() {
-//   this.where({ isDeleted: false });
-// });
 
 UserSchema.pre('findOne', function () {
   this.where({ isDeleted: false });
 });
 
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) {
     return next();
   }

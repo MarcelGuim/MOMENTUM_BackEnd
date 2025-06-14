@@ -14,8 +14,15 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import iaRoutes from './models/IA/IA.routes';
+import admin from 'firebase-admin';
+import serviceAccount from './firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json';
+
 import recordatorisRoutes from './models/recordatoris/recordatoris.routes';
 dotenv.config();
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+});
 
 // Configuración de Express
 const app = express();

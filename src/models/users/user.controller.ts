@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { IUsuari } from './user.model';
+import User from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
+import { getMessaging } from 'firebase-admin/messaging';
 
 const userService = new UserService();
 
@@ -303,7 +305,10 @@ export async function toggleFavoriteLocationController(
   }
 }
 
-export async function findUsersByName(req: Request, res: Response): Promise<Response> {
+export async function findUsersByName(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { name } = req.query;
     if (!name || typeof name !== 'string') {
@@ -323,16 +328,18 @@ export async function followUser(req: Request, res: Response) {
     const { followerId, followeeId } = req.params;
 
     if (followerId === followeeId) {
-      return res.status(400).json({ message: "No puedes seguirte a ti mismo" });
+      return res.status(400).json({ message: 'No puedes seguirte a ti mismo' });
     }
 
     const user = await userService.followUser(followerId, followeeId);
 
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    return res.status(200).json({ message: "Usuario seguido correctamente", user });
+    return res
+      .status(200)
+      .json({ message: 'Usuario seguido correctamente', user });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
   }
@@ -343,17 +350,189 @@ export async function unfollowUser(req: Request, res: Response) {
     const { followerId, followeeId } = req.params;
 
     if (followerId === followeeId) {
-      return res.status(400).json({ message: "No puedes dejar de seguirte a ti mismo" });
+      return res
+        .status(400)
+        .json({ message: 'No puedes dejar de seguirte a ti mismo' });
     }
 
     const user = await userService.unfollowUser(followerId, followeeId);
 
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    return res.status(200).json({ message: "Usuario dejado de seguir correctamente", user });
+    return res
+      .status(200)
+      .json({ message: 'Usuario dejado de seguir correctamente', user });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
+  }
+}
+export async function sendFriendRequest(req: Request, res: Response) {
+  const fromId = req.userPayload?.userId;
+  const { toId } = req.body;
+
+  if (!fromId || !toId) {
+    return res.status(400).json({ error: 'Falten dades: fromId o toId' });
+  }
+
+  try {
+    const result = await userService.sendFriendRequest(fromId, toId);
+
+    if (!result) {
+      return res.status(404).json({ error: 'Usuari no trobat o ja afegit' });
+    }
+
+    const { toUser, fromUser } = result;
+
+    if (toUser.fcmToken) {
+      await getMessaging().send({
+        token: toUser.fcmToken,
+        notification: {
+          title: "Nova sol·licitud d'amistat",
+          body: `Tens una nova sol·licitud de ${fromUser.mail}`,
+        },
+        data: {
+          type: 'friend_request',
+          fromId,
+          fromEmail: fromUser.mail,
+        },
+      });
+    }
+    return res.json({ message: 'Sol·licitud enviada' });
+  } catch (error) {
+    console.error('Error enviant la sol·licitud:', error);
+    return res.status(500).json({ error: 'Error en enviar la sol·licitud' });
+  }
+}
+
+export async function acceptFriendRequest(req: Request, res: Response) {
+  const toId = req.userPayload?.userId;
+  const { fromId } = req.body;
+
+  if (!toId || !fromId) {
+    return res.status(400).json({ error: 'Falten dades: toId o fromId' });
+  }
+
+  try {
+    const result = await userService.acceptFriendRequest(toId, fromId);
+    if (!result) return res.status(404).json({ error: 'Usuari no trobat' });
+
+    const fromUser = await User.findById(fromId);
+    if (fromUser?.fcmToken) {
+      await getMessaging().send({
+        token: fromUser.fcmToken,
+        notification: {
+          title: 'Amistat acceptada',
+          body: `${result.mail} ha acceptat la teva sol·licitud d'amistat`,
+        },
+        data: {
+          type: 'friend_accept',
+          toId,
+        },
+      });
+    }
+
+    return res.json({ message: 'Amistat acceptada' });
+  } catch (error) {
+    console.error('Error acceptant amistat:', error);
+    return res
+      .status(500)
+      .json({ error: 'Error intern acceptant la sol·licitud' });
+  }
+}
+
+export async function getFriendRequests(req: Request, res: Response) {
+  const userId = req.userPayload?.userId;
+  if (!userId) return res.status(400).json({ error: 'Falta userId a token' });
+
+  try {
+    const requests = await userService.getFriendRequests(userId);
+    return res.json({ requests });
+  } catch (error) {
+    console.error("Error obtenint les sol·licituds d'amistat:", error);
+    return res.status(500).json({ error: 'Error intern del servidor' });
+  }
+}
+
+export async function searchUsersByEmailFragment(req: Request, res: Response) {
+  const emailFragment = req.body.q as string;
+  const currentUserId = req.userPayload?.userId;
+
+  if (!emailFragment) {
+    return res.status(400).json({ error: 'Missing email fragment.' });
+  }
+  if (!currentUserId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const results = await userService.searchUsersByEmailFragment(
+      currentUserId,
+      emailFragment
+    );
+    return res.json({ users: results });
+  } catch (error) {
+    console.error('Error buscant usuaris per fragment de correu:', error);
+    return res.status(500).json({ error: 'Error intern del servidor' });
+  }
+}
+
+export async function denyFriendRequest(req: Request, res: Response) {
+  const toId = req.params.userId;
+  const { fromId } = req.body;
+
+  if (!toId || !fromId) {
+    return res.status(400).json({ error: 'Falten dades: toId o fromId' });
+  }
+
+  try {
+    const success = await userService.denyFriendRequest(toId, fromId);
+    if (!success) {
+      return res.status(404).json({ error: 'Usuari receptor no trobat' });
+    }
+
+    return res.json({ message: "Sol·licitud d'amistat rebutjada" });
+  } catch (error) {
+    console.error('Error rebutjant sol·licitud:', error);
+    return res
+      .status(500)
+      .json({ error: 'Error intern rebutjant la sol·licitud' });
+  }
+}
+export async function getFriends(req: Request, res: Response) {
+  const userId = req.params.userId;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Falta userId' });
+  }
+
+  try {
+    const friends = await userService.getFriendsByUserId(userId);
+    return res.json({ friends });
+  } catch (error) {
+    console.error('Error obtenint amics:', error);
+    return res.status(500).json({ error: 'Error intern obtenint amics' });
+  }
+}
+export async function removeFriend(req: Request, res: Response) {
+  const { userId, friendId } = req.params;
+
+  if (!userId || !friendId) {
+    return res.status(400).json({ error: 'Falten dades: userId o friendId' });
+  }
+
+  try {
+    const result = await userService.removeFriend(userId, friendId);
+    if (!result) {
+      return res
+        .status(404)
+        .json({ error: "No s'ha pogut eliminar l'amistat" });
+    }
+
+    return res.json({ message: 'Amistat eliminada correctament' });
+  } catch (error) {
+    console.error('Error eliminant amistat:', error);
+    return res.status(500).json({ error: 'Error intern eliminant amistat' });
   }
 }
