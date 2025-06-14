@@ -15,6 +15,8 @@ import {
   getFavoriteBusinesses,
   getFilteredFavoriteBusinesses,
   getBusinessById,
+  getBusinessesPaginated,
+  restoreBusiness,
 } from './business.controller';
 
 const router = Router();
@@ -122,6 +124,37 @@ router.post('/', createBusiness);
  *                   example: Server error when getting all business
  */
 router.get('/', getAllBusiness);
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get paginated businesses
+ *     tags: [users]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of users per page (default 5)
+ *       - in: query
+ *         name: getDeleted
+ *         schema:
+ *           type: boolean
+ *         description: Whether to get deleted businesses
+ *     responses:
+ *       200:
+ *         description: Paginated businesses
+ *       500:
+ *         description: Server error
+ */
+router.get('/paginated', getBusinessesPaginated);
 
 /**
  * @swagger
@@ -658,6 +691,68 @@ router.delete('/:businessId/locations/:locationId', deleteLocationForBusiness);
  *                     - Failed to perform soft delete for business
  */
 router.patch('/:businessId/softdelete', softDeleteBusiness);
+
+/**
+ * @swagger
+ * /business/{businessId}/restore:
+ *   patch:
+ *     summary: Restableix un negoci i les seves ubicacions
+ *     tags: [business]
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID del negoci que es vol eliminar lògicament
+ *     responses:
+ *       200:
+ *         description: Negoci i ubicacions associades restablertes correctament
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Business and its locations were restored successfully
+ *                 business:
+ *                   $ref: '#/components/schemas/Business'
+ *       400:
+ *         description: Format d’ID de negoci invàlid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid business ID format
+ *       404:
+ *         description: No s’ha trobat el negoci
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Business not found
+ *       500:
+ *         description: Error en restablir el negoci o les seves ubicacions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   enum:
+ *                     - Failed to restore all associated locations
+ *                     - Failed to restore business, all associated locations have been restored
+ *                     - Failed to restore for business
+ */
+router.patch('/:businessId/restore', restoreBusiness);
 
 /**
  * @swagger

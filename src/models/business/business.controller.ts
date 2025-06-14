@@ -317,6 +317,55 @@ export async function softDeleteBusiness(
       .json({ message: 'Failed to perform soft delete for business' });
   }
 }
+
+export async function restoreBusiness(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    const { businessId } = req.params;
+
+    const result = await businessService.restoreSoftDeletedBusiness(businessId);
+
+    if (result === -1) {
+      console.error('Invalid business ID format');
+      return res.status(400).json({ message: 'Invalid business ID format' });
+    }
+
+    if (result === null) {
+      console.error('Business not found');
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    if (result === -2) {
+      console.error('Failed to restore all associated locations');
+      return res
+        .status(500)
+        .json({ message: 'Failed to restore all associated locations' });
+    }
+
+    if (typeof result !== 'number' && result.isDeleted === true) {
+      console.error(
+        'Failed to restore business, all associated locations have been restored'
+      );
+      return res.status(500).json({
+        message:
+          'Failed to restore business, all associated locations have been restored',
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Business and its locations were restored successfully',
+      business: result,
+    });
+  } catch (error) {
+    console.error('Error performing restore for business:', error);
+    return res
+      .status(500)
+      .json({ message: 'Failed to perform restore for business' });
+  }
+}
+
 export async function hardDeleteBusiness(
   req: Request,
   res: Response
@@ -574,5 +623,37 @@ export async function getBusinessById(
         .json({ error: (error as { message: string }).message });
     }
     return res.status(500).json({ message: 'Failed to search business' });
+  }
+}
+
+type PaginatedBusinessesQueryParams = {
+  page: number;
+  limit: number | undefined;
+  getDeleted: string | undefined;
+};
+
+export async function getBusinessesPaginated(
+  req: Request<{}, {}, {}, PaginatedBusinessesQueryParams>,
+  res: Response
+): Promise<Response> {
+  try {
+    const page = req.query.page;
+    const limit = req.query.limit ?? 5;
+    const getDeleted = req.query.getDeleted == 'true';
+
+    const result = await businessService.getPaginatedBusinesses(
+      page,
+      limit,
+      getDeleted
+    );
+    if (result) {
+      console.log(result);
+      return res.status(200).json(result);
+    } else {
+      return res.status(404).json({ error: 'No businesses found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Failed to fetch businesses' });
   }
 }
