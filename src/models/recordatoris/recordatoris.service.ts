@@ -17,20 +17,16 @@ export default class RecordatorisService {
       title: saved.title,
       description: saved.description,
     };
-    console.log('Recordatori a crear:', jobData);
 
     if (repeat === RepetitionType.NEVER) {
       const barcelonaTime = DateTime.fromJSDate(time).setZone('Europe/Madrid');
       const now = DateTime.now().setZone('Europe/Madrid');
       const delay = barcelonaTime.toMillis() - now.toMillis();
-      console.log('delay:', delay);
       if (delay > 0) {
-        console.log('programant recordatori només un sol cop');
         await reminderQueue.add('sendReminder', jobData, {
           delay,
           jobId: saved._id.toString(),
         });
-        console.log('Ha fet alguna cosa');
       } else {
         console.warn('Temps passat — no es programa el job');
       }
@@ -45,7 +41,6 @@ export default class RecordatorisService {
         throw new Error('Cron no generat per aquest tipus de repetició');
       }
     }
-
     return saved;
   }
 
