@@ -11,54 +11,67 @@ export interface IUsuari {
     favoriteLocations: mongoose.Types.ObjectId[];
     followers: mongoose.Types.ObjectId[];
     following: mongoose.Types.ObjectId[];
+    friends: mongoose.Types.ObjectId[];
+    friendRequests: mongoose.Types.ObjectId[];
+    fcmToken: string;
     // eslint-disable-next-line no-unused-vars
     isValidPassword: (password: string) => Promise<boolean>;
 }
 
 const UserSchema = new mongoose.Schema<IUsuari>({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-  age: {
-    type: Number,
-    required: true,
-  },
-  mail: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
-  },
-  password: {
-    type: String,
-    required: true,
-    select: false,
-  },
-  isDeleted: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
-  activationId: {
-    type: String,
-    sparse: true,
-    select: false,
-  },
-  favoriteLocations: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Location',
-      default: [],
+    name: { 
+        type: String, 
+        required: true,
+        unique: true,
+        index: true 
     },
- ],
+    age: { 
+        type: Number, 
+        required: true 
+    },
+    mail: { 
+        type: String, 
+        required: true,
+        unique: true, 
+        index: true 
+    },
+    password: { 
+        type: String, 
+        required: true,
+        select: false  
+    },
+    isDeleted: {
+        type: Boolean,
+        required: true, 
+        default: false
+    },
+    activationId: {
+        type: String,
+        sparse: true ,
+        select: false
+    },
+    favoriteLocations: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Location',
+          default: [],
+        },
+    ],
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+    }],
+    friendRequests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: []
+    }],
+    fcmToken: {
+        type: String,
+        default: null
+    }
 });
-
-// UserSchema.pre('find', function() {
-//   this.where({ isDeleted: false });
-// });
 
 UserSchema.pre('findOne', function () {
   this.where({ isDeleted: false });
@@ -73,6 +86,7 @@ UserSchema.pre('save', async function(next) {
   this.password = hashedPassword;
   next();
 });
+
 
 UserSchema.method(
   'isValidPassword',

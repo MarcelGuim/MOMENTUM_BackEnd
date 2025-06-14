@@ -34,6 +34,9 @@ const router = Router();
  *                 type: string
  *               password:
  *                 type: string
+ *               fcmToken:
+ *                 type: string
+ *                 description: Firebase token for push notifications
  *     responses:
  *       200:
  *         description: Authentication successful
