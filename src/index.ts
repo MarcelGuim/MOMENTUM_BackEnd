@@ -14,11 +14,10 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import iaRoutes from './models/IA/IA.routes';
-import { Server } from 'socket.io';
-import { verifyAccessToken } from './utils/jwt.utils';
 import admin from 'firebase-admin';
 import serviceAccount from './firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json';
 
+import recordatorisRoutes from './models/recordatoris/recordatoris.routes';
 dotenv.config();
 
 admin.initializeApp({
@@ -30,7 +29,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins = [
+/* const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:4200',
   'http://localhost:8080',
@@ -40,16 +39,12 @@ const allowedOrigins = [
   'https://ea5-api.upc.edu',
   'https://ea5.upc.edu',
   'https://ea5-back.upc.edu',
-];
+]; */
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      callback(null, true); // Accepta qualsevol origen
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
@@ -71,6 +66,7 @@ app.use('/location', locationRoutes); // Rutas de ubicaciones
 app.use('/workers', workersRoutes); // Rutas de ubicaciones
 app.use('/business', businessRoutes); // Rutas de ubicaciones
 app.use('/ia', iaRoutes);
+app.use('/recordatoris', recordatorisRoutes);
 
 const PORT = process.env.PORT || 8080; // Use env variable or fallback
 const BASE_URL = process.env.APP_BASE_URL || `http://localhost:${PORT}`;

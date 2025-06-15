@@ -3,8 +3,6 @@ import { IUsuari } from './user.model';
 import User from './user.model';
 import { UserService } from './user.services';
 import bcrypt from 'bcrypt';
-import { generateAccessToken, generateRefreshToken } from '../../utils/jwt.utils';
-import admin from 'firebase-admin';
 import { getMessaging } from 'firebase-admin/messaging';
 
 const userService = new UserService();
@@ -307,7 +305,10 @@ export async function toggleFavoriteLocationController(
   }
 }
 
-export async function findUsersByName(req: Request, res: Response): Promise<Response> {
+export async function findUsersByName(
+  req: Request,
+  res: Response
+): Promise<Response> {
   try {
     const { name } = req.query;
     if (!name || typeof name !== 'string') {
@@ -327,16 +328,18 @@ export async function followUser(req: Request, res: Response) {
     const { followerId, followeeId } = req.params;
 
     if (followerId === followeeId) {
-      return res.status(400).json({ message: "No puedes seguirte a ti mismo" });
+      return res.status(400).json({ message: 'No puedes seguirte a ti mismo' });
     }
 
     const user = await userService.followUser(followerId, followeeId);
 
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    return res.status(200).json({ message: "Usuario seguido correctamente", user });
+    return res
+      .status(200)
+      .json({ message: 'Usuario seguido correctamente', user });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
   }
@@ -347,16 +350,20 @@ export async function unfollowUser(req: Request, res: Response) {
     const { followerId, followeeId } = req.params;
 
     if (followerId === followeeId) {
-      return res.status(400).json({ message: "No puedes dejar de seguirte a ti mismo" });
+      return res
+        .status(400)
+        .json({ message: 'No puedes dejar de seguirte a ti mismo' });
     }
 
     const user = await userService.unfollowUser(followerId, followeeId);
 
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    return res.status(200).json({ message: "Usuario dejado de seguir correctamente", user });
+    return res
+      .status(200)
+      .json({ message: 'Usuario dejado de seguir correctamente', user });
   } catch (error: any) {
     return res.status(400).json({ message: error.message });
   }
@@ -382,14 +389,14 @@ export async function sendFriendRequest(req: Request, res: Response) {
       await getMessaging().send({
         token: toUser.fcmToken,
         notification: {
-          title: 'Nova sol·licitud d\'amistat',
+          title: "Nova sol·licitud d'amistat",
           body: `Tens una nova sol·licitud de ${fromUser.mail}`,
         },
         data: {
           type: 'friend_request',
           fromId,
           fromEmail: fromUser.mail,
-        }
+        },
       });
     }
     return res.json({ message: 'Sol·licitud enviada' });
@@ -398,7 +405,6 @@ export async function sendFriendRequest(req: Request, res: Response) {
     return res.status(500).json({ error: 'Error en enviar la sol·licitud' });
   }
 }
-
 
 export async function acceptFriendRequest(req: Request, res: Response) {
   const toId = req.userPayload?.userId;
@@ -422,18 +428,19 @@ export async function acceptFriendRequest(req: Request, res: Response) {
         },
         data: {
           type: 'friend_accept',
-          toId
-        }
+          toId,
+        },
       });
     }
 
     return res.json({ message: 'Amistat acceptada' });
   } catch (error) {
     console.error('Error acceptant amistat:', error);
-    return res.status(500).json({ error: 'Error intern acceptant la sol·licitud' });
+    return res
+      .status(500)
+      .json({ error: 'Error intern acceptant la sol·licitud' });
   }
 }
-
 
 export async function getFriendRequests(req: Request, res: Response) {
   const userId = req.userPayload?.userId;
@@ -448,20 +455,22 @@ export async function getFriendRequests(req: Request, res: Response) {
   }
 }
 
-
 export async function searchUsersByEmailFragment(req: Request, res: Response) {
   const emailFragment = req.body.q as string;
   const currentUserId = req.userPayload?.userId;
 
   if (!emailFragment) {
-    return res.status(400).json({ error: "Missing email fragment." });
+    return res.status(400).json({ error: 'Missing email fragment.' });
   }
   if (!currentUserId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    const results = await userService.searchUsersByEmailFragment(currentUserId, emailFragment);
+    const results = await userService.searchUsersByEmailFragment(
+      currentUserId,
+      emailFragment
+    );
     return res.json({ users: results });
   } catch (error) {
     console.error('Error buscant usuaris per fragment de correu:', error);
@@ -470,7 +479,7 @@ export async function searchUsersByEmailFragment(req: Request, res: Response) {
 }
 
 export async function denyFriendRequest(req: Request, res: Response) {
-  const toId = req.params.userId; 
+  const toId = req.params.userId;
   const { fromId } = req.body;
 
   if (!toId || !fromId) {
@@ -483,10 +492,12 @@ export async function denyFriendRequest(req: Request, res: Response) {
       return res.status(404).json({ error: 'Usuari receptor no trobat' });
     }
 
-    return res.json({ message: 'Sol·licitud d\'amistat rebutjada' });
+    return res.json({ message: "Sol·licitud d'amistat rebutjada" });
   } catch (error) {
     console.error('Error rebutjant sol·licitud:', error);
-    return res.status(500).json({ error: 'Error intern rebutjant la sol·licitud' });
+    return res
+      .status(500)
+      .json({ error: 'Error intern rebutjant la sol·licitud' });
   }
 }
 export async function getFriends(req: Request, res: Response) {
@@ -514,7 +525,9 @@ export async function removeFriend(req: Request, res: Response) {
   try {
     const result = await userService.removeFriend(userId, friendId);
     if (!result) {
-      return res.status(404).json({ error: 'No s\'ha pogut eliminar l\'amistat' });
+      return res
+        .status(404)
+        .json({ error: "No s'ha pogut eliminar l'amistat" });
     }
 
     return res.json({ message: 'Amistat eliminada correctament' });
@@ -523,4 +536,3 @@ export async function removeFriend(req: Request, res: Response) {
     return res.status(500).json({ error: 'Error intern eliminant amistat' });
   }
 }
-
