@@ -812,7 +812,7 @@ router.delete('/:businessId/harddelete', hardDeleteBusiness);
  *                   type: string
  *                   example: Failed to retrieve businesses
  */
-router.post('/filter', getFilteredBusinesses);
+router.post('/filter/:userId', getFilteredBusinesses);
 
 /**
  * @swagger

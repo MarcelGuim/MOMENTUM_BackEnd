@@ -253,7 +253,10 @@ export class CalendarService {
       appointments.sort((a, b) => a.inTime.getTime() - b.inTime.getTime());
       const appointmentsInRange: IAppointment[] = appointments.filter(
         (appointment) =>
-          appointment.inTime >= date1 && appointment.outTime <= date2
+          (appointment.inTime >= date1 && appointment.outTime <= date2) ||
+          (appointment.inTime <= date1 && appointment.outTime >= date2) ||
+          (appointment.inTime <= date1 && appointment.outTime <= date2) ||
+          (appointment.inTime >= date1 && appointment.outTime >= date2)
       );
       if (appointmentsInRange.length === 0) return [[date1, date2]];
       appointmentsInRange.sort(
@@ -373,10 +376,8 @@ export class CalendarService {
         let item: [Date, Date][] | null | number =
           await this.getEmptySlotForAUser(userId, date1, date2);
         if (!item) {
-          console.log(`User with ID ${userId} has no calendars`);
           userIDsWithNoCalendars[1].push(userId);
         } else if (typeof item === 'number') {
-          console.log(`User with ID ${userId} has no empty slots ${item}`);
           userIDsWithNoEmptySlots[1].push(userId);
         } else {
           emptySlots.push(item);
@@ -446,6 +447,7 @@ export class CalendarService {
     const worker: IWorker | null = await Worker.findById(workerId);
     if (!user || !worker)
       throw new Error('Error finding the user or the bussiness');
+
     let emptySlotsUser: [Date, Date][] | null = null;
     let emptySlotsWorker: [Date, Date][] | null = null;
 
@@ -460,6 +462,7 @@ export class CalendarService {
         date1,
         date2
       );
+
       if (emptySlotsUser === null || emptySlotsWorker === null)
         throw new Error(
           'Error finding the empty slots, one of the people involved might not have a calendar'
@@ -468,10 +471,13 @@ export class CalendarService {
         throw new Error('Error, there are no empty slots for the user');
       else if (emptySlotsWorker.length === 0)
         throw new Error('Error, there are no empty slots for the worker');
-      return await this.getMatchingDatesForTwoEmptySlotsArrays(
+
+      const result = await this.getMatchingDatesForTwoEmptySlotsArrays(
         emptySlotsUser,
         emptySlotsWorker
       );
+
+      return result;
     }
     return null;
   }

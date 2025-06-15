@@ -80,7 +80,6 @@ router.post(
   workerValidationRules(),
   workerValidator,
   verifyToken,
-  requireAdmin,
   createWorker
 );
 
@@ -140,7 +139,6 @@ router.post(
   '/multiple-locations',
   workerValidator,
   verifyToken,
-  requireAdmin,
   createWorkerWithMultipleLocations
 );
 

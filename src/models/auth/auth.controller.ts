@@ -21,22 +21,26 @@ const workerService = new WorkerService();
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-      const { name_or_mail, password, fcmToken } = req.body as LoginRequestBody & { fcmToken?: string };
-      const { user, accessToken, refreshToken } = await authService.loginUser(name_or_mail, password, fcmToken);
-  
-      res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
+    const { name_or_mail, password, fcmToken } =
+      req.body as LoginRequestBody & { fcmToken?: string };
+    const { user, accessToken, refreshToken } = await authService.loginUser(
+      name_or_mail,
+      password,
+      fcmToken
+    );
 
+    res.cookie('refreshToken', refreshToken, refreshTokenCookieOptions);
 
-      return res.status(200).json({
-        user,
-        accessToken // Store this in localStorage
-      });
-    } catch (error: any) {
-      return res.status(401).json({ 
-        error: "Invalid Credentials", 
-        details: error.message 
-      });
-    }
+    return res.status(200).json({
+      user,
+      accessToken, // Store this in localStorage
+    });
+  } catch (error: any) {
+    return res.status(401).json({
+      error: 'Invalid Credentials',
+      details: error.message,
+    });
+  }
 };
 
 export const refresh = async (req: Request, res: Response) => {
@@ -102,7 +106,8 @@ export const logout = async (req: Request, res: Response) => {
     if (!req.refreshPayload) {
       return res.status(400).json({ error: 'No refresh token found' });
     }
-
+    const userId = req.refreshPayload.userId;
+    await authService.deleteFcmToken(userId);
     // 2. Add token to blacklist (if using token invalidation)
     // await tokenService.blacklistToken(refreshToken);
 

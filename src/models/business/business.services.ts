@@ -4,9 +4,10 @@ import User from '../users/user.model';
 import mongoose from 'mongoose';
 import { locationServiceType } from '../../enums/locationServiceType.enum';
 import { LocationService } from '../location/location.services';
+import { CalendarService } from '../calendari/calendar.services';
 import { FilterOptions } from '../../interfaces/filter.interface';
 import Worker from '../worker/worker.model';
-
+import { adjustDatesToSchedule } from '../../utils/date.utils';
 const locationService = new LocationService();
 export class BusinessService {
   async createBusiness(
@@ -268,7 +269,9 @@ export class BusinessService {
   ): Promise<IBusiness[] | number | null> {
     // Primer filtrem les ubicacions que compleixen els criteris
     const locationFilter: any = { isDeleted: false };
-
+    if (filters.accessible !== undefined) {
+      locationFilter.accessible = filters.accessible;
+    }
     if (filters.serviceTypes) {
       const invalid = filters.serviceTypes.some(
         (type) =>
@@ -357,6 +360,58 @@ export class BusinessService {
     ]);
 
     if (!businesses || businesses.length === 0) return null;
+
+    // Filtrar per disponibilitat d'slots
+    if (filters.userId && filters.date1 && filters.date2) {
+      const result: IBusiness[] = [];
+
+      for (const business of businesses) {
+        const availableLocations: ILocation[] = [];
+
+        for (const location of business.location) {
+          try {
+            const calendarService = new CalendarService();
+            const adjusted = adjustDatesToSchedule(
+              filters.date1,
+              filters.date2,
+              location.schedule
+            );
+
+            if (!adjusted) {
+              continue; // No coincideix amb horari laboral
+            }
+
+            const { adjustedDate1, adjustedDate2 } = adjusted;
+
+            const slots =
+              await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
+                filters.userId,
+                location._id.toString(),
+                adjustedDate1,
+                adjustedDate2
+              );
+
+            if (slots && slots.length > 0) {
+              availableLocations.push(location);
+            }
+          } catch (error) {
+            console.error(
+              `Error obtenint slots per ubicació ${location._id}:`,
+              error instanceof Error ? error.message : error
+            );
+            //errors o ubicacions sense disponibilitat
+          }
+        }
+
+        if (availableLocations.length > 0) {
+          result.push({
+            ...business,
+            location: availableLocations,
+          });
+        }
+      }
+      return result.length > 0 ? result : null;
+    }
 
     return businesses;
   }
@@ -461,13 +516,17 @@ export class BusinessService {
   }
 
   async getFilteredFavoriteBusinesses(
-    userId: string,
     filters: FilterOptions
   ): Promise<IBusiness[] | number | null> {
     const locationFilter: any = { isDeleted: false };
 
+    if (filters.accessible !== undefined) {
+      locationFilter.accessible = filters.accessible;
+    }
     //Obtenim l’usuari
-    const user = await User.findById(userId).select('favoriteLocations');
+    const user = await User.findById(filters.userId).select(
+      'favoriteLocations'
+    );
     if (!user || !user.favoriteLocations || user.favoriteLocations.length === 0)
       return null;
 
@@ -566,6 +625,60 @@ export class BusinessService {
       },
     ]);
 
-    return businesses.length > 0 ? businesses : null;
+    if (!businesses || businesses.length === 0) return null;
+
+    // Filtrar per disponibilitat d'slots
+    if (filters.userId && filters.date1 && filters.date2) {
+      const result: IBusiness[] = [];
+      for (const business of businesses) {
+        const availableLocations: ILocation[] = [];
+
+        for (const location of business.location) {
+          try {
+            const calendarService = new CalendarService();
+            const adjusted = adjustDatesToSchedule(
+              filters.date1,
+              filters.date2,
+              location.schedule
+            );
+
+            if (!adjusted) {
+              continue; // No coincideix amb horari laboral
+            }
+
+            const { adjustedDate1, adjustedDate2 } = adjusted;
+
+            const slots =
+              await calendarService.getSlotsCommonForCalendarsOfOneUserAndOneLocation(
+                filters.userId,
+                location._id.toString(),
+                adjustedDate1,
+                adjustedDate2
+              );
+
+            if (slots && slots.length > 0) {
+              availableLocations.push(location);
+            }
+          } catch (error) {
+            console.error(
+              `Error obtenint slots per ubicació ${location._id}:`,
+              error instanceof Error ? error.message : error
+            );
+            // errors o ubicacions sense disponibilitat
+          }
+        }
+
+        if (availableLocations.length > 0) {
+          result.push({
+            ...business,
+            location: availableLocations,
+          });
+        }
+      }
+
+      return result.length > 0 ? result : null;
+    }
+
+    return businesses;
   }
 }

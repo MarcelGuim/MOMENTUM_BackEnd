@@ -9,7 +9,7 @@ import {
 import { ModelType } from '../../types';
 
 export class AuthService {
-  async loginUser(identifier:string, password:string, fcmToken?: string){
+  async loginUser(identifier: string, password: string, fcmToken?: string) {
     const isEmail = identifier.includes('@');
     const query = isEmail ? { mail: identifier } : { name: identifier };
 
@@ -17,20 +17,19 @@ export class AuthService {
     if (!user) {
       throw new Error('User not found');
     }
-    const isMatch : boolean = await user.isValidPassword(password);
-    if(!isMatch){
+    const isMatch: boolean = await user.isValidPassword(password);
+    if (!isMatch) {
       throw new Error('Invalid password');
     }
 
-    //s'actualitza el fcmToken 
-    if (fcmToken) { 
-      user.fcmToken = fcmToken; 
-      await user.save(); 
+    //s'actualitza el fcmToken
+    if (fcmToken) {
+      user.fcmToken = fcmToken;
+      await user.save();
     }
     const accessToken = generateAccessToken(user.id, ModelType.USER);
     const refreshToken = generateRefreshToken(user.id, ModelType.USER);
 
-    
     const userWithoutPassword = user.toObject() as Partial<IUsuari>;
     delete userWithoutPassword.password;
 
@@ -95,5 +94,8 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+  async deleteFcmToken(userId: string) {
+    await User.findByIdAndUpdate(userId, { fcmToken: null });
   }
 }

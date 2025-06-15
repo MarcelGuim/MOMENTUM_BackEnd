@@ -362,7 +362,17 @@ export async function getFilteredBusinesses(
       lat,
       lon,
       maxDistance,
+      date1,
+      date2,
+      accessible,
     } = req.body;
+    const userId = req.params.userId;
+
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ message: 'Missing userId in URL parameter' });
+    }
 
     // Neteja i preparació dels filtres
     const filters = {
@@ -387,8 +397,11 @@ export async function getFilteredBusinesses(
         maxDistance !== null && maxDistance !== '' && !isNaN(maxDistance)
           ? parseInt(maxDistance)
           : undefined,
+      date1: date1 ? new Date(req.body.date1) : undefined,
+      date2: date2 ? new Date(req.body.date2) : undefined,
+      userId,
+      accessible: typeof accessible === 'boolean' ? accessible : undefined,
     };
-
     const result = await businessService.getFilteredBusinesses(filters);
 
     if (result === -1) {
@@ -497,6 +510,9 @@ export async function getFilteredFavoriteBusinesses(
       lat,
       lon,
       maxDistance,
+      date1,
+      date2,
+      accessible,
     } = req.body;
 
     // Neteja i preparació dels filtres
@@ -522,12 +538,13 @@ export async function getFilteredFavoriteBusinesses(
         maxDistance !== null && maxDistance !== '' && !isNaN(maxDistance)
           ? parseInt(maxDistance)
           : undefined,
+      date1: date1 ? new Date(req.body.date1) : undefined,
+      date2: date2 ? new Date(req.body.date2) : undefined,
+      userId,
+      accessible: typeof accessible === 'boolean' ? accessible : undefined,
     };
 
-    const result = await businessService.getFilteredFavoriteBusinesses(
-      userId,
-      filters
-    );
+    const result = await businessService.getFilteredFavoriteBusinesses(filters);
 
     if (result === -1) {
       return res.status(400).json({ message: 'Invalid service type' });
