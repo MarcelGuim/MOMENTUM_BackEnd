@@ -59,6 +59,36 @@ export class BusinessService {
     return businesses;
   }
 
+  async getPaginatedBusinesses(
+    page = 1,
+    limit = 5,
+    getDeleted = false
+  ): Promise<{
+    businesses: IBusiness[];
+    totalPages: number;
+    totalUsers: number;
+    currentPage: number;
+  } | null> {
+    const businesses = await Business.find(
+      getDeleted ? {} : { isDeleted: false }
+    )
+      .populate({
+        path: 'location',
+        populate: {
+          path: 'workers',
+        },
+      })
+      .sort({ name: 1 })
+      .skip(page * limit)
+      .limit(limit);
+    return {
+      businesses,
+      currentPage: page,
+      totalUsers: await Business.countDocuments(),
+      totalPages: Math.ceil((await Business.countDocuments()) / limit),
+    };
+  }
+
   //Funció que retorna totes les locations d'un business a partir del ID del business
   async getLocationsFromBusinessbyId(
     businessId: string
@@ -68,7 +98,9 @@ export class BusinessService {
       console.log(`Invalid ID format: ${businessId}`);
       return -1;
     }
-    const business = await Business.findById(businessId).populate<{
+    const business = await Business.findById(businessId, {
+      isDeleted: false,
+    }).populate<{
       location: ILocation[];
     }>('location');
     if (business === null) {
@@ -97,7 +129,9 @@ export class BusinessService {
     }
 
     // Mirem si el ID pertany a algun business
-    const business = await Business.findById(businessId).populate<{
+    const business = await Business.findById(businessId, {
+      isDeleted: false,
+    }).populate<{
       location: ILocation[];
     }>('location');
 
@@ -232,6 +266,50 @@ export class BusinessService {
     ).populate('location');
 
     return updatedBusiness;
+  }
+
+  // Funció que restaura un business i les seves locations si estaven eliminades
+  async restoreSoftDeletedBusiness(
+    businessId: string
+  ): Promise<IBusiness | null | number> {
+    // Verificar si el ID és vàlid
+    if (!mongoose.Types.ObjectId.isValid(businessId)) {
+      return -1; // ID no vàlid
+    }
+
+    const foundBusiness = await Business.findById(
+      businessId,
+      {},
+      { bypassHooks: true }
+    );
+    if (!foundBusiness) {
+      return null; // Business no trobat
+    }
+
+    if (!foundBusiness.isDeleted) {
+      return -3; // El business no està eliminat
+    }
+
+    // Restaurar les locations associades
+    if (foundBusiness.location && foundBusiness.location.length > 0) {
+      const locationIds = foundBusiness.location.map((loc) => loc._id);
+      const updatedLocations = await Location.updateMany(
+        { _id: { $in: locationIds } },
+        { $set: { isDeleted: false } }
+      );
+      if (updatedLocations.modifiedCount !== locationIds.length) {
+        return -2; // No s'han pogut restaurar totes les locations
+      }
+    }
+
+    // Restaurar el business
+    const restoredBusiness = await Business.findByIdAndUpdate(
+      businessId,
+      { $set: { isDeleted: false } },
+      { new: true, bypassHooks: true }
+    ).populate('location');
+
+    return restoredBusiness;
   }
 
   //Funció que fa un harddelete de Business
@@ -421,7 +499,7 @@ export class BusinessService {
   }
 
   async findBusinessById(id: string): Promise<IBusiness | null> {
-    return Business.findById(id);
+    return Business.findById(id, { isDeleted: false });
   }
 
   async getBusinessesWithFavoriteLocations(

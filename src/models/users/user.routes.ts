@@ -27,13 +27,13 @@ import {
   findUsersByName,
   followUser,
   unfollowUser,
-  sendFriendRequest,
-  acceptFriendRequest,
   getFriendRequests,
   searchUsersByEmailFragment,
   denyFriendRequest,
   getFriends,
   removeFriend,
+  acceptFriendRequest,
+  sendFriendRequest,
 } from './user.controller';
 
 /**

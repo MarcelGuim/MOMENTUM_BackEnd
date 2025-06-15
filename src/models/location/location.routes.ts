@@ -13,6 +13,8 @@ import {
   getLocationByNameHandler,
   getWorkersOfLocation,
   getCities,
+  softDeleteLocaitonHandler,
+  restoreLocationHandler,
 } from './location.controller';
 
 const router = Router();
@@ -433,6 +435,88 @@ router.put('/:id', updateLocationByIdHandler);
  *         description: Internal Server Error
  */
 router.delete('/:id', deleteLocationByIdHandler);
+
+/**
+ * @swagger
+ * /location/softdelete/{id}:
+ *   patch:
+ *     summary: Soft delete a location
+ *     description: Marks a location as deleted without removing it from the database.
+ *     tags:
+ *       - Locations
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the location to soft delete.
+ *     responses:
+ *       200:
+ *         description: Successfully soft deleted the location.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *       404:
+ *         description: Location not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: could not find location
+ *       500:
+ *         description: Internal server error.
+ */
+router.patch('/softdelete/:id', softDeleteLocaitonHandler);
+
+/**
+ * @swagger
+ * /location/restore/{id}:
+ *   patch:
+ *     summary: Restore a soft-deleted location
+ *     description: Restores a previously soft-deleted location.
+ *     tags:
+ *       - Locations
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the location to restore.
+ *     responses:
+ *       200:
+ *         description: Successfully restored the location.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: success
+ *       404:
+ *         description: Location not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: could not find location
+ *       500:
+ *         description: Internal server error.
+ */
+router.patch('/restore/:id', restoreLocationHandler);
 
 /**
  * @swagger
