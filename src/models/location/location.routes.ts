@@ -13,6 +13,7 @@ import {
   getLocationByNameHandler,
   getWorkersOfLocation,
   getCities,
+  getCloseMedicalLocations,
 } from './location.controller';
 
 const router = Router();
@@ -215,6 +216,8 @@ router.post('/', createLocationHandler);
  *         description: Error intern del servidor
  */
 router.get('/cities', getCities);
+
+router.get('/medical', getCloseMedicalLocations);
 
 /**
  * @swagger

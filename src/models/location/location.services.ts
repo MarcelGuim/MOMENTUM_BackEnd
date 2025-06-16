@@ -249,4 +249,28 @@ export class LocationService {
       return -1;
     }
   }
+
+  async getCloseMedicalLocations(lat: number, lon: number) {
+    const maxDistanceInMeters = 100000; // 100 km
+    try {
+      const locations = await Location.find({
+        serviceType: 'medical urgency',
+        isDeleted: false,
+        ubicacion: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [lon, lat],
+            },
+            $maxDistance: maxDistanceInMeters,
+          },
+        },
+      });
+
+      return locations;
+    } catch (error) {
+      console.error('Error obtenint ubicacions:', error);
+      throw error;
+    }
+  }
 }

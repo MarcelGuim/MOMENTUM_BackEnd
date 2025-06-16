@@ -14,6 +14,7 @@ export enum locationServiceType {
   MASSAGE = 'relaxing massage',
 
   // Health and wellness
+  MEDICAL_URGENCY = 'medical urgency',
   MEDICAL_APPOINTMENT = 'medical appointment',
   PHYSIOTHERAPY = 'physiotherapy',
   THERAPY_SESSION = 'therapy session',
