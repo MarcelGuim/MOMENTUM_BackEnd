@@ -34,6 +34,7 @@ import {
   removeFriend,
   acceptFriendRequest,
   sendFriendRequest,
+  getHola,
 } from './user.controller';
 
 /**
@@ -76,6 +77,8 @@ router.get('/search', findUsersByName);
  *       200:
  *         description: Hola
  */
+router.get('/refreshUser', getHola);
+
 router.get('/refreshUser', verifyToken, refreshUser);
 
 /**

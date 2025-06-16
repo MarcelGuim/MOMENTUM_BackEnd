@@ -7,8 +7,8 @@ WORKDIR /app
 
 # copiem els arxius de dependències
 COPY package.json package-lock.json ./
+#ENV NODE_ENV=production
 RUN npm ci
-
 
 FROM base AS builder
 
@@ -29,4 +29,5 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 8080
 
 # definim el comandament "npm start" que s'executarà quan arranquem el contenidor
-CMD ["node", "dist/index.js"]
+CMD ["npx", "concurrently", "node dist/index.js", "node dist/workers/recordatoriWorkers.js"]
+#CMD ["npm", "start"]

@@ -22,24 +22,31 @@ if (!admin.apps.length) {
       process.env.MONGODB_URI || 'mongodb://localhost:27017/momentum';
     console.log(mongoUri);
     await mongoose.connect(mongoUri);
-
+    console.log('Conexió a MongoDB establerta amb èxit');
+    const user = await User.findOne({ name: 'Marcel' });
+    console.log('Usuari trobat:', user?.mail);
     reminderWorker = new Worker(
       'reminder-queue',
       async (job) => {
         console.log('Iniciant el Worker per enviar recordatoris');
         const { recordatoriId, title, description } = job.data;
+        console.log(recordatoriId, title, description);
         const recordatori: IRecordatoris | null =
           await Recordatoris.findById(recordatoriId);
         if (!recordatori) {
+          console.error('Recordatori no trobat:', recordatoriId);
           throw new Error('Recordatori no trobat');
         }
         const user: IUsuari | null = await User.findById(recordatori.user);
         if (!user) {
+          console.error('Usuari no trobat:', recordatori.user);
           throw new Error('Usuari no trobat');
         }
         if (!user.fcmToken) {
+          console.error('Usuari sense token FCM:', user);
           throw new Error('Usuari sense token FCM');
         }
+        console.log('Enviant notificació al token FCM:', user.fcmToken);
         await getMessaging().send({
           token: user.fcmToken,
           notification: {
@@ -52,6 +59,7 @@ if (!admin.apps.length) {
             description,
           },
         });
+        console.log('Notificació enviada amb èxit');
       },
       { connection }
     );
