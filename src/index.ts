@@ -15,23 +15,12 @@ import http from 'http';
 import { startSocketServer } from './sockets/socket_server';
 import iaRoutes from './models/IA/IA.routes';
 import admin from 'firebase-admin';
-import { Buffer } from 'buffer';
-/* import serviceAccount from './firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json'; */
-
 import recordatorisRoutes from './models/recordatoris/recordatoris.routes';
+import serviceAccount from './firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json';
 
 dotenv.config();
-const base64 = process.env.FIREBASE_CONFIG_BASE64;
-
-if (!base64) {
-  throw new Error('FIREBASE_CONFIG_BASE64 is not defined');
-}
-
-const decoded = Buffer.from(base64, 'base64').toString('utf8');
-const serviceAccount = JSON.parse(decoded);
-
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 });
 
 // Configuración de Express
