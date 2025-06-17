@@ -241,63 +241,69 @@ export class UserService {
   }
 
   async findUsersByName(name: string): Promise<IUsuari[]> {
-  const nameRegex = new RegExp(name, 'i');
+    const nameRegex = new RegExp(name, 'i');
 
-  const users = await User.aggregate([
-    {
-      $match: {
-        isDeleted: false,
-        name: { $regex: nameRegex },
+    const users = await User.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          name: { $regex: nameRegex },
+        },
       },
-    },
-    {
-      $project: {
-        password: 0,
-        activationId: 0,
+      {
+        $project: {
+          password: 0,
+          activationId: 0,
+        },
       },
-    },
-  ]);
+    ]);
 
-  return users;
- }
-
-  async followUser(followerId: string, followeeId: string): Promise<IUsuari | null> {
-      if (followerId === followeeId) {
-        throw new Error("No puedes seguirte a ti mismo");
-      }
-
-      const follower = await User.findById(followerId);
-      const followee = await User.findById(followeeId);
-
-      if (!follower || !followee) {
-        return null;
-      }
-
-      // Aseguramos que follower.following y followee.followers sean arrays
-      follower.following = follower.following || [];
-      followee.followers = followee.followers || [];
-
-      // Comprobamos si ya está siguiendo para no duplicar
-      const followeeIdObj = new mongoose.Types.ObjectId(followeeId);
-      const followerIdObj = new mongoose.Types.ObjectId(followerId);
-
-      if (follower.following.some(id => id.equals(followeeIdObj))) {
-        // Ya está siguiendo, no hacemos nada
-        return follower;
-      }
-
-      follower.following.push(followeeIdObj);
-      followee.followers.push(followerIdObj);
-
-      await follower.save();
-      await followee.save();
-
-      return follower;
+    return users;
   }
 
-  async unfollowUser(followerId: string, followeeId: string): Promise<IUsuari | null> {
+  async followUser(
+    followerId: string,
+    followeeId: string
+  ): Promise<IUsuari | null> {
     if (followerId === followeeId) {
-      throw new Error("No puedes dejar de seguirte a ti mismo");
+      throw new Error('No puedes seguirte a ti mismo');
+    }
+
+    const follower = await User.findById(followerId);
+    const followee = await User.findById(followeeId);
+
+    if (!follower || !followee) {
+      return null;
+    }
+
+    // Aseguramos que follower.following y followee.followers sean arrays
+    follower.following = follower.following || [];
+    followee.followers = followee.followers || [];
+
+    // Comprobamos si ya está siguiendo para no duplicar
+    const followeeIdObj = new mongoose.Types.ObjectId(followeeId);
+    const followerIdObj = new mongoose.Types.ObjectId(followerId);
+
+    if (follower.following.some((id) => id.equals(followeeIdObj))) {
+      // Ya está siguiendo, no hacemos nada
+      return follower;
+    }
+
+    follower.following.push(followeeIdObj);
+    followee.followers.push(followerIdObj);
+
+    await follower.save();
+    await followee.save();
+
+    return follower;
+  }
+
+  async unfollowUser(
+    followerId: string,
+    followeeId: string
+  ): Promise<IUsuari | null> {
+    if (followerId === followeeId) {
+      throw new Error('No puedes dejar de seguirte a ti mismo');
     }
 
     const follower = await User.findById(followerId);
@@ -314,10 +320,14 @@ export class UserService {
     const followerIdObj = new mongoose.Types.ObjectId(followerId);
 
     // Filtramos para eliminar el followee de following del follower
-    follower.following = follower.following.filter(id => !id.equals(followeeIdObj));
+    follower.following = follower.following.filter(
+      (id) => !id.equals(followeeIdObj)
+    );
 
     // Filtramos para eliminar el follower de followers del followee
-    followee.followers = followee.followers.filter(id => !id.equals(followerIdObj));
+    followee.followers = followee.followers.filter(
+      (id) => !id.equals(followerIdObj)
+    );
 
     await follower.save();
     await followee.save();
@@ -325,7 +335,10 @@ export class UserService {
     return follower;
   }
 
-  async sendFriendRequest(fromId: string, toId: string): Promise<{ toUser: IUsuari, fromUser: IUsuari } | null> {
+  async sendFriendRequest(
+    fromId: string,
+    toId: string
+  ): Promise<{ toUser: IUsuari; fromUser: IUsuari } | null> {
     const fromUser = await User.findById(fromId);
     const toUser = await User.findById(toId);
 
@@ -334,18 +347,23 @@ export class UserService {
     if (!toUser.friendRequests.includes(fromUser.id!)) {
       toUser.friendRequests.push(fromUser.id!);
       await toUser.save();
-      return { toUser, fromUser }; 
+      return { toUser, fromUser };
     }
     return null;
   }
 
-  async acceptFriendRequest(toId: string, fromId: string): Promise<IUsuari | null> {
+  async acceptFriendRequest(
+    toId: string,
+    fromId: string
+  ): Promise<IUsuari | null> {
     const toUser = await User.findById(toId);
     const fromUser = await User.findById(fromId);
 
     if (!toUser || !fromUser) return null;
 
-    toUser.friendRequests = toUser.friendRequests.filter(id => !id.equals(fromUser.id!));
+    toUser.friendRequests = toUser.friendRequests.filter(
+      (id) => !id.equals(fromUser.id!)
+    );
     toUser.friends.push(fromUser.id!);
     fromUser.friends.push(toUser.id!);
 
@@ -358,47 +376,54 @@ export class UserService {
     const user = await User.findById(userId).select('friendRequests');
     if (!user) return [];
 
-    const requestIds = user.friendRequests.map(id => id.toString());
+    const requestIds = user.friendRequests.map((id) => id.toString());
 
     // Obtenir les dades bàsiques dels usuaris que han enviat la sol·licitud
     const requestUsers = await User.find({
       _id: { $in: requestIds },
-      isDeleted: false
-    }).select('_id mail');
+      isDeleted: false,
+    }).select('_id name mail');
 
     return requestUsers;
   }
-  
-  async searchUsersByEmailFragment(currentUserId: string, emailFragment: string) {
-    const currentUser = await User.findById(currentUserId).select('friends friendRequests');
+
+  async searchUsersByEmailFragment(
+    currentUserId: string,
+    emailFragment: string
+  ) {
+    const currentUser = await User.findById(currentUserId).select(
+      'friends friendRequests'
+    );
     if (!currentUser) return [];
 
     const users = await User.find({
       mail: { $regex: emailFragment, $options: 'i' },
       _id: { $ne: currentUserId },
       isDeleted: false,
-    }).select('mail _id');
+    }).select('mail name _id');
 
-    const friendIds = (currentUser.friends || []).map(id => id.toString());
-    const requestedIds = (currentUser.friendRequests || []).map(id => id.toString());
+    const friendIds = (currentUser.friends || []).map((id) => id.toString());
+    const requestedIds = (currentUser.friendRequests || []).map((id) =>
+      id.toString()
+    );
 
-    const filteredUsers = users.filter(u => {
+    const filteredUsers = users.filter((u) => {
       const id = u._id.toString();
       return !friendIds.includes(id) && !requestedIds.includes(id);
     });
 
-    return filteredUsers.map(u => ({
+    return filteredUsers.map((u) => ({
       _id: u._id.toString(),
-      mail: u.mail
+      mail: u.mail,
     }));
   }
 
   async denyFriendRequest(toId: string, fromId: string): Promise<boolean> {
-   const toUser = await User.findById(toId);
+    const toUser = await User.findById(toId);
     if (!toUser) return false;
 
     toUser.friendRequests = toUser.friendRequests.filter(
-      id => id.toString() !== fromId
+      (id) => id.toString() !== fromId
     );
 
     await toUser.save();
@@ -406,7 +431,7 @@ export class UserService {
   }
   async getFriendsByUserId(userId: string) {
     const user = await User.findById(userId)
-      .populate('friends', 'mail _id') 
+      .populate('friends', 'mail name _id')
       .select('friends');
 
     if (!user) {
@@ -415,6 +440,7 @@ export class UserService {
 
     const formattedFriends = user.friends.map((friend: any) => ({
       _id: friend._id.toString(),
+      name: friend.name,
       mail: friend.mail,
     }));
 
@@ -427,8 +453,8 @@ export class UserService {
     if (!user || !friend) return false;
 
     // Eliminar mútuament
-    user.friends = user.friends.filter(id => id.toString() !== friendId);
-    friend.friends = friend.friends.filter(id => id.toString() !== userId);
+    user.friends = user.friends.filter((id) => id.toString() !== friendId);
+    friend.friends = friend.friends.filter((id) => id.toString() !== userId);
 
     await user.save();
     await friend.save();
@@ -436,8 +462,6 @@ export class UserService {
     return true;
   }
 }
-
-
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
