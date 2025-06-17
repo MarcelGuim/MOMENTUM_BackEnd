@@ -8,6 +8,9 @@ import { getMessaging } from 'firebase-admin/messaging';
 import mongoose from 'mongoose';
 import admin from 'firebase-admin';
 import serviceAccount from '../firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json';
+import { configDotenv } from 'dotenv';
+
+configDotenv();
 
 let reminderWorker: Worker | null = null;
 if (!admin.apps.length) {

@@ -29,5 +29,4 @@ COPY --from=builder /app/node_modules ./node_modules
 EXPOSE 8080
 
 # definim el comandament "npm start" que s'executarà quan arranquem el contenidor
-CMD ["npx", "concurrently", "node dist/index.js", "node dist/workers/recordatoriWorkers.js"]
-#CMD ["npm", "start"]
+CMD ["npx", "concurrently", "\"node dist/index.js\"", "\"node dist/workers/recordatoriWorkers.js\""]
