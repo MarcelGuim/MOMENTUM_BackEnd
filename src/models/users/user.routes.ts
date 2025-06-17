@@ -437,6 +437,8 @@ router.patch(
   toggleFavoriteLocationController
 );
 
+router.post('/search-by-email', verifyToken, searchUsersByEmailFragment);
+
 /**
  * @swagger
  * /users/follow/{followerId}/{followeeId}:
@@ -669,8 +671,6 @@ router.get(
   requireOwnership('userId'),
   getFriendRequests
 );
-
-router.post('/search-by-email', verifyToken, searchUsersByEmailFragment);
 
 router.post('/:userId/deny-friend', verifyToken, denyFriendRequest);
 
