@@ -422,6 +422,7 @@ Click on the following link to activate your user: `;
 
     return filteredUsers.map((u) => ({
       _id: u._id.toString(),
+      name: u.name,
       mail: u.mail,
     }));
   }
