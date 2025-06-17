@@ -181,4 +181,7 @@ export class AuthService {
       refreshToken,
     };
   }
+  async deleteFcmToken(userId: string) {
+    await User.findByIdAndUpdate(userId, { fcmToken: null });
+  }
 }

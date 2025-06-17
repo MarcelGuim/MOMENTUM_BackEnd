@@ -108,7 +108,8 @@ export const logout = async (req: Request, res: Response) => {
     if (!req.refreshPayload) {
       return res.status(400).json({ error: 'No refresh token found' });
     }
-
+    const userId = req.refreshPayload.userId;
+    await authService.deleteFcmToken(userId);
     // 2. Add token to blacklist (if using token invalidation)
     // await tokenService.blacklistToken(refreshToken);
 

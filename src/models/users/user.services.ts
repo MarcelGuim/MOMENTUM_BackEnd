@@ -390,7 +390,7 @@ Click on the following link to activate your user: `;
     const requestUsers = await User.find({
       _id: { $in: requestIds },
       isDeleted: false,
-    }).select('_id mail');
+    }).select('_id name mail');
 
     return requestUsers;
   }
@@ -408,7 +408,7 @@ Click on the following link to activate your user: `;
       mail: { $regex: emailFragment, $options: 'i' },
       _id: { $ne: currentUserId },
       isDeleted: false,
-    }).select('mail _id');
+    }).select('mail name _id');
 
     const friendIds = (currentUser.friends || []).map((id) => id.toString());
     const requestedIds = (currentUser.friendRequests || []).map((id) =>
@@ -439,7 +439,7 @@ Click on the following link to activate your user: `;
   }
   async getFriendsByUserId(userId: string) {
     const user = await User.findById(userId)
-      .populate('friends', 'mail _id')
+      .populate('friends', 'mail name _id')
       .select('friends');
 
     if (!user) {
@@ -448,6 +448,7 @@ Click on the following link to activate your user: `;
 
     const formattedFriends = user.friends.map((friend: any) => ({
       _id: friend._id.toString(),
+      name: friend.name,
       mail: friend.mail,
     }));
 

@@ -267,7 +267,7 @@ export async function changePassword(
       return res.status(404).json({ error: 'User not found' });
     }
     if (err.message === 'IncorrectPassword') {
-      return res.status(401).json({ error: 'Current password is incorrect' });
+      return res.status(402).json({ error: 'Current password is incorrect' });
     }
     console.error(err);
     return res.status(500).json({ error: 'Failed to update password' });

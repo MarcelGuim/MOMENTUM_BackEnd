@@ -356,3 +356,28 @@ export async function getCities(
     return res.status(500).json({ message: 'Unexpected server error' });
   }
 }
+
+export async function getCloseMedicalLocations(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    const { lat, lon } = req.query;
+
+    const latNum = parseFloat(lat as string);
+    const lonNum = parseFloat(lon as string);
+
+    if (isNaN(latNum) || isNaN(lonNum)) {
+      return res.status(400).json({ message: 'Invalid coordinates' });
+    }
+
+    const locations = await locationService.getCloseMedicalLocations(
+      latNum,
+      lonNum
+    );
+    return res.json(locations);
+  } catch (error) {
+    console.error('Error al buscar ubicacions mèdiques properes:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}

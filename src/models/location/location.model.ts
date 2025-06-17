@@ -18,6 +18,7 @@ export interface ILocation extends Document {
   }[];
   business: mongoose.Types.ObjectId;
   workers: mongoose.Types.ObjectId[];
+  accessible: boolean;
   isDeleted: boolean;
 }
 //const LocationSchema: Schema = new Schema({
@@ -82,6 +83,11 @@ const LocationSchema = new mongoose.Schema<ILocation>({
       ref: 'Worker',
     },
   ],
+  accessible: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   isDeleted: {
     type: Boolean,
     required: true,

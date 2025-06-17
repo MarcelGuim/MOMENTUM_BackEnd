@@ -1,6 +1,7 @@
 import { locationSchedule } from '../enums/locationSchedule.enum';
 export interface LocationFilter {
   isDeleted: boolean;
+  accessible?: boolean;
   serviceType?: { $in: string[] };
   address?: { $regex: string; $options: string };
   rating?: { $gte: number };
@@ -24,6 +25,7 @@ export interface LocationFilter {
 }
 
 export interface FilterOptions {
+  accessible?: boolean;
   serviceTypes?: string[];
   cities?: string[];
   ratingMin?: number;
@@ -32,4 +34,7 @@ export interface FilterOptions {
   lat?: number;
   lon?: number;
   maxDistance?: number;
+  date1?: Date;
+  date2?: Date;
+  userId?: string;
 }
