@@ -14,6 +14,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      - name: Recreate Firebase Admin SDK JSON file
+        run: |
+          mkdir -p src/firebase
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > src/firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
