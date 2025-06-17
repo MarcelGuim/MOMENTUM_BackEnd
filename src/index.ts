@@ -20,6 +20,7 @@ import { Buffer } from 'buffer';
 
 import recordatorisRoutes from './models/recordatoris/recordatoris.routes';
 
+dotenv.config();
 const base64 = process.env.FIREBASE_CONFIG_BASE64;
 
 if (!base64) {
@@ -31,12 +32,6 @@ const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-});
-
-dotenv.config();
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 });
 
 // Configuración de Express
