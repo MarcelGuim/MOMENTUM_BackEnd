@@ -19,6 +19,7 @@ export default [
         require: 'readonly',
         fetch: 'readonly',
         Response: 'readonly',
+        URLSearchParams: 'readonly',
       },
     },
     plugins: {

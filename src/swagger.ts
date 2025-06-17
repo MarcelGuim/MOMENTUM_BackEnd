@@ -5,6 +5,7 @@ import { appointmentServiceType } from './enums/appointmentServiceType.enum';
 import { appointmentState } from './enums/appointmentState.enum';
 
 import dotenv from 'dotenv';
+import { RepetitionType } from './enums/recordatorisRepetition.enum';
 
 dotenv.config();
 
@@ -371,6 +372,35 @@ const options = {
             colour: {
               type: 'string',
               example: '#FF5733',
+            },
+          },
+        },
+        Recordatori: {
+          type: 'object',
+          required: ['user', 'title', 'description', 'time', 'repeat'],
+          properties: {
+            user: {
+              type: 'string',
+              description: 'ID de l’usuari',
+              example: '62b8c1f1f1e3f0a5d4d9e1c2',
+            },
+            title: {
+              type: 'string',
+              example: 'Anar al metge',
+            },
+            description: {
+              type: 'string',
+              example: 'Consulta anual de salut',
+            },
+            time: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-07-01T10:00:00Z',
+            },
+            repeat: {
+              type: 'string',
+              enum: Object.values(RepetitionType),
+              example: RepetitionType.NEVER,
             },
           },
         },

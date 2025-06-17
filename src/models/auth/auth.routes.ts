@@ -7,6 +7,8 @@ import {
   validateLogin,
   registerBusiness,
   loginWorker,
+  googleAuthCtrl,
+  googleAuthCallback,
 } from './auth.controller';
 import { verifyRefresh, verifyToken } from '../../middleware/auth.middleware';
 
@@ -312,5 +314,52 @@ router.post('/registerBusiness', registerBusiness);
  *                   example: Failed to authenticate worker
  */
 router.post('/loginWorker', loginWorker);
+
+/////////////////////////////////
+// Google Part
+
+/**
+ * @swagger
+ * /auth/google:
+ *   get:
+ *     summary: Initiate Google OAuth2 authentication
+ *     tags: [Authentication]
+ *     description: Redirects the user to Google's OAuth2 consent screen.
+ *     responses:
+ *       302:
+ *         description: Redirects to Google's OAuth2 login page
+ *       500:
+ *         description: Server error due to missing configuration
+ */
+router.get('/google', googleAuthCtrl);
+
+/**
+ * @swagger
+ * /auth/google/callback:
+ *   get:
+ *     summary: Google OAuth2 callback
+ *     tags: [Authentication]
+ *     description: Handles the OAuth2 callback from Google and sets the authentication cookie.
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The authorization code returned from Google
+ *     responses:
+ *       302:
+ *         description: Redirects the user to the frontend with the access token
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *             description: HTTP-only cookie with access token
+ *       400:
+ *         description: Missing authorization code
+ *       500:
+ *         description: Server error during Google authentication
+ */
+router.get('/google/callback', googleAuthCallback);
 
 export default router;

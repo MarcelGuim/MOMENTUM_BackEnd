@@ -67,6 +67,24 @@ export class LocationService {
     return location;
   }
 
+  async softDeleteLocation(id: string): Promise<boolean> {
+    const res = await Location.updateOne(
+      { _id: id },
+      { $set: { isDeleted: true } }
+    );
+
+    return res.modifiedCount > 0;
+  }
+
+  async restoreLocation(id: string): Promise<boolean> {
+    const res = await Location.updateOne(
+      { _id: id },
+      { $set: { isDeleted: false } }
+    );
+
+    return res.modifiedCount > 0;
+  }
+
   async updateLocationById(
     id: string,
     data: Partial<ILocation>

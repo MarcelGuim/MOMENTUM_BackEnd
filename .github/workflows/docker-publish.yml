@@ -1,0 +1,41 @@
+name: Build and Publish Docker image
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Recreate Firebase Admin SDK JSON file
+        run: |
+          mkdir -p src/firebase
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d > src/firebase/momentumapp-73123-firebase-adminsdk-fbsvc-b0622154fc.json
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build the Docker image
+        run: docker build -t janvinas/momentum-backend:latest .
+
+      - name: Push the Docker image
+        run: docker push janvinas/momentum-backend:latest
+
+      - name: Trigger remote deployment via bastion host
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: 147.83.118.151
+          username: marcel
+          key: ${{ secrets.SSH_KEY_BASTION }}
+          script: |
+            /home/marcel/Escritorio/remote_docker_exec.sh "cd MOMENTUM_Deployment && docker-compose -f momentum-compose.prod.yaml stop &&  docker-compose -f momentum-compose.prod.yaml pull && docker-compose -f momentum-compose.prod.yaml start"

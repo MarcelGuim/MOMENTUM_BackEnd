@@ -1,7 +1,13 @@
 import { Router } from 'express';
-import { userValidationRules, userValidator,} from '../../middleware/user.validation';
+import {
+  userValidationRules,
+  userValidator,
+} from '../../middleware/user.validation';
 import { changePasswordValidator } from '../../middleware/changePasswordValidation';
-import { requireOwnership, verifyToken } from '../../middleware/auth.middleware';
+import {
+  requireOwnership,
+  verifyToken,
+} from '../../middleware/auth.middleware';
 
 const router = Router();
 
@@ -21,13 +27,14 @@ import {
   findUsersByName,
   followUser,
   unfollowUser,
-  sendFriendRequest,
-  acceptFriendRequest,
   getFriendRequests,
   searchUsersByEmailFragment,
   denyFriendRequest,
   getFriends,
   removeFriend,
+  acceptFriendRequest,
+  sendFriendRequest,
+  getHola,
 } from './user.controller';
 
 /**
@@ -58,7 +65,7 @@ import {
  *       500:
  *         description: Error interno del servidor
  */
-router.get("/search", findUsersByName);
+router.get('/search', findUsersByName);
 
 /**
  * @swagger
@@ -70,6 +77,8 @@ router.get("/search", findUsersByName);
  *       200:
  *         description: Hola
  */
+router.get('/refreshUser', getHola);
+
 router.get('/refreshUser', verifyToken, refreshUser);
 
 /**
@@ -208,7 +217,13 @@ router.get('/:userId', verifyToken, requireOwnership('userId'), getUserById);
  *       500:
  *         description: Server error
  */
-router.put('/:userId/password', verifyToken, requireOwnership('userId'), changePasswordValidator, changePassword);
+router.put(
+  '/:userId/password',
+  verifyToken,
+  requireOwnership('userId'),
+  changePasswordValidator,
+  changePassword
+);
 
 /**
  * @swagger
@@ -246,7 +261,14 @@ router.put('/:userId/password', verifyToken, requireOwnership('userId'), changeP
  *       500:
  *         description: Failed to update user
  */
-router.put('/:userId', verifyToken, requireOwnership('userId'), userValidationRules(), userValidator, updateUserById );
+router.put(
+  '/:userId',
+  verifyToken,
+  requireOwnership('userId'),
+  userValidationRules(),
+  userValidator,
+  updateUserById
+);
 
 /**
  * @swagger
@@ -410,7 +432,10 @@ router.get('', getUsersPaginated);
  *       500:
  *         description: Internal server error
  */
-router.patch('/:userId/favorites/:locationId', toggleFavoriteLocationController);
+router.patch(
+  '/:userId/favorites/:locationId',
+  toggleFavoriteLocationController
+);
 
 /**
  * @swagger
@@ -638,7 +663,12 @@ router.post('/:userId/accept-friend', verifyToken, acceptFriendRequest);
  *       404:
  *         description: Usuari no trobat
  */
-router.get('/:userId/friend-requests', verifyToken, requireOwnership('userId'), getFriendRequests);
+router.get(
+  '/:userId/friend-requests',
+  verifyToken,
+  requireOwnership('userId'),
+  getFriendRequests
+);
 
 router.post('/search-by-email', verifyToken, searchUsersByEmailFragment);
 

@@ -7,6 +7,9 @@ import { getMessaging } from 'firebase-admin/messaging';
 
 const userService = new UserService();
 
+export async function getHola(req: Request, res: Response): Promise<Response> {
+  return res.status(201).json('hola');
+}
 //PART CRUD
 export async function createUser(
   req: Request,

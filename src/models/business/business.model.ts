@@ -26,10 +26,6 @@ const BusinessSchema = new mongoose.Schema<IBusiness>({
   },
 });
 
-BusinessSchema.pre('find', function () {
-  this.where({ isDeleted: false });
-});
-
 BusinessSchema.pre('findOne', function () {
   if (!this.getOptions().bypassHooks) {
     this.where({ isDeleted: false });
